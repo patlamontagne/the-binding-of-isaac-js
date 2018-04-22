@@ -166,7 +166,7 @@ var Player = {
 			//Orientation du mouvement
 			var currentMoving = "";
 			//Calcul Boost
-			this.speed = 3 + (this.speedBoost*2)/3;
+			this.speed = 3 + this.speedBoost/2;
 			this.damage = 1 + this.dmgBoost*0.4;
 			this.range = 400 + this.rangeBoost*70;
 			this.fireRate = 700 - this.fireRateBoost*50;

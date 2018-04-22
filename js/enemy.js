@@ -6,53 +6,79 @@ function Minion(x,y,hp){
 	this.diry = 0;
 	this.height = 32;
 	this.width = 32;
-	this.speed = 1;
+	this.speed = 2;
 	this.maxHp = hp;
 	this.hp = hp;
 	this.dmg = 1;
 	this.alive = true;
 	this.now = Date.now();
 	this.lastDamaged = Date.now();
-	this.damagedNow = this.lastDamaged-2000;
+	this.lastAng = Date.now();
+	this.angNow = Date.now();
 	this.isHit = false;
 	this.update = function(){	//Calcul
 		//Si le minion est vivant
 		if(this.alive){
+		
 			this.checkDamage();
+		
+			this.angNow = Date.now();
+			if( this.angNow - this.lastAng > 1000){
+				var angle = getRand(360,0);
+				this.diry = Math.sin(angle);
+				this.dirx = Math.cos(angle);
+				this.lastAng = Date.now();
+			}
+			
+				if(!this.isHit){
+					// X
+					this.x += this.dirx*this.speed;
+						if(this.dirx > 0){ //Est à gauche du joueur
+							this.checkCollideRight();}
+						if(this.dirx < 0){ //Est à droite du joueur
+							this.checkCollideLeft();}
+					// Y
+					this.y += this.diry*this.speed;
+						if(this.diry > 0){ //Est au dessus du joueur
+							this.checkCollideDown();}
+						if(this.diry < 0){ //Est en dessous du joueur
+							this.checkCollideUp();}
+				
+					}
+				
+			
+			// Mode "bump" (a été touché)
+				if(this.isHit){
+					this.dirx = (Player.x) - (this.x - this.width/2);
+					this.diry = (Player.y) - (this.y - this.height/2);
+					var hyp = Math.sqrt(this.dirx*this.dirx + this.diry*this.diry);
+					this.dirx = this.dirx/hyp;
+					this.diry = this.diry/hyp;
+					this.x -= this.dirx*(Player.attackSpeed);
+						if(this.dirx < 0){ //Est à gauche du joueur
+							this.checkCollideRight();}
+						if(this.dirx > 0){ //Est à droite du joueur
+							this.checkCollideLeft();}
+							
+					this.y -= this.diry*(Player.attackSpeed);
+						if(this.diry < 0){ //Est au dessus du joueur
+							this.checkCollideDown();}
+						if(this.diry > 0){ //Est en dessous du joueur
+							this.checkCollideUp();}
+				}
+		/*
 			this.dirx = (Player.x) - (this.x - this.width/2);
 			this.diry = (Player.y) - (this.y - this.height/2);
 			var hyp = Math.sqrt(this.dirx*this.dirx + this.diry*this.diry);
 			this.dirx = this.dirx/hyp;
 			this.diry = this.diry/hyp;
 			// Mode poursuite
-			if(!this.isHit){
-				// X
-				this.x += this.dirx*this.speed;
-					if(this.dirx > 0){ //Est à gauche du joueur
-						this.checkCollideRight();}
-					if(this.dirx < 0){ //Est à droite du joueur
-						this.checkCollideLeft();}
-				// Y
-				this.y += this.diry*this.speed;
-					if(this.diry > 0){ //Est au dessus du joueur
-						this.checkCollideDown();}
-					if(this.diry < 0){ //Est en dessous du joueur
-						this.checkCollideUp();}
-				}
-			// Mode "bump" (a été touché)
-			if(this.isHit){
-				this.x -= this.dirx*(Player.attackSpeed);
-					if(this.dirx < 0){ //Est à gauche du joueur
-						this.checkCollideRight();}
-					if(this.dirx > 0){ //Est à droite du joueur
-						this.checkCollideLeft();}
-						
-				this.y -= this.diry*(Player.attackSpeed);
-					if(this.diry < 0){ //Est au dessus du joueur
-						this.checkCollideDown();}
-					if(this.diry > 0){ //Est en dessous du joueur
-						this.checkCollideUp();}
-				}
+			*/
+				
+			if(this.x <= 90) this.x = 90;
+			if(this.y <= 110) this.y = 110;
+			if(this.x >= 1050 - this.width) this.x = 1050 -this.width;
+			if(this.y >= 680 - this.height) this.y = 680 - this.height;
 		}
 	}
 	this.draw = function(context){  //Affichage
@@ -191,25 +217,6 @@ function Fly(x,y,hp){
 			this.isHit = true;}
 		else this.isHit = false;
 	}
-	this.checkCollideUp = function(){ //calcul de collision Up
-		for(var i=0;i<collideMaps.length;i++){
-			if(this.y < collideMaps[i].y + collideMaps[i].height && this.y + this.height > collideMaps[i].y && this.x + this.width  > collideMaps[i].x && this.x < collideMaps[i].x + collideMaps[i].width ){
-			this.y = collideMaps[i].y+collideMaps[i].height;}}}
-			
-	this.checkCollideDown = function(){ //calcul de collision S
-		for(var i=0;i<collideMaps.length;i++){
-			if(this.y < collideMaps[i].y + collideMaps[i].height && this.y + this.height > collideMaps[i].y && this.x + this.width  > collideMaps[i].x && this.x < collideMaps[i].x + collideMaps[i].width ){
-			this.y = collideMaps[i].y-this.height;}}}
-			
-	this.checkCollideLeft = function(){ //calcul de collision W
-		for(var i=0;i<collideMaps.length;i++){
-			if(this.y < collideMaps[i].y + collideMaps[i].height && this.y + this.height > collideMaps[i].y && this.x + this.width  > collideMaps[i].x && this.x < collideMaps[i].x + collideMaps[i].width ){
-			this.x = collideMaps[i].x+collideMaps[i].width;}}}
-			
-	this.checkCollideRight = function(){ //calcul de collision S
-		for(var i=0;i<collideMaps.length;i++){
-			if(this.y < collideMaps[i].y + collideMaps[i].height && this.y + this.height > collideMaps[i].y && this.x + this.width  > collideMaps[i].x && this.x < collideMaps[i].x + collideMaps[i].width ){
-			this.x = collideMaps[i].x-this.width;}}}
 }
 
 //objet tower
