@@ -1,4 +1,22 @@
 html { background: #fff;	font: 1em Arial; }
 * {	padding: 0px; margin: 0px; }
-
-canvas { border: solid 1px #000;}
+#main {
+	width: 800px;
+	margin: 50px auto;
+}
+#label {
+	position: absolute;
+	top: 50px;
+	height: 32px;
+	z-index: 1;
+	padding: 5px 12px;
+	font: bold 0.9em Verdana;
+	color: #fff;
+}
+#fps {
+	font: bold 0.9em Verdana;
+	position: relative;
+	left: 730px;
+	top: -18px;
+}
+canvas { border: solid 1px #000; cursor: none;}
