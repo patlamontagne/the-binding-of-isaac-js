@@ -1,11 +1,11 @@
-html { background: #111;	font: 1em Arial; }
+html { background: #222;	font: 1em Arial; }
 * {	padding: 0px; margin: 0px; }
 @font-face {
     font-family: 'wendy';
     src: url("font/wendy.ttf");}
 #game {
 	width: 970px;
-	margin: auto;
+	margin: 20px auto;
 	line-height:0px;
 	text-align: center;}
 #label {
@@ -24,4 +24,5 @@ html { background: #111;	font: 1em Arial; }
 	font: bold 1.1em Verdana;
 	position: relative;
 	left: 12px;}
-canvas { border: solid 5px #fff;cursor: crosshair; background: #222; margin: auto;}
+canvas { border: solid 3px #000;cursor: crosshair; background: #ccc; margin: auto;}
+#uicanvas{border-bottom: solid 0px #fff;}

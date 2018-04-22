@@ -51,31 +51,44 @@ var possibleRooms;
 
 function generateFloor(){
 	var rand = getRand(firstFloor.length,0);
+	//alert(rand);
 	floorStructure = firstFloor[rand];
 	possibleRooms = rooms;
 	currentFloor = new Array(floorStructure.length);
-	//Peuple les rooms de base
+	//Peuple les rooms
 	for(var y=0; y < floorStructure.length; y++){
 		currentFloor[y] = new Array(floorStructure[y].length);
 		for(var x=0; x < floorStructure[y].length; x++){
-			currentFloor[y][x]= new Nothing();
+			currentFloor[y][x]= new Nothing(); //Initialiser toutes les rooms, même celles qui n'existent pas
+			//BASIC ROOMS
 			if(floorStructure[y][x] == "0"){ //Si room de base présente dans la structure
-				var randRoom = getRand(possibleRooms.length,0); //Choisir une room random parmis celle disponibles
-				currentFloor[y][x] = new Room(possibleRooms[randRoom],y,x); //L'assigner à l'étage
-				possibleRooms.splice(randRoom,1);} //Enleve la room des rooms disponibles
+				var randRoom = getRand(rooms.length,0); //Choisir une room random parmis celle disponibles
+				currentFloor[y][x] = new Room("Room",rooms[randRoom],y,x); //L'assigner à l'étage
+				rooms.splice(randRoom,1);} //Enleve la room des rooms disponibles
+			//BOSS
+			if(floorStructure[y][x] == "B"){ 
+				currentFloor[y][x] = new Room("Boss",bossRooms[0],y,x);}
+				
+			
 		}
 	}
-		
-	//Salle de départ
-	var rx = getRand(floorStructure.length,0);
+	//SPECIAL
 	var ry = getRand(floorStructure.length,0);
+	var	rx = getRand(floorStructure[ry].length,0);
 	
+	while (floorStructure[ry][rx] !="1"){
+		ry = getRand(floorStructure.length,0);
+		rx = getRand(floorStructure[ry].length,0);}
+	currentFloor[ry][rx] = new Room("Treasure",specialRooms[0],ry,rx); //Assigner la starting room
+			
+	//Salle de départ	
 	for(var y=0; y < floorStructure.length; y++){
 		for(var x=0; x < floorStructure[y].length; x++){
 			while (floorStructure[ry][rx] !="0"){
-				rx = getRand(floorStructure.length,0);
-				ry = getRand(floorStructure.length,0);}
-			currentFloor[ry][rx] = new Room(startingRoom[0],ry,rx); //Assigner la starting room
+				ry = getRand(floorStructure.length,0);
+				rx = getRand(floorStructure[ry].length,0);}
+				var randStart = getRand(startingRoom.length,0);
+			currentFloor[ry][rx] = new Room("Room",startingRoom[randStart],ry,rx); //Assigner la starting room
 			Game = currentFloor[ry][rx];
 			currentFloor[ry][rx].isCurrent = true;
 		}
@@ -84,6 +97,7 @@ function generateFloor(){
 	//Créer le niveau
 	for(var i=0; i<currentFloor.length;i++){
 		for(var j=0; j<currentFloor[i].length;j++){
+			//alert("i = "+i+"... j = "+j);
 			if(currentFloor[i][j].exists) currentFloor[i][j].create();
 		}
 	}
@@ -142,6 +156,7 @@ function mainloop(){
 		Game.update();
 		Game.clear();
 		Player.update();
+		showAdjacentRooms();
 		if(keyW || keyS){Animations[0].update();}
 		if(keyD){Animations[1].update();}
 		if(keyA){Animations[2].update();}
@@ -167,7 +182,8 @@ function Nothing(){
 }
 
 // Niveau
-function Room(map,locy,locx){
+function Room(type,map,locy,locx){
+	this.type = type;
 	this.locy = locy;
 	this.locx = locx;
 	this.Minions = []; //Monstres errants
@@ -188,7 +204,9 @@ function Room(map,locy,locx){
 	this.looty = 0;
 	this.canSpawnLoot = false;
 	this.exists = true;
+	this.isVisited = false;
 	this.isCurrent = false;
+	this.isVisible = false;
 	this.map = map; 
 	this.create= function(){
 		for(var i=0,y=0; i< this.map.length; i++,y+=64){
@@ -197,19 +215,23 @@ function Room(map,locy,locx){
 				//PORTES
 				else if(this.map[i][j] == "+L") {
 					if(this.locx > 0){
-						if(currentFloor[this.locy][this.locx-1].exists) this.Doors.push(new Door(x,y,"left"));}
-					else this.wallMaps.push(new Wall(x,y));	}
+						if(currentFloor[this.locy][this.locx-1].exists) this.Doors.push(new Door(x,y,"left"));
+						else this.wallMaps.push(new Wall(x,y));}
+					else this.wallMaps.push(new Wall(x,y));}
 				else if(this.map[i][j] == "+R") {
 					if(this.locx < currentFloor[this.locy].length-1){
-						if(currentFloor[this.locy][this.locx+1].exists) this.Doors.push(new Door(x,y,"right"));}
+						if(currentFloor[this.locy][this.locx+1].exists) this.Doors.push(new Door(x,y,"right"));
+						else this.wallMaps.push(new Wall(x,y));}
 					else this.wallMaps.push(new Wall(x,y));	}
 				else if(this.map[i][j] == "+U") {
 					if(this.locy > 0){
-						if(currentFloor[this.locy-1][this.locx].exists) this.Doors.push(new Door(x,y,"up"));}
+						if(currentFloor[this.locy-1][this.locx].exists) this.Doors.push(new Door(x,y,"up"));
+						else this.wallMaps.push(new Wall(x,y));}
 					else this.wallMaps.push(new Wall(x,y));	}
 				else if(this.map[i][j] == "+D") {
 					if(this.locy < currentFloor.length-1){
-						if(currentFloor[this.locy+1][this.locx].exists) this.Doors.push(new Door(x,y,"down"));}
+						if(currentFloor[this.locy+1][this.locx].exists) this.Doors.push(new Door(x,y,"down"));
+						else this.wallMaps.push(new Wall(x,y));}
 					else this.wallMaps.push(new Wall(x,y));	}
 				//Obstacles
 				else if(this.map[i][j] == "  ") {	this.freeCells.push(new freeCell(x,y));}
@@ -276,7 +298,10 @@ function Room(map,locy,locx){
 		//Definition contexte canvas
 		var canvas = getEl("canvas");
 		var context = canvas.getContext('2d');
-		context.clearRect(0,0,canvas.width,canvas.height);
+		var uicanvas = getEl("uicanvas");
+		var uicontext = uicanvas.getContext('2d');
+		context.clearRect(0,0,uicanvas.width,canvas.height);
+		uicontext.clearRect(0,0,uicanvas.width,canvas.height);
 		if(hitBox){context.globalAlpha = 0.5;}	
 		//Éléments
 		Background.draw(context);
@@ -299,18 +324,21 @@ function Room(map,locy,locx){
 		for(var j=0;j<playerBullets.length;j++){playerBullets[j].draw(context);}	
 		//Écran de pause
 		if( gameIsPaused()) pauseScreen(context);
-		Player.drawUI(context);
+		Player.drawUI(context,uicontext);
 		
 		//Minimap
-		context.save();
 		for(var y=0; y < currentFloor.length; y++){
-		context.globalAlpha = 0.7;
 			for(var x=0; x < currentFloor[y].length; x++){
-				if(currentFloor[y][x].isCurrent){ context.drawImage(imageTool.start,(x*30)+(10),(y*18)+(canvas.height-100), 30, 18);}
-				else if(currentFloor[y][x].exists){ context.drawImage(imageTool.room,(x*30)+(10),(y*18)+(canvas.height-100), 30, 18);}
+				
+				
+				if(currentFloor[y][x].isCurrent){ uicontext.drawImage(imageTool.current,(x*35)+455,(y*15)+20, 36, 18);}
+				else if(currentFloor[y][x].exists && currentFloor[y][x].isVisited){ uicontext.drawImage(imageTool.visited,(x*35)+455,(y*15)+20, 36, 18);}
+				else if(currentFloor[y][x].exists && currentFloor[y][x].isVisible){ uicontext.drawImage(imageTool.unvisited,(x*35)+455,(y*15)+20, 36, 18);}
+				
+				if(currentFloor[y][x].exists && currentFloor[y][x].isVisible && currentFloor[y][x].type =="Boss"){ uicontext.drawImage(imageTool.boss,(x*35)+455,(y*15)+10, 34, 34);}
+				if(currentFloor[y][x].exists && currentFloor[y][x].isVisible && currentFloor[y][x].type =="Treasure"){ uicontext.drawImage(imageTool.treasure,(x*35)+455,(y*15)+10, 34, 34);}
 			}
 		}
-		context.restore();
 	}
 	
 	this.clear = function(){
@@ -340,9 +368,16 @@ function changeRoom(side){
 		else if(side == "down"){
 			Game =currentFloor[Game.locy+1][Game.locx];
 			Player.y = 74;}
+	Game.isVisited = true;
 	Game.isCurrent = true;
 }
 
+function showAdjacentRooms(){
+	if(Game.locx > 0 && currentFloor[Game.locy][Game.locx-1].exists)currentFloor[Game.locy][Game.locx-1].isVisible=true;
+	if(Game.locx < currentFloor[Game.locy].length-1 && currentFloor[Game.locy][Game.locx+1].exists)currentFloor[Game.locy][Game.locx+1].isVisible=true;
+	if(Game.locy > 0 && currentFloor[Game.locy-1][Game.locx].exists)currentFloor[Game.locy-1][Game.locx].isVisible=true;
+	if(Game.locy < currentFloor.length-1 && currentFloor[Game.locy+1][Game.locx].exists)currentFloor[Game.locy+1][Game.locx].isVisible=true;
+}
 
 function freeCell(x,y){
 	this.type = "free";
@@ -421,10 +456,10 @@ function Block(x,y){
 	this.draw = function(context){
 		if(hitBox)context.drawImage(imageTool.hitBox, this.x, this.y, this.width, this.height);
 		switch(this.rand){
-			case 1: context.drawImage(imageTool.block, this.x, this.y-5, 64, 80);;break;
-			case 2: context.drawImage(imageTool.block1, this.x, this.y-5, 64, 80);;break;
-			case 3: context.drawImage(imageTool.block2, this.x, this.y-5, 64, 80);;break;
-			default: context.drawImage(imageTool.block, this.x, this.y-5, 64, 80);;break;}}
+			case 1: context.drawImage(imageTool.block, this.x, this.y-5, 64, 80);break;
+			case 2: context.drawImage(imageTool.block1, this.x, this.y-5, 64, 80);break;
+			case 3: context.drawImage(imageTool.block2, this.x, this.y-5, 64, 80);break;
+			default: context.drawImage(imageTool.block, this.x, this.y-5, 64, 80);break;}}
 }
 function Poop(x,y){
 	this.type = "poop";

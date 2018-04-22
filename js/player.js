@@ -329,27 +329,29 @@ var Player = {
 					context.drawImage(this.head, this.x-14, this.y-32, 64, 55);}
 					context.restore();	
 	},
-	drawUI : function(context){
+	drawUI : function(context,uicontext){
+	
 		//LifeBar
 		var half = this.hp%1;
 		var intHp = this.hp - half;
 		var diffHp = this.maxhp - (this.hp+half);
 		var pool = 0;
-		context.drawImage(imageTool.hpbg,-311+(this.maxhp*17),-2,400,24); //15 HP = 0-60
-		for(var h = 0; h < intHp; h++){context.drawImage(imageTool.hp,(pool*17)+24,2,18,16); pool++;}
-		if(half !=0){context.drawImage(imageTool.halfHp,(pool*17)+24,2,18,16); pool++;}
-		for(var d = 0; d < diffHp; d++){ context.drawImage(imageTool.emptyHp,(pool*17)+24,2,18,16); pool++;}
+		for(var h = 0; h < intHp; h++){
+			uicontext.drawImage(imageTool.hp,(pool*17)+12,8,18,16); pool++;}
+		if(half !=0){
+			uicontext.drawImage(imageTool.halfHp,(pool*17)+12,8,18,16); pool++;}
+		for(var d = 0; d < diffHp; d++){
+			uicontext.drawImage(imageTool.emptyHp,(pool*17)+12,8,18,16); pool++;}
 		
 		// Gold
-		context.drawImage(imageTool.goldbg,canvas.width-47,-65,48,257);
-		context.drawImage(imageTool.gold,canvas.width-38,12,14,14);
-		context.drawImage(imageTool.bombs,canvas.width-38,36,14,20);
-		context.drawImage(imageTool.keys,canvas.width-37,66,14,20);
-		context.font = "17pt Wendy";
-		context.fillStyle = 'black';
-		context.fillText(Player.gold, canvas.width-21,25);
-		context.fillText(Player.bombs, canvas.width-21,54);
-		context.fillText(Player.keys, canvas.width-21,81);
+		uicontext.drawImage(imageTool.gold,uicanvas.width-38,22,14,14);
+		uicontext.drawImage(imageTool.bombs,uicanvas.width-38,46,14,20);
+		uicontext.drawImage(imageTool.keys,uicanvas.width-37,76,14,20);
+		uicontext.font = "17pt Wendy";
+		uicontext.fillStyle = 'black';
+		uicontext.fillText(this.gold, uicanvas.width-21,35);
+		uicontext.fillText(this.bombs, uicanvas.width-21,64);
+		uicontext.fillText(this.keys, uicanvas.width-21,91);
 		
 		// FPS
 		context.font = "15pt Wendy";

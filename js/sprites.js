@@ -10,26 +10,21 @@ var sounds = new function(){
 //Object d'images
 var imageTool = new function() {
 	//Minimap
-	this.room = new Image();
+	this.visited = new Image();
+	this.unvisited = new Image();
+	this.current = new Image();
 	this.boss = new Image();
-	this.secret = new Image();
 	this.shop = new Image();
 	this.treasure = new Image();
 	this.empty = new Image();
-	this.start = new Image();
 	//Game
 	this.background = new Image();
 	this.pauseScreen = new Image();
 	this.loading = new Image();
-	this.gameOver = new Image();
 	this.blackScreen = new Image();
 	this.hp = new Image();
-	this.hpbg = new Image();
 	this.halfHp = new Image();
 	this.emptyHp = new Image();
-	this.stats = new Image();
-	this.stat = new Image();
-	this.hit = new Image();
 	this.playerDead = new Image();
 	this.playerDown = new Image();
 	this.playerLeft = new Image();
@@ -55,7 +50,6 @@ var imageTool = new function() {
 	this.gold = new Image();
 	this.keys = new Image();
 	this.bombs = new Image();
-	this.goldbg = new Image();
 	this.shadow = new Image();
 	this.blood1 = new Image();
 	this.blood2 = new Image();
@@ -128,32 +122,28 @@ var imageTool = new function() {
 	this.wirecoathanger  = new Image();
 	this.woodenspoon  = new Image();
 	//Préchargement
-	var numImages = 113;
+	var numImages = 109;
 	var numLoaded = 0;
 	function imageLoaded() {
 		numLoaded++;
 		if (numLoaded === numImages) {gameInit(); loading(false);}
 		else loading(true); }
 		
-	this.room.onload = function() {imageLoaded();}
+	this.visited.onload = function() {imageLoaded();}
+	this.unvisited.onload = function() {imageLoaded();}
+	this.current.onload = function() {imageLoaded();}
 	this.boss.onload = function() {imageLoaded();}
-	this.secret.onload = function() {imageLoaded();}
 	this.shop.onload = function() {imageLoaded();}
 	this.treasure.onload = function() {imageLoaded();}
 	this.empty.onload = function() {imageLoaded();}
-	this.start.onload = function() {imageLoaded();}
 	
 	this.background.onload = function() {imageLoaded();}
 	this.pauseScreen.onload = function() {imageLoaded();}
 	this.loading.onload = function() {imageLoaded();}
-	this.gameOver.onload = function() {imageLoaded();}
 	this.blackScreen.onload = function() {imageLoaded();}
 	this.hp.onload = function() {imageLoaded();}
-	this.hpbg.onload = function() {imageLoaded();}
 	this.halfHp.onload = function() {imageLoaded();}
 	this.emptyHp.onload = function() {imageLoaded();}
-	this.stats.onload = function() {imageLoaded();}
-	this.stat.onload = function() {imageLoaded();}
 	this.playerDead.onload = function() {imageLoaded();}
 	this.playerDown.onload = function() {imageLoaded();}
 	this.playerLeft.onload = function() {imageLoaded();}
@@ -179,7 +169,6 @@ var imageTool = new function() {
 	this.gold.onload = function() {imageLoaded();}
 	this.keys.onload = function() {imageLoaded();}
 	this.bombs.onload = function() {imageLoaded();}
-	this.goldbg.onload = function() {imageLoaded();}
 	this.shadow.onload = function() {imageLoaded();}
 	this.blood1.onload = function() {imageLoaded();}
 	this.blood2.onload = function() {imageLoaded();}
@@ -252,25 +241,21 @@ var imageTool = new function() {
 	this.wirecoathanger.onload = function() {imageLoaded();}
 	this.woodenspoon.onload = function() {imageLoaded();}
 	//Sources
-	this.room.src = "img/minimap/room.png";
+	this.visited.src = "img/minimap/visited.png";
+	this.unvisited.src = "img/minimap/unvisited.png";
+	this.current.src = "img/minimap/current.png";
 	this.boss.src = "img/minimap/boss.png";
-	this.secret.src = "img/minimap/secret.png";
 	this.shop.src = "img/minimap/shop.png";
 	this.treasure.src = "img/minimap/treasure.png";
 	this.empty.src = "img/minimap/empty.png";
-	this.start.src = "img/minimap/start.png";
 	
 	this.background.src = "img/bg.png";
 	this.pauseScreen.src = "img/pause.png";
 	this.loading.src = "img/loading.png";
-	this.gameOver.src = "img/pause.png";
 	this.blackScreen.src = "img/screen.png";
 	this.hp.src = "img/hp.png";
-	this.hpbg.src = "img/hpbg.png";
 	this.halfHp.src = "img/halfhp.png";
 	this.emptyHp.src = "img/emptyhp.png";
-	this.stats.src = "img/stats.png";
-	this.stat.src = "img/stat.png";
 	this.minionHit.src = "img/minionhit.png";
 	this.towerHit.src = "img/towerhit.png";
 	this.flyBoss.src = "img/flyboss.png";
@@ -296,7 +281,6 @@ var imageTool = new function() {
 	this.gold.src = "img/gold.png";
 	this.keys.src = "img/keys.png";
 	this.bombs.src = "img/bombs.png";
-	this.goldbg.src = "img/goldbg.png";
 	this.shadow.src = "img/shadow.png";
 	this.blood1.src = "img/blood1.png";
 	this.blood2.src = "img/blood2.png";
