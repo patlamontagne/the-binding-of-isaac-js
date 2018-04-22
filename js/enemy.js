@@ -354,6 +354,12 @@ function towerBullet(side,speed,range,bulx,buly,dirx,diry,dmg){
 			this.diry = this.iniy + this.range;
 			if(this.y < this.diry) this.y += this.speed;
 			else this.alive = false;} */
+			
+			//Limites du canvas
+			if(this.x <= 40){this.alive = false;towerBulletsCounter--;} 	//gauche
+			if(this.y <= 60){this.alive = false;towerBulletsCounter--;}  //haut
+			if(this.x >= 1100 - this.width){this.alive = false;towerBulletsCounter--;} //droite
+			if(this.y >= 720 - this.height){this.alive = false;towerBulletsCounter--;} //bas
 	}
 	this.draw = function(context){  //Affichage
 			context.save();

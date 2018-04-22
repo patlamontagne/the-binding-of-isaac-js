@@ -142,8 +142,8 @@ var Player = {
 	fireRateBoost:0,
 	bulletSpeedBoost:0,
 	rangeBoost:0, 
-	speed : 2,
-	speedy : 1.5,
+	speed : 1.5,
+	speedy : 1,
 	speedx : 2,
 	accelx : 0,
 	accely : 0,
@@ -151,7 +151,7 @@ var Player = {
 	damage : 1,
 	range : 400,
 	fireRate: 700,
-	attackSpeed: 1,
+	attackSpeed: 4,
 	hp : 3,	// Vie (actuelle)
 	maxhp: 3,	// Vie (pleine)
 	lifebar :24, // HP boosté maximum
@@ -173,13 +173,13 @@ var Player = {
 			//Orientation du mouvement
 			var currentMoving = "";
 			//Calcul Boost
-			this.speed  = 2 + this.speedBoost/2;
-			this.speedx = 2 + this.speedBoost/2;
-			this.speedy = 1.5 + this.speedBoost*2/5;
+			this.speed  = 1.5 + this.speedBoost/2;
+			this.speedx = 1.5 + this.speedBoost/2;
+			this.speedy = 1 + this.speedBoost*2/5;
 			this.damage = 1 + this.dmgBoost*0.4;
 			this.range = 400 + this.rangeBoost*70;
 			this.fireRate = 700 - this.fireRateBoost*50;
-			this.attackSpeed = 3 + this.bulletSpeedBoost;
+			this.attackSpeed = 4 + this.bulletSpeedBoost;
 				
 				if(keyW){
 					if(this.accely > 0-this.speedy){this.accely -= this.friction;}
@@ -236,7 +236,7 @@ var Player = {
 			if(this.x <= 80){this.x = 80} 	// droit
 			if(this.y <= 100){this.y = 100;}// bas
 			if(this.x >= 1060 - this.width){this.x = 1060 - this.width;} // gauche
-			if(this.y >= 680 - this.height){this.y = 680 - this.height;} // haut
+			if(this.y >= 700 - this.height){this.y = 700 - this.height;} // haut
 			
 			//Direction tête
 			if(keyLeft){
@@ -250,31 +250,51 @@ var Player = {
 			else this.head = imageTool.playerDown;
 		}
 	},
-	draw : function(context,statContext){
+	drawBody : function(context){
 		
+			context.save();
+			context.globalAlpha = 0.15;
+			context.drawImage(imageTool.shadow, Player.x-4, Player.y, Player.width, Player.height);
+			context.restore();
+			
 		if(this.alive){
+	
 			
-			
-			
-			
-			
-			if(this.canGetDamage){ //Joueur Normal
-				context.drawImage(this.head, this.x-2, this.y-2, this.width+4, this.height+4);}
+		
+			if(this.canGetDamage){ //Joueur Normalelse 
+				if(keyD){Animations[1].draw(context);}
+				else if(keyA){Animations[2].draw(context);}
+				else if(keyW || keyS){Animations[0].draw(context);}
+				else context.drawImage(imageTool.bodyIdle,Player.x, Player.y, 46, 40);}
 			if(!this.canGetDamage){ // Joueur invincible
 				context.save();
 				context.globalAlpha = 0.6;
-				context.drawImage(this.head, this.x-2, this.y-2, this.width+4, this.height+4);
+				if(keyW || keyS){Animations[0].draw(context);}
+				else if(keyD){Animations[1].draw(context);}
+				else if(keyA){Animations[2].draw(context);}
+				else context.drawImage(imageTool.bodyIdle,Player.x, Player.y, 46, 40);
 				context.restore();
 			}
 		}
-		if(!this.alive){ 
-			context.save();
-			context.globalAlpha = 0.15;
-			context.drawImage(imageTool.shadow, this.x-2, this.y+10, this.width+4, this.height+4);
-			context.restore();
-			context.drawImage(imageTool.playerDead, this.x-2, this.y-2, this.width+4, this.height+4);} //joueur mort
-		
-		//LifeBar
+		if(!this.alive){
+			context.drawImage(imageTool.bodyIdle,Player.x, Player.y, 46, 40);}//joueur mort		
+	},
+	drawHead : function(context){
+		if(this.alive){
+			if(this.canGetDamage){ //Joueur Normal
+				context.drawImage(this.head, this.x-13, this.y-43, 70, 64);}
+			if(!this.canGetDamage){ // Joueur invincible
+				context.save();
+				context.globalAlpha = 0.6;
+				context.drawImage(this.head, this.x-13, this.y-43, 70, 64);
+				context.restore();}	}
+				
+		if(!this.alive){
+			context.drawImage(imageTool.playerDead, this.x-13, this.y-43, 70, 64);} //joueur mort		
+	},
+	
+	drawUI : function(context,statContext){
+	//LifeBar
 		var diffHp = this.maxhp - this.hp;
 		var pool = 0;
 		for(var h = 0; h < this.hp; h++){
@@ -315,7 +335,7 @@ var Player = {
 		// RANGE
 		for(var r = 0; r < Player.rangeBoost; r++){
 			statContext.drawImage(imageTool.stat,(r*10)+246,100,6,13);		}
-		
+	
 	},
 	getDamage : function(dmg){
 		if(this.alive && this.hp > 0){ //Si vivant
@@ -368,26 +388,26 @@ function isCollide(a, b) {
 function playerFire(dir,mov){
 	var bulx = 0;
 	var buly = 0;
-	if(dir == mov){	var range = Player.range*(1.3);	var speed = Player.attackSpeed+Player.speed/2;	}
+	if(dir == mov){	var range = Player.range*(1.2);	var speed = Player.attackSpeed+Player.speed/3;	}
 	else {var range = Player.range; var speed = Player.attackSpeed;}
 	
 	var fireNow = Date.now();
 	if( fireNow - lastFire > Player.fireRate){
 		switch(dir){
-			case "left":	bulx = Player.x-5;
-							buly = Player.y + (Player.height/2);
+			case "left":	bulx = Player.x-10;
+							buly = Player.y -20;
 							playerBullets.push(new Bullet("left",speed,range,bulx,buly,Player.damage));
 							break;
-			case "up":		bulx = Player.x + (Player.width/2)-11;
-							buly = Player.y;
+			case "up":		bulx = Player.x +12;
+							buly = Player.y -30;
 							playerBullets.push(new Bullet("up",speed,range,bulx,buly,Player.damage));
 							break;
-			case "right": 	bulx = Player.x + (Player.width/2)+14;
-							buly = Player.y + (Player.height/2);
+			case "right": 	bulx = Player.x +30;
+							buly = Player.y -20;
 							playerBullets.push(new Bullet("right",speed,range,bulx,buly,Player.damage));
 							break;
-			case "down": 	bulx = Player.x + (Player.width/2)-11;
-							buly = Player.y + (Player.height/2)+18;
+			case "down": 	bulx = Player.x +12;
+							buly = Player.y -15;
 							playerBullets.push(new Bullet("down",speed,range,bulx,buly,Player.damage));
 							break;
 		}

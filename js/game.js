@@ -13,6 +13,7 @@ var Minions = [];
 var Towers = [];
 var towerBullets = [];
 var towerBulletsCounter = 0;
+var Animations = [];
 
 var Items = [];
 var ItemCounter =0;
@@ -40,14 +41,14 @@ function gameInit(){
 	Level.create();
 	createAnimations();
 	keyboardEvent();
-	//minionInit(6);
 	fpsCounter();
 	animFrame(recursiveAnim);
 }
 
-var Animations = [];
-function createAnimations(){
-	Animations[0] = new Animation(11,Player.x+2,Player.y+30,46,40,45,imageTool.bodyAnim);}
+function createAnimations(){ //(maxframe,x,y,width,height,updatetime,spritesheet)
+	Animations[0] = new Animation(11,Player.x,Player.y,100,80,50,imageTool.bodyAnim,-2,0);
+	Animations[1] = new Animation(11,Player.x,Player.y,100,80,50,imageTool.bodyRight,-2,0);
+	Animations[2] = new Animation(11,Player.x,Player.y,100,80,50,imageTool.bodyLeft,-2,0);}
 
 
 // Pause
@@ -94,6 +95,9 @@ function mainloop(){
 			towerBullets[tb].update();
 		}
 		Player.update();
+		if(keyW || keyS){Animations[0].update();}
+		if(keyD){Animations[1].update();}
+		if(keyA){Animations[2].update();}
 	}
 	drawGame();
 	//fps calcul
@@ -113,16 +117,21 @@ function drawGame(){
 	statContext.clearRect(0,0,statCanvas.width,statCanvas.height);
 	
 	/* 
-	Draw order
+	Ordre de draw
 	
+	LEVEL
 	Background
 	Éléments du sol
-	Sprites de débris, sang
-	Ombres
+	Sprites de débris && sang
 	Obstacles
-	Animations de monstres
+	
+	PLAYER & MONSTRES
+	Ombres
+	Animations de corps
 	Têtes
-	Animations de projectiles
+	
+	PROJECTILES
+	Animations de projectiles et impacts
 	Projectiles
 	
 	*/
@@ -135,21 +144,24 @@ function drawGame(){
 	for(var h=0;h<holeMaps.length;h++){holeMaps[h].draw(context);}
 	for(var u=0;u<Items.length;u++){Items[u].draw(context);}
 	
-			context.save();
-			context.globalAlpha = 0.15;
-			context.drawImage(imageTool.shadow, Player.x-2, Player.y+24, Player.width+4, Player.height+4);
-			context.restore();
+	if(keyUp){
+		for(var j=0;j<playerBullets.length;j++){playerBullets[j].draw(context);}
+		Player.drawBody(context);
+		for(var i=0;i<Minions.length;i++){Minions[i].draw(context);}
+		Player.drawHead(context);}
+	else{
+		Player.drawBody(context);
+		for(var i=0;i<Minions.length;i++){Minions[i].draw(context);}
+		Player.drawHead(context);
+		for(var j=0;j<playerBullets.length;j++){playerBullets[j].draw(context);}}
 	
-	if(keyW || keyS || keyA || keyD){bodyAnim.update(context);}
-	else context.drawImage(imageTool.bodyIdle,Player.x+2, Player.y+30, 46, 40);
-	
-	for(var j=0;j<playerBullets.length;j++){playerBullets[j].draw(context);}
-	Player.draw(context,statContext);
 	for(var t=0;t<Towers.length;t++){Towers[t].draw(context);}
-	for(var i=0;i<Minions.length;i++){Minions[i].draw(context);}
 	for(var tb=0;tb<towerBullets.length;tb++){towerBullets[tb].draw(context);}
+	//UI
+	
 	//Écran de pause
 	if( gameIsPaused() ) pauseScreen(context);
+	Player.drawUI(context,statContext);
 	
 }
 
@@ -176,13 +188,13 @@ var Background = {
 var Level = {
 	map: [
 		[" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "],
-		[" "," "," "," "," "," "," "," "," "," "," "," "," ","T"," "],
-		[" "," "," "," "," ","M"," "," "," ","M"," "," "," "," "," "],
+		[" "," "," "," "," "," "," "," "," "," "," "," "," ","M"," "],
 		[" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "],
-		[" "," "," ","F"," "," "," "," ","F"," "," "," "," "," "," "],
 		[" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "],
-		[" "," "," "," "," "," "," "," "," "," "," "," ","T"," "," "],
-		[" "," "," "," "," "," ","M"," "," "," "," "," "," "," "," "],
+		[" "," "," "," "," "," "," ","P"," "," "," "," "," "," "," "],
+		[" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "],
+		[" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "],
+		[" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "],
 		[" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "] 
 	],
 	create: function(){
