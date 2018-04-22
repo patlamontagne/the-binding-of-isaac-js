@@ -8,10 +8,11 @@ var frameTime = 0, lastLoop = new Date, thisLoop;
 var lastFire = Date.now();
 var playerBullets = [];
 var collideMaps = [];
+var holeMaps=[];
 var Minions = [];
 var Towers = [];
 var towerBullets = [];
-var towerLastFire = Date.now();
+var towerBulletsCounter = 0;
 
 var Items = [];
 var ItemCounter =0;
@@ -51,7 +52,13 @@ function gameIsPaused(){
 	lastPaused = Date.now();}
 	return isPaused;
 }
-function pauseScreen(context){ context.drawImage(imageTool.pauseScreen, 0, 10, canvas.width, canvas.height); }
+function pauseScreen(context){
+	context.save();
+	context.globalAlpha = 0.7;
+	context.drawImage(imageTool.blackScreen, 0, 0, canvas.width, canvas.height);
+	context.restore();
+	context.drawImage(imageTool.pauseScreen, 0, 0, canvas.width, canvas.height);
+	}
 
 // Loop du jeu
 function mainloop(){
@@ -76,6 +83,9 @@ function mainloop(){
 			playerBullets[j].update();
 			if( !playerBullets[j].alive ) playerBullets.splice(j,1);
 		}
+		for(var tb=0;tb<towerBullets.length;tb++){
+			towerBullets[tb].update();
+		}
 		Player.update();
 	}
 	drawGame();
@@ -99,11 +109,13 @@ function drawGame(){
 	Background.draw(context);
 	//uiData.draw();
 	for(var c=0;c<collideMaps.length;c++){collideMaps[c].draw(context);}
+	for(var h=0;h<holeMaps.length;h++){holeMaps[h].draw(context);}
 	for(var u=0;u<Items.length;u++){Items[u].draw(context);}
 	Player.draw(context,statContext);
-	for(var i=0;i<Minions.length;i++){Minions[i].draw(context);}
 	for(var t=0;t<Towers.length;t++){Towers[t].draw(context);}
+	for(var i=0;i<Minions.length;i++){Minions[i].draw(context);}
 	for(var j=0;j<playerBullets.length;j++){playerBullets[j].draw(context);}
+	for(var tb=0;tb<towerBullets.length;tb++){towerBullets[tb].draw(context);}
 	//Écran de pause
 	if( gameIsPaused() ) pauseScreen(context);
 }
@@ -130,20 +142,21 @@ var Background = {
 // Niveau
 var Level = {
 	map: [
-		["B","B","B","B","B","B","B","B","B","B","B","B","B","B","B"],
-		["B","M"," "," "," "," "," "," "," "," "," "," "," "," ","B"],
-		["B"," "," "," "," "," "," "," "," "," "," "," "," "," ","B"],
-		["B"," "," "," "," "," "," "," "," "," "," "," "," "," ","B"],
-		["B"," "," "," "," "," "," ","P"," "," "," "," ","T"," ","B"],
-		["B"," "," "," "," "," "," "," "," "," "," "," "," "," ","B"],
-		["B"," "," "," "," "," "," "," "," "," "," "," "," "," ","B"],
-		["B","M"," "," "," "," "," "," "," "," "," "," "," "," ","B"],
-		["B","B","B","B","B","B","B","B","B","B","B","B","B","B","B"]
+		["B","B","B","B","M"," "," "," "," "," ","M","B","B","B","B"],
+		[" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "],
+		[" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "],
+		[" "," "," "," "," "," "," ","H"," "," "," "," "," "," "," "],
+		[" "," ","H"," ","H"," ","H","4","H"," ","H"," ","H"," "," "],
+		[" "," "," "," "," "," "," ","H"," "," "," "," "," "," "," "],
+		[" ","H"," "," "," "," "," "," "," "," "," "," "," ","H"," "],
+		["H","T","H"," "," "," "," "," "," "," "," "," ","H","T","H"],
+		[" ","H"," "," "," "," ","B","P","B"," "," "," "," ","H"," "]
 	],
 	create: function(){
 		var minionCounter=0;
 		var towerCounter=0;
 		var collideMapsCounter=0;
+		var holeMapsCounter = 0;
 		for(var i=0,y=0; i< this.map.length; i++,y+=64){
 			for(var j=0,x=0; j< this.map[i].length; j++,x+=64){ 
 				if(this.map[i][j] == "P") {
@@ -158,14 +171,32 @@ var Level = {
 				if(this.map[i][j] == "B") {
 					collideMaps[collideMapsCounter] = new Block(x,y);
 					collideMapsCounter++;}
+				if(this.map[i][j] == "H") {
+					holeMaps[holeMapsCounter] = new Hole(x,y);
+					holeMapsCounter++;}
 				if(this.map[i][j] == "1") {
-					Items[ItemCounter] = new Item(x,y,1);
+					Items[ItemCounter] = new Item(x+16,y+16,1);
 					ItemCounter++;}
 				if(this.map[i][j] == "2") {
-					Items[ItemCounter] = new Item(x,y,2);
+					Items[ItemCounter] = new Item(x+16,y+16,2);
 					ItemCounter++;}
 				if(this.map[i][j] == "3") {
-					Items[ItemCounter] = new Item(x,y,3);
+					Items[ItemCounter] = new Item(x+16,y+16,3);
+					ItemCounter++;}
+				if(this.map[i][j] == "4") {
+					Items[ItemCounter] = new Item(x+16,y+16,4);
+					ItemCounter++;}
+				if(this.map[i][j] == "5") {
+					Items[ItemCounter] = new Item(x+16,y+16,5);
+					ItemCounter++;}
+				if(this.map[i][j] == "6") {
+					Items[ItemCounter] = new Item(x+16,y+16,6);
+					ItemCounter++;}
+				if(this.map[i][j] == "7") {
+					Items[ItemCounter] = new Item(x+16,y+16,7);
+					ItemCounter++;}
+				if(this.map[i][j] == "8") {
+					Items[ItemCounter] = new Item(x+16,y+16,8);
 					ItemCounter++;}
 			}
 		}
@@ -179,6 +210,15 @@ function Block(x,y){
 	this.height = 64;
 	this.draw = function(context){
 		context.drawImage(imageTool.block, this.x, this.y, this.width, this.height);
+	}
+}
+function Hole(x,y){
+	this.x = x+4;
+	this.y = y+4;
+	this.width = 56;
+	this.height = 56;
+	this.draw = function(context){
+		context.drawImage(imageTool.hole, x, y, 64, 64);
 	}
 }
 

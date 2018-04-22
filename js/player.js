@@ -30,8 +30,16 @@ function Item(x,y,type){ // type 1 = coin, 2 = health, 3 = maxhealth...
 		// Mode "bump" (a été touché)
 			this.checkDamage();
 			if(this.isHit){
-				this.x -= this.dirx*(Player.attackSpeed);						
+				this.x -= this.dirx*(Player.attackSpeed);
+					if(this.dirx < 0){ //Est à gauche du joueur
+						this.checkCollideRight(collideMaps);this.checkCollideRight(holeMaps);}
+					if(this.dirx > 0){ //Est à droite du joueur
+						this.checkCollideLeft(collideMaps);this.checkCollideLeft(holeMaps);}					
 				this.y -= this.diry*(Player.attackSpeed);
+					if(this.diry < 0){ //Est au dessus du joueur
+						this.checkCollideDown(collideMaps);this.checkCollideDown(holeMaps);}
+					if(this.diry > 0){ //Est en dessous du joueur
+						this.checkCollideUp(collideMaps);this.checkCollideUp(holeMaps);}
 			}
 			if(!this.isHit){
 				this.x +=0;
@@ -44,13 +52,23 @@ function Item(x,y,type){ // type 1 = coin, 2 = health, 3 = maxhealth...
 			if(this.type == 1){img = imageTool.coin;}
 			if(this.type == 2){img = imageTool.health;}
 			if(this.type == 3){img = imageTool.maxHealth;}
+			if(this.type == 4){img = imageTool.speedBoost;}
+			if(this.type == 5){img = imageTool.dmgBoost;}
+			if(this.type == 6){img = imageTool.rangeBoost;}
+			if(this.type == 7){img = imageTool.fireRateBoost;}
+			if(this.type == 8){img = imageTool.bulletSpeedBoost;}
 			context.drawImage(img, this.x, this.y, this.width, this.height);
 		}
 	}
 	this.use = function(){
-		if(this.type == 1){Player.gold++;this.alive=false;}
+		if(this.type == 1){Player.gold++;sounds.gold.currentTime = 0;sounds.gold.play();this.alive=false;}
 		if(this.type == 2){if(Player.hp < Player.maxhp){Player.hp++;this.alive=false;}}
-		if(this.type == 3){if(Player.maxhp < Player.lifebar){Player.maxhp++;this.alive=false;}}
+		if(this.type == 3){if(Player.maxhp < Player.lifebar){Player.maxhp++;Player.hp++;this.alive=false;}}
+		if(this.type == 4){if(Player.speedBoost < 5){Player.speedBoost++;this.alive=false;}}
+		if(this.type == 5){if(Player.dmgBoost < 5){Player.dmgBoost++;this.alive=false;}}
+		if(this.type == 6){if(Player.rangeBoost < 5){Player.rangeBoost++;this.alive=false;}}
+		if(this.type == 7){if(Player.fireRateBoost < 5){Player.fireRateBoost++;this.alive=false;}}
+		if(this.type == 8){if(Player.bulletSpeedBoost < 5){Player.bulletSpeedBoost++;this.alive=false;}}
 	}
 	this.clear = function(){
 		this.x = 0;
@@ -68,13 +86,37 @@ function Item(x,y,type){ // type 1 = coin, 2 = health, 3 = maxhealth...
 			this.isHit = true;}
 		else this.isHit = false;
 	}
+	this.checkCollideUp = function(obj){ //calcul de collision Up
+		for(var i=0;i<obj.length;i++){
+			if(this.y < obj[i].y + obj[i].height && this.y + this.height > obj[i].y && this.x + this.width  > obj[i].x && this.x < obj[i].x + obj[i].width ){
+			this.y = obj[i].y+obj[i].height;}}}
+			
+	this.checkCollideDown = function(obj){ //calcul de collision S
+		for(var i=0;i<obj.length;i++){
+			if(this.y < obj[i].y + obj[i].height && this.y + this.height > obj[i].y && this.x + this.width  > obj[i].x && this.x < obj[i].x + obj[i].width ){
+			this.y = obj[i].y-this.height;}}}
+			
+	this.checkCollideLeft = function(obj){ //calcul de collision W
+		for(var i=0;i<obj.length;i++){
+			if(this.y < obj[i].y + obj[i].height && this.y + this.height > obj[i].y && this.x + this.width  > obj[i].x && this.x < obj[i].x + obj[i].width ){
+			this.x = obj[i].x+obj[i].width;}}}
+			
+	this.checkCollideRight = function(obj){ //calcul de collision S
+		for(var i=0;i<obj.length;i++){
+			if(this.y < obj[i].y + obj[i].height && this.y + this.height > obj[i].y && this.x + this.width  > obj[i].x && this.x < obj[i].x + obj[i].width ){
+			this.x = obj[i].x-this.width;}}}
 }
 
 function createItem(x,y){
 	var drop = getRand(100,1);
 	var type = 1;
-	if(drop >= 1 && drop<= 25){type = 2;}
-	if(drop > 25 && drop<= 50){type = 3;}
+	if(drop >= 95){type = 2;}
+	if(drop == 1){type = 3;}
+	if(drop == 3){type = 4;}
+	if(drop == 5){type = 5;}
+	if(drop == 7){type = 6;}
+	if(drop == 9){type = 7;}
+	if(drop == 11){type = 8;}
 	
 	Items[ItemCounter] = new Item(x+20,y+20,type);
 	ItemCounter ++;
@@ -88,13 +130,17 @@ var Player = {
 	y : 100,//Haut
 	velx: 0,
 	vely: 0,
-	speed : 4,
-	friction: 0.5,
+	speedBoost:0, 
+	dmgBoost:0, 
+	fireRateBoost:0,
+	bulletSpeedBoost:0,
+	rangeBoost:0, 
+	speed : 3,
 	damage : 1,
 	range : 400,
-	fireRate: 600,
-	attackSpeed: 8,
-	hp : 2,	// Vie (actuelle)
+	fireRate: 700,
+	attackSpeed: 4,
+	hp : 3,	// Vie (actuelle)
 	maxhp: 3,	// Vie (pleine)
 	lifebar :24, // HP boosté maximum
 	gold : 0,
@@ -105,18 +151,29 @@ var Player = {
 	lastDamaged : Date.now(),
 	damagedNow : this.lastDamaged-2000,
 	update: function(){
+		if(this.hp ==0) this.alive = false; //Si plus d'HP, le joueur n'est plus vivant
 		//Déplacement
 		if(this.alive){
+			//Vérifications
 			itemCollision();
 			detectCollision(Minions);
 			this.checkDamage();
+			//Orientation du mouvement
 			var currentMoving = "";
+			//Calcul Boost
+			this.speed = 3 + (this.speedBoost*2)/3;
+			this.damage = 1 + this.dmgBoost*0.4;
+			this.range = 400 + this.rangeBoost*70;
+			this.fireRate = 700 - this.fireRateBoost*50;
+			this.attackSpeed = 4 + this.bulletSpeedBoost;
+			
 				if(keyW){
 					this.y -= this.speed;
 					this.head = imageTool.playerUp;
 					currentMoving = "up";
 					detectCollision(Towers);
 					this.checkCollideW(collideMaps);
+					this.checkCollideW(holeMaps);
 					this.checkCollideW(Towers);}				
 				if(keyS){
 					this.y += this.speed;
@@ -124,6 +181,7 @@ var Player = {
 					currentMoving = "down";
 					detectCollision(Towers);
 					this.checkCollideS(collideMaps);
+					this.checkCollideS(holeMaps);
 					this.checkCollideS(Towers);}
 				
 				if(keyA){					
@@ -132,6 +190,7 @@ var Player = {
 					currentMoving = "left";
 					detectCollision(Towers);
 					this.checkCollideA(collideMaps);
+					this.checkCollideA(holeMaps);
 					this.checkCollideA(Towers);}
 				if(keyD){
 					this.x += this.speed;
@@ -139,11 +198,12 @@ var Player = {
 					currentMoving = "right";
 					detectCollision(Towers);
 					this.checkCollideD(collideMaps);
+					this.checkCollideD(holeMaps);
 					this.checkCollideD(Towers);}
 			
 			//Limites du canvas
-			if(this.x >= canvas.width){this.x = canvas.width;} 	// droit
-			if(this.y >= canvas.height){this.y = canvas.height;}// bas
+			if(this.x >= canvas.width-this.width){this.x = canvas.width-this.width;} 	// droit
+			if(this.y >= canvas.height-this.height){this.y = canvas.height-this.height;}// bas
 			if(this.x <= 0){this.x = 0;} // gauche
 			if(this.y <= 0){this.y = 0;} // haut
 			
@@ -159,37 +219,75 @@ var Player = {
 		}
 	},
 	draw : function(context,statContext){
-		if(this.alive){
-			if(this.canGetDamage){
+		if(this.alive){ 
+			if(this.canGetDamage){ //Joueur Normal
 				context.drawImage(this.head, this.x, this.y, this.width, this.height);}
-			if(!this.canGetDamage){
+			if(!this.canGetDamage){ // Joueur invincible
 				context.drawImage(this.head, this.x, this.y, this.width, this.height);
 				context.drawImage(imageTool.noDamage, this.x-10, this.y-10, 70, 70);
 			}
 		}
-		if(!this.alive) context.drawImage(imageTool.playerDead, this.x, this.y, this.width, this.height);
+		if(!this.alive) context.drawImage(imageTool.playerDead, this.x, this.y, this.width, this.height); //joueur mort
 		
 		//LifeBar
 		var diffHp = this.maxhp - this.hp;
 		var pool = 0;
 		for(var h = 0; h < this.hp; h++){
-			statContext.drawImage(imageTool.hp,(pool*39)+10,5,44,32);
+			statContext.drawImage(imageTool.hp,(pool*35)+10,4,40,29);
 			pool++;
 		}
 		for(var d = 0; d < diffHp; d++){
-			statContext.drawImage(imageTool.emptyHp,(pool*39)+10,8,39,27);
+			statContext.drawImage(imageTool.emptyHp,(pool*35)+10,6,39,27);
 			pool++;
 		}
+		/* BOOST ICONS
+		statContext.drawImage(imageTool.speedBoost,10,36,32,32);
+		statContext.drawImage(imageTool.dmgBoost,10,70,32,32);
+		statContext.drawImage(imageTool.fireRateBoost,10,105,32,32);
+		statContext.drawImage(imageTool.bulletSpeedBoost,10,135,32,32);
+		statContext.drawImage(imageTool.rangeBoost,10,170,32,32);*/
+
+		// Gold
+		statContext.drawImage(imageTool.gold,870,4,50,27);
+		statContext.font = "21pt Impact";
+		statContext.fillText(Player.gold, 920, 28);
+		
+		//Stats
+		statContext.drawImage(imageTool.stats,0,28,250,170);
+		// SPEED
+		for(var s = 0; s < Player.speedBoost; s++){
+			statContext.drawImage(imageTool.stat,(s*10)+242,42,18,24);		}
+		// DMG
+		for(var d = 0; d < Player.dmgBoost; d++){
+			statContext.drawImage(imageTool.stat,(d*10)+242,73,18,24);		}
+		// FIRERATE
+		for(var f = 0; f < Player.fireRateBoost; f++){
+			statContext.drawImage(imageTool.stat,(f*10)+242,104,18,24);		}
+		// BULLSPEED
+		for(var b = 0; b < Player.bulletSpeedBoost; b++){
+			statContext.drawImage(imageTool.stat,(b*10)+242,135,18,24);		}
+		// RANGE
+		for(var r = 0; r < Player.rangeBoost; r++){
+			statContext.drawImage(imageTool.stat,(r*10)+242,166,18,24);		}
+		/*
+		statContext.fillText(Player.speedBoost, 200, 65);
+		statContext.fillText(Player.dmgBoost, 200, 95);
+		statContext.fillText(Player.fireRateBoost, 200, 125);
+		statContext.fillText(Player.bulletSpeedBoost, 200, 155);
+		statContext.fillText(Player.rangeBoost, 200, 185); */
 	},
 	getDamage : function(dmg){
 		if(this.alive && this.hp > 0){ //Si vivant
 			this.damagedNow = Date.now(); //Moment ou le dégat est pris
 			if( this.damagedNow - this.lastDamaged > 1000){ //Si le dernier dégat date d'une seconde
 				this.hp -= dmg;//retirer les points de vie
+				if(this.hp <= 0){
+				sounds.playerDeath.currentTime = 0;sounds.playerDeath.play();}
+				else {sounds.playerDmg.currentTime = 0;sounds.playerDmg.play();}
 				this.lastDamaged = Date.now();
-				} 
+				}
+			
 		}
-		else if(this.hp ==0) this.alive = false; //Si plus d'HP, le joueur n'est plus vivant
 	},
 	checkDamage : function(){ //calcul d'invulnérabilité temporaire
 		this.now = Date.now();
@@ -219,7 +317,7 @@ var Player = {
 function playerFire(dir,mov){
 	var bulx = 0;
 	var buly = 0;
-	if(dir == mov){	var range = Player.range*(1+Player.speed/15);	var speed = Player.attackSpeed+Player.speed;	}
+	if(dir == mov){	var range = Player.range*(1.3);	var speed = Player.attackSpeed+Player.speed/2;	}
 	else {var range = Player.range; var speed = Player.attackSpeed;}
 	
 	var fireNow = Date.now();
@@ -243,6 +341,8 @@ function playerFire(dir,mov){
 							break;
 		}
 		lastFire = Date.now();
+		sounds.bullet.currentTime = 0;
+		sounds.bullet.play();
 	}
 }
 
@@ -307,22 +407,35 @@ function detectCollision(obj){
 	}
 }
 
+function holeCollision(obj){
+	var safeGap = 0;
+	for(var i=0;i<obj.length;i++){
+		if (Player.x < obj[i].x + obj[i].width-safeGap  && Player.x + Player.width-safeGap  > obj[i].x &&
+			Player.y < obj[i].y + obj[i].height-safeGap && Player.y + Player.height-safeGap > obj[i].y) {
+			Player.getDamage(obj[i].dmg);}
+	}
+}
 
 function bulletCollision(obj){
 	for(var i=0;i<playerBullets.length;i++){
 		// Enemies
 		for(var j=0;j<obj.length;j++){
-			if (playerBullets[i].x < obj[j].x + obj[j].width-6  && playerBullets[i].x + (playerBullets[i].width-6)  > obj[j].x &&
-			playerBullets[i].y < obj[j].y + obj[j].height-6 && playerBullets[i].y + (playerBullets[i].height-6) > obj[j].y) {
+			if (playerBullets[i].x < obj[j].x + obj[j].width-1  && playerBullets[i].x + (playerBullets[i].width-1)  > obj[j].x &&
+			playerBullets[i].y < obj[j].y + obj[j].height-1 && playerBullets[i].y + (playerBullets[i].height-1) > obj[j].y) {
 				obj[j].getDamage(playerBullets[i].dmg);
+				sounds.impact.currentTime = 0;
+				sounds.impact.play();
 				playerBullets[i].clear();
 				}
 		}
 		// Collision map
 		for(var m=0; m<collideMaps.length;m++){
-			if (playerBullets[i].x < collideMaps[m].x + collideMaps[m].width-14  && playerBullets[i].x + (playerBullets[i].width-14)  > collideMaps[m].x &&
-			playerBullets[i].y < collideMaps[m].y + collideMaps[m].height-14 && playerBullets[i].y + (playerBullets[i].height-14) > collideMaps[m].y) {
-				playerBullets[i].clear();}
+			if (playerBullets[i].x < collideMaps[m].x + collideMaps[m].width-5  && playerBullets[i].x + (playerBullets[i].width-5)  > collideMaps[m].x &&
+			playerBullets[i].y < collideMaps[m].y + collideMaps[m].height-5 && playerBullets[i].y + (playerBullets[i].height-5) > collideMaps[m].y) {
+				sounds.impact.currentTime = 0;
+				sounds.impact.play();
+				playerBullets[i].clear();
+				}
 		}
 	}
 }

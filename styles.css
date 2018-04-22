@@ -1,4 +1,4 @@
-html { background: #4a4a5b;	font: 1em Arial; }
+html { background: #222;	font: 1em Arial; }
 * {	padding: 0px; margin: 0px; }
 #game {
 	width: 1200px;
@@ -29,5 +29,5 @@ html { background: #4a4a5b;	font: 1em Arial; }
 canvas { border: solid 6px #000; cursor: none; background: #444; margin: auto;}
 
 #statCanvas {
-	border-bottom: solid 0px #000;
+	border-top: solid 0px #000;
 }
