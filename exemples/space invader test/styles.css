@@ -1,0 +1,20 @@
+body{
+	font: 1em Verdana;
+	margin: 10px auto 10px;
+	text-align: center;
+	background-color: #333;
+}
+
+canvas {
+	position: absolute;
+	background: transparent;
+	border: solid 2px #f0f0f0;
+	top: 2em;
+	left: 6em;
+}
+
+#background {z-index: -2;}
+
+#main {z-index: -1;}
+
+#ship {z-index: 0;}

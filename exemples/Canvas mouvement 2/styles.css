@@ -1,0 +1,5 @@
+canvas{
+	cursor: crosshair;
+	border: solid 1px #000;
+	background: url(bg.png) no-repeat;
+}
