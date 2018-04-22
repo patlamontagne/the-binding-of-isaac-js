@@ -1,16 +1,18 @@
 //Variables globales et Arrays
 //PAUSE
-var isPaused = true, lastPaused = Date.now();
+var isChanging = false;
+var lastChange = Date.now();
+var isPaused = false, lastPaused = Date.now();
 //FPSCOUNTER
 var filterStrength = 20;
 var frameTime = 0, lastLoop = new Date, thisLoop;
-
+var hitBox = false;
 var lastFire = Date.now();
 var playerBullets = [];
 var playerBulletsBack = [];
 var Animations = [];
 var tempAnimations = [];
-var Gamelevel;
+
 // Compatibilité browser
  var animFrame = window.requestAnimationFrame ||
             window.webkitRequestAnimationFrame ||
@@ -28,28 +30,79 @@ var recursiveAnim = function() {
 function gameInit(){
 	var canvas = getEl("canvas");
     var context = canvas.getContext('2d');
-	generateDungeon();
-	Gamelevel = Dungeon[currentLevel];
-	createAnimations();
+	generateFloor();
+	playerAnimations();
 	keyboardEvent();
 	animFrame(recursiveAnim);
 }
 
-var Dungeon = [];
-var currentLevel = 0;
-function generateDungeon(){
-	Dungeon[0] =  new Level(mapGenerator[0]);
-	Dungeon[1] =  new Level(mapGenerator[1]);
-	Dungeon[2] =  new Level(mapGenerator[2]);
-	Dungeon[3] =  new Level(mapGenerator[3]);
-	
-	for(var i=0; i<Dungeon.length;i++) Dungeon[i].create();
+function loading(state){
+	var canvas = getEl("canvas");
+    var context = canvas.getContext('2d');
+	if(state){context.drawImage(imageTool.loading, 0, 0, canvas.width, canvas.height);}
+	else if(!state){context.clearRect(0,0,canvas.width,canvas.height);}
 }
 
-function createAnimations(){ //(maxframe,x,y,width,height,updatetime,spritesheet,offsetx,offsety)
-	Animations[0] = new Animation(7,Player.x,Player.y,100,80,55,imageTool.bodyAnim,-5,13);
-	Animations[1] = new Animation(9,Player.x,Player.y,100,80,50,imageTool.bodyRight,-7,13);
-	Animations[2] = new Animation(9,Player.x,Player.y,100,80,50,imageTool.bodyLeft,-3,13);}
+
+var Game;
+var floorStructure;
+var currentFloor;
+var possibleRooms;
+
+function generateFloor(){
+	var rand = getRand(firstFloor.length,0);
+	floorStructure = firstFloor[rand];
+	possibleRooms = rooms;
+	currentFloor = new Array(floorStructure.length);
+	//Peuple les rooms de base
+	for(var y=0; y < floorStructure.length; y++){
+		currentFloor[y] = new Array(floorStructure[y].length);
+		for(var x=0; x < floorStructure[y].length; x++){
+			currentFloor[y][x]= new Nothing();
+			if(floorStructure[y][x] == "0"){ //Si room de base présente dans la structure
+				var randRoom = getRand(possibleRooms.length,0); //Choisir une room random parmis celle disponibles
+				currentFloor[y][x] = new Room(possibleRooms[randRoom],y,x); //L'assigner à l'étage
+				possibleRooms.splice(randRoom,1);} //Enleve la room des rooms disponibles
+		}
+	}
+		
+	//Salle de départ
+	var rx = getRand(floorStructure.length,0);
+	var ry = getRand(floorStructure.length,0);
+	
+	for(var y=0; y < floorStructure.length; y++){
+		for(var x=0; x < floorStructure[y].length; x++){
+			while (floorStructure[ry][rx] !="0"){
+				rx = getRand(floorStructure.length,0);
+				ry = getRand(floorStructure.length,0);}
+			currentFloor[ry][rx] = new Room(startingRoom[0],ry,rx); //Assigner la starting room
+			Game = currentFloor[ry][rx];
+			currentFloor[ry][rx].isCurrent = true;
+		}
+	}
+	
+	//Créer le niveau
+	for(var i=0; i<currentFloor.length;i++){
+		for(var j=0; j<currentFloor[i].length;j++){
+			if(currentFloor[i][j].exists) currentFloor[i][j].create();
+		}
+	}
+	/*
+	currentFloor[0] =  new Room(rooms[0]);
+	for(var d = 1; d <= 5; d++){
+		var mapChoice = rooms.length-2;
+		var rand = getRand(mapChoice,2);
+		currentFloor[d] =  new Room(rooms[rand]);
+		rooms.splice(rand,1);}
+	currentFloor.push(new Room(rooms[1]));	
+	for(var i=0; i<currentFloor.length;i++) currentFloor[i].create();*/
+}
+
+function playerAnimations(){//(maxframe,x,y,width,height,updatetime,spritesheet,offsetx,offsety)
+	Animations = [];
+	Animations[0] = new Animation(7,Player.x,Player.y,100,80,55,imageTool.bodyAnim,-7,3);
+	Animations[1] = new Animation(9,Player.x,Player.y,100,80,50,imageTool.bodyRight,-9,3);
+	Animations[2] = new Animation(9,Player.x,Player.y,100,80,50,imageTool.bodyLeft,-5,3);}
 
 // Pause
 function gameIsPaused(){
@@ -59,144 +112,70 @@ function gameIsPaused(){
 	lastPaused = Date.now();}
 	return isPaused;
 }
+
 function pauseScreen(context){
 	context.save();
 	context.globalAlpha = 0.7;
 	context.drawImage(imageTool.blackScreen, 0, 0, canvas.width, canvas.height);
 	context.restore();
-	context.drawImage(imageTool.pauseScreen, 0, 0, canvas.width, canvas.height);
+	if(gameIsPaused()){context.drawImage(imageTool.pauseScreen, 0, 0, canvas.width, canvas.height);}
+	
+}
+var lastToggle = Date.now();
+function toggleHitbox(){
+ var nowToggle = Date.now();
+	if(Date.now() - lastToggle > 300){
+		if(hitBox) hitBox =false;
+		else hitBox = true;
+		lastToggle = Date.now();}
 }
 
 // Loop du jeu
 function mainloop(){
-	if( !gameIsPaused() && Player.alive ){
-		Gamelevel.update();
-		Gamelevel.clear();
+	if(keyQ)toggleHitbox();
+	
+	if(Date.now() - lastChange < 350){
+		isChanging = true;}
+	else isChanging = false;
+	
+	if(!gameIsPaused() && !isChanging){
+		Game.update();
+		Game.clear();
 		Player.update();
 		if(keyW || keyS){Animations[0].update();}
 		if(keyD){Animations[1].update();}
 		if(keyA){Animations[2].update();}
-		
 		//Sang
 		for(var s=0; s<tempAnimations.length;s++) tempAnimations[s].playOnce();
-	}
-	drawGame();
+		Game.draw();
+		}
 	//fps calcul
 	var thisFrameTime = (thisLoop=new Date) - lastLoop;
 	frameTime+= (thisFrameTime - frameTime) / filterStrength;
 	lastLoop = thisLoop;
 }
 
-//Affichage
-function drawGame(){
-	//Definition contexte canvas
-	var canvas = getEl("canvas");
-    var context = canvas.getContext('2d');
-	context.clearRect(0,0,canvas.width,canvas.height);
-	
-	
-	
-	/*Ordre de draw
-	1-LEVEL
-	Background
-	Éléments du sol
-	Sprites de débris && sang
-	Obstacles
-	2-PLAYER & MONSTRES
-	Ombres
-	Animations de corps
-	Têtes
-	3-PROJECTILES
-	Animations de projectiles et impacts
-	Projectiles	*/
-	
-	//Éléments
-	Background.draw(context);
-	for(var k=0;k<Gamelevel.sprites.length;k++){Gamelevel.sprites[k].draw(context);}
-	for(var d=0;d<Gamelevel.Doors.length;d++){Gamelevel.Doors[d].draw(context);}
-	for(var c=0;c<Gamelevel.collideMaps.length;c++){Gamelevel.collideMaps[c].draw(context);}
-	for(var h=0;h<Gamelevel.holeMaps.length;h++){Gamelevel.holeMaps[h].draw(context);}
-	for(var u=0;u<Gamelevel.Items.length;u++){Gamelevel.Items[u].draw(context);}
-
-	Player.drawBody(context);
-	for(var i=0;i<Gamelevel.Minions.length;i++){Gamelevel.Minions[i].draw(context);}
-	for(var b=0;b<playerBulletsBack.length;b++){playerBulletsBack[b].draw(context);}
-	Player.drawHead(context);
-	for(var xb=0;xb<Gamelevel.Bosses.length;xb++){Gamelevel.Bosses[xb].draw(context);}
-	for(var j=0;j<playerBullets.length;j++){playerBullets[j].draw(context);}
-	
-	//Sang
-	for(var s=0; s<tempAnimations.length;s++) tempAnimations[s].drawOnce(context);
-	
-	for(var t=0;t<Gamelevel.Towers.length;t++){Gamelevel.Towers[t].draw(context);}
-	for(var tb=0;tb<Gamelevel.towerBullets.length;tb++){Gamelevel.towerBullets[tb].draw(context);}
-	//UI
-	//Écran de pause
-	if( gameIsPaused() ) pauseScreen(context);
-	Player.drawUI(context);
-}
-
 //Image de fond
 var Background = {
 	x: 0, y: 0,	height: 576, width: 960,
 	draw : function(context){
-		context.drawImage(imageTool.background, this.x, this.y, this.width, this.height);
-	}
+		context.drawImage(imageTool.background, this.x, this.y, this.width, this.height);}
 };
 
-var mapGenerator = [
-	[
-		["!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!"],
-		["!!","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","!!"],
-		["!!","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","!!"],
-		["!!","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","!!"],
-		["!!","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","D+"],
-		["!!","  ","  ","  ","  ","  ","  ","Pl","  ","  ","  ","  ","  ","  ","!!"],
-		["!!","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","!!"],
-		["!!","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","!!"],
-		["!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!"]
-	],
-	[
-		["!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!"],
-		["!!","  ","  ","  ","Ho","  ","  ","  ","  ","  ","Ho","To","  ","  ","!!"],
-		["!!","  ","  ","  ","Ho","  ","  ","  ","  ","  ","Ho","  ","  ","  ","!!"],
-		["!!","  ","  ","  ","Ho","  ","  ","  ","  ","  ","Ho","  ","  ","  ","!!"],
-		["D-","  ","  ","  ","Ho","  ","  ","Ho","  ","  ","Ho","To","  ","  ","D+"],
-		["!!","  ","  ","  ","  ","  ","  ","Ho","  ","  ","Ho","  ","  ","  ","!!"],
-		["!!","  ","  ","  ","  ","  ","  ","Ho","  ","  ","  ","  ","  ","  ","!!"],
-		["!!","  ","  ","  ","  ","  ","  ","Ho","  ","  ","  ","To","  ","  ","!!"],
-		["!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!"]
-	],
-	[
-		["!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!"],
-		["!!","  ","  ","  ","Bl","Bl","Bl","Bl","Bl","Bl","Bl","  ","  ","  ","!!"],
-		["!!","  ","  ","  ","  ","Mi","  ","Mi","  ","Mi","Bl","  ","  ","  ","!!"],
-		["!!","  ","  ","  ","  ","  ","  ","  ","  ","  ","Bl","  ","  ","  ","!!"],
-		["D-","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","D+"],
-		["!!","  ","  ","  ","  ","  ","  ","  ","  ","  ","Bl","  ","  ","  ","!!"],
-		["!!","  ","  ","  ","  ","Mi","  ","Mi","  ","Mi","Bl","  ","  ","  ","!!"],
-		["!!","  ","  ","  ","Bl","Bl","Bl","Bl","Bl","Bl","Bl","  ","  ","  ","!!"],
-		["!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!"]
-	],
-	[
-		["!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!"],
-		["!!","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","!!"],
-		["!!","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","!!"],
-		["!!","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","!!"],
-		["D-","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","X1","  ","!!"],
-		["!!","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","!!"],
-		["!!","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","!!"],
-		["!!","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","!!"],
-		["!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!","!!"]
-	]
-];
+function Nothing(){
+	this.exists = false;
+}
 
 // Niveau
-function Level(map){
+function Room(map,locy,locx){
+	this.locy = locy;
+	this.locx = locx;
 	this.Minions = []; //Monstres errants
 	this.Towers = []; //Monstres fixes
-	this.towerBullets = [];
+	this.enemyBullets = [];
 	this.collideMaps = []; //Objets infranchissables par le joueur et par les projectiles
+	this.wallMaps = [];
+	this.traps = []; // Pièges
 	this.holeMaps=[]; //Objets franchissables par les projectiles et certains Monstres, mais pas par le joueur
 	this.freeCells = []; //Espace libre, franchissable par tout
 	this.Items = []; // Drops, gold, boosts, hp, tout objets
@@ -205,72 +184,168 @@ function Level(map){
 	this.sprites = [];
 	this.enemies = 0;
 	this.combatMode = 1;
-	
+	this.lootx = 0;
+	this.looty = 0;
+	this.canSpawnLoot = false;
+	this.exists = true;
+	this.isCurrent = false;
 	this.map = map; 
 	this.create= function(){
 		for(var i=0,y=0; i< this.map.length; i++,y+=64){
 			for(var j=0,x=0; j< this.map[i].length; j++,x+=64){ 
 				if(this.map[i][j] == "Pl") {	Player.x=x;	Player.y=y;}
-				if(this.map[i][j] == "D-") {	this.Doors.push(new Door(x,y,"previous"));}
-				if(this.map[i][j] == "D+") {	this.Doors.push(new Door(x,y,"next"));}
-				if(this.map[i][j] == "  ") {	this.freeCells.push(new freeCell(x,y));}
-				if(this.map[i][j] == "!!") {	this.collideMaps.push(new Wall(x,y));}
-				if(this.map[i][j] == "Bl") {	this.collideMaps.push(new Block(x,y));}
-				if(this.map[i][j] == "Ho") {	this.holeMaps.push(new Hole(x,y));}
-				if(this.map[i][j] == "Mi") {	this.Minions.push(new Minion(x,y,1));}
-				if(this.map[i][j] == "Fl") {	this.Minions.push(new Fly(x,y,1));}
-				if(this.map[i][j] == "To") {	this.Towers.push(new Tower(x,y,1));}
-				if(this.map[i][j] == "01") { 	this.Items.push(new Item(x+16,y+16,1));} //Gold
-				if(this.map[i][j] == "02") {	this.Items.push(new Item(x+16,y+16,2));} //Health
-				if(this.map[i][j] == "03") {	this.Items.push(new Item(x+16,y+16,3));} //Max Health
-				if(this.map[i][j] == "X1") {	this.Bosses.push(new Boss(x,y,1));}
+				//PORTES
+				else if(this.map[i][j] == "+L") {
+					if(this.locx > 0){
+						if(currentFloor[this.locy][this.locx-1].exists) this.Doors.push(new Door(x,y,"left"));}
+					else this.wallMaps.push(new Wall(x,y));	}
+				else if(this.map[i][j] == "+R") {
+					if(this.locx < currentFloor[this.locy].length-1){
+						if(currentFloor[this.locy][this.locx+1].exists) this.Doors.push(new Door(x,y,"right"));}
+					else this.wallMaps.push(new Wall(x,y));	}
+				else if(this.map[i][j] == "+U") {
+					if(this.locy > 0){
+						if(currentFloor[this.locy-1][this.locx].exists) this.Doors.push(new Door(x,y,"up"));}
+					else this.wallMaps.push(new Wall(x,y));	}
+				else if(this.map[i][j] == "+D") {
+					if(this.locy < currentFloor.length-1){
+						if(currentFloor[this.locy+1][this.locx].exists) this.Doors.push(new Door(x,y,"down"));}
+					else this.wallMaps.push(new Wall(x,y));	}
+				//Obstacles
+				else if(this.map[i][j] == "  ") {	this.freeCells.push(new freeCell(x,y));}
+				else if(this.map[i][j] == "Tg") {	this.traps.push(new Glue(x,y));}
+				else if(this.map[i][j] == "!!") {	this.wallMaps.push(new Wall(x,y));}
+				else if(this.map[i][j] == "Bl") {	this.collideMaps.push(new Block(x,y));}
+				else if(this.map[i][j] == "Oo") {	this.collideMaps.push(new Poop(x,y));}
+				else if(this.map[i][j] == "Ho") {	this.holeMaps.push(new Hole(x,y));}
+				//Ennemis
+				else if(this.map[i][j] == "Sp") {	this.Minions.push(new Minion(x+15,y+25,3,"spider",true));}
+				else if(this.map[i][j] == "Sb") {	this.Minions.push(new Minion(x+15,y+25,5,"buttspider",true));}
+				else if(this.map[i][j] == "Bf") {	this.Minions.push(new Minion(x,y,4,"bigfly"));}
+				else if(this.map[i][j] == "Fl") {	this.Minions.push(new Fly(x,y,2));}
+				else if(this.map[i][j] == "To") {	this.Towers.push(new Tower(x,y,7));}
+				//Bosses
+				else if(this.map[i][j] == "X1") {	this.Bosses.push(new Boss(x,y,40));this.sprites.push(new Blood(0,0,0,true));}
+				//Items
+				else if(this.map[i][j] == "XY") {	this.lootx = x+10; this.looty = y+10;this.canSpawnLoot=true;}
+				else if(this.map[i][j] == "01") {	this.Items.push(new Item(x+10,y+10,"Half Heart"));}
+				else if(this.map[i][j] == "02") {	this.Items.push(new Item(x+10,y+10,"Heart"));}
+				else if(this.map[i][j] == "03") {	this.Items.push(new Item(x+10,y+10,"MEAT!"));}
+				else if(this.map[i][j] == "04") {	this.Items.push(new Item(x+10,y+10,"Speed Ball"));}
 			}
 		}
 	}
 	this.update = function(){
 		for(var k=0; k<this.sprites.length;k++){
-			this.sprites[k].update();			}
-			
+			this.sprites[k].update();			}			
 		for(var u=0;u<this.Items.length;u++){
 			this.Items[u].update();
-			if( !this.Items[u].alive ) this.Items.splice(u,1);}
-					
+			if( !this.Items[u].alive ) this.Items.splice(u,1);}					
 		for(var xb=0;xb<this.Bosses.length;xb++){
 			this.Bosses[xb].update();
-			if( !this.Bosses[xb].alive ) this.Bosses.splice(xb,1);}
-			
+			if( !this.Bosses[xb].alive ) this.Bosses.splice(xb,1);}			
 		for(var i=0;i<this.Minions.length;i++){
 			this.Minions[i].update();
-			if( !this.Minions[i].alive ){ this.Minions.splice(i,1);}}
-				
+			if( !this.Minions[i].alive ){ this.Minions.splice(i,1);}}				
 		for(var t=0;t<this.Towers.length;t++){
 			this.Towers[t].update();
-			if( !this.Towers[t].alive ){this.Towers.splice(t,1);}}
-			
+			if( !this.Towers[t].alive ){this.Towers.splice(t,1);}}			
 		for(var j=0;j<playerBullets.length;j++){
 			playerBullets[j].update();
-			if( !playerBullets[j].alive ) playerBullets.splice(j,1);}
-			
+			if( !playerBullets[j].alive ){
+				bulletImpact("player",playerBullets[j].x,playerBullets[j].y,-50,-50);
+				playerBullets.splice(j,1);}}			
 		for(var b=0;b<playerBulletsBack.length;b++){
 			playerBulletsBack[b].update();
-			if( !playerBulletsBack[b].alive ) playerBulletsBack.splice(b,1);}
-			
-		for(var tb=0;tb<this.towerBullets.length;tb++){
-			this.towerBullets[tb].update();}
+			if( !playerBulletsBack[b].alive ){
+				bulletImpact("player",playerBulletsBack[b].x,playerBulletsBack[b].y,-50,-50);
+				playerBulletsBack.splice(b,1);}}			
+		for(var tb=0;tb<this.enemyBullets.length;tb++){
+			this.enemyBullets[tb].update();}
 			
 		this.enemies = this.Minions.length + this.Towers.length + this.Bosses.length;
-		if(this.enemies ==0) this.combatMode = 0;
-		else if(this.Bosses !=0) this.combatMode = 2;
+		if(this.enemies ==0){
+			if(this.canSpawnLoot){
+				createItem(this.lootx,this.looty,"normal room");
+				this.canSpawnLoot = false;}
+			this.combatMode = 0;}
+		else if(this.Bosses.length !=0) this.combatMode = 2;
 		else this.combatMode = 1;
+	}
+	this.draw = function(){
+		//Definition contexte canvas
+		var canvas = getEl("canvas");
+		var context = canvas.getContext('2d');
+		context.clearRect(0,0,canvas.width,canvas.height);
+		if(hitBox){context.globalAlpha = 0.5;}	
+		//Éléments
+		Background.draw(context);
+		for(var k=0;k<this.sprites.length;k++){this.sprites[k].draw(context);}
+		for(var d=0;d<this.Doors.length;d++){this.Doors[d].draw(context);}
+		for(var c=0;c<this.collideMaps.length;c++){this.collideMaps[c].draw(context);}
+		for(var h=0;h<this.holeMaps.length;h++){this.holeMaps[h].draw(context);}
+		for(var t=0;t<this.traps.length;t++){this.traps[t].draw(context);}
+		for(var u=0;u<this.Items.length;u++){this.Items[u].draw(context);}	
+		//Sang
+		for(var s=0; s<tempAnimations.length;s++) tempAnimations[s].drawOnce(context);	
+		//Monstres et joueur
+		Player.drawBody(context);
+		for(var i=0;i<this.Minions.length;i++){this.Minions[i].draw(context);}
+		for(var t=0;t<this.Towers.length;t++){this.Towers[t].draw(context);}
+		for(var b=0;b<playerBulletsBack.length;b++){playerBulletsBack[b].draw(context);}
+		Player.drawHead(context);
+		for(var tb=0;tb<this.enemyBullets.length;tb++){this.enemyBullets[tb].draw(context);}
+		for(var xb=0;xb<this.Bosses.length;xb++){this.Bosses[xb].draw(context);}
+		for(var j=0;j<playerBullets.length;j++){playerBullets[j].draw(context);}	
+		//Écran de pause
+		if( gameIsPaused()) pauseScreen(context);
+		Player.drawUI(context);
+		
+		//Minimap
+		context.save();
+		for(var y=0; y < currentFloor.length; y++){
+		context.globalAlpha = 0.7;
+			for(var x=0; x < currentFloor[y].length; x++){
+				if(currentFloor[y][x].isCurrent){ context.drawImage(imageTool.start,(x*30)+(10),(y*18)+(canvas.height-100), 30, 18);}
+				else if(currentFloor[y][x].exists){ context.drawImage(imageTool.room,(x*30)+(10),(y*18)+(canvas.height-100), 30, 18);}
+			}
+		}
+		context.restore();
 	}
 	
 	this.clear = function(){
-		for(var i = 0; i<  this.towerBullets.length; i++){
-		if (!this.towerBullets[i].alive)this.towerBullets.splice(i,1);}
+		for(var i = 0; i<  this.enemyBullets.length; i++){
+		if (!this.enemyBullets[i].alive){
+			bulletImpact("enemy",this.enemyBullets[i].x,this.enemyBullets[i].y,-50,-50);
+			this.enemyBullets.splice(i,1);}}
 	}
 }
 
+
+function changeRoom(side){
+	lastChange = Date.now();
+	Game.isCurrent = false;
+		if(side == "left"){
+			Game = currentFloor[Game.locy][Game.locx-1];
+			Player.x  = canvas.width - 100;}
+			
+		else if(side == "right"){
+			Game =currentFloor[Game.locy][Game.locx+1];
+			Player.x = 74;}
+		
+		else if(side == "up"){
+			Game =currentFloor[Game.locy-1][Game.locx];
+			Player.y = canvas.height-120;}
+		
+		else if(side == "down"){
+			Game =currentFloor[Game.locy+1][Game.locx];
+			Player.y = 74;}
+	Game.isCurrent = true;
+}
+
+
 function freeCell(x,y){
+	this.type = "free";
 	this.x = x;
 	this.y = y;
 	this.width = 64;
@@ -284,52 +359,123 @@ function Door(x,y,type){
 	this.width = 64;
 	this.height = 64;
 	this.img = 0;
+	this.isColliding = true;
 	this.draw = function(context){
-	var offset = 0;
-		if(this.type == "previous") {
-			offset = 15;
-			if(Gamelevel.combatMode!=0)this.img = imageTool.doorLclosed;
+		if(Game.combatMode!=0) this.isColliding = true;
+		else this.isColliding = false;
+		var offset = 0;
+		if(this.type == "left") {
+			var imgwidth = 74;
+			var imgheight = 128;
+			var offsetx = 0;
+			var offsety = -30;
+			if(Game.combatMode!=0)this.img = imageTool.doorLclosed;
 			else this.img = imageTool.doorL;}
-		else if(this.type == "next") {
-			offset = -5;
-			if(Gamelevel.combatMode!=0)this.img = imageTool.doorRclosed;
+			
+		else if(this.type == "right") {
+			var imgwidth = 74;
+			var imgheight = 128;
+			var offsetx = -5;
+			var offsety = -30;
+			if(Game.combatMode!=0)this.img = imageTool.doorRclosed;
 			else this.img = imageTool.doorR;}
-		context.drawImage(this.img, this.x+offset, this.y-20, 54, 104);	
+			
+		else if(this.type == "up") {
+			var imgwidth = 128;
+			var imgheight = 74;
+			var offsetx = -30;
+			var offsety = 4;
+			if(Game.combatMode!=0)this.img = imageTool.doorUclosed;
+			else this.img = imageTool.doorU;}
+			
+		else if(this.type == "down") {
+			var imgwidth = 128;
+			var imgheight = 74;
+			var offsetx = -30;
+			var offsety = -12;
+			if(Game.combatMode!=0)this.img = imageTool.doorDclosed;
+			else this.img = imageTool.doorD;}
+			
+		if(hitBox)context.drawImage(imageTool.hitBox, this.x, this.y, this.width, this.height);
+		context.drawImage(this.img, this.x+offsetx, this.y+offsety, imgwidth, imgheight);	
 	}
 }
 
 function Wall(x,y){
+	this.type = "wall";
 	this.x = x;
 	this.y = y;
 	this.width = 64;
 	this.height = 64;
+	this.isColliding = true;
 	this.draw = function(context){}
 }
 function Block(x,y){
+	this.type = "block";
 	this.x = x;
 	this.y = y;
 	this.rand = getRand(3,1);
 	this.width = 64;
 	this.height = 64;
+	this.isColliding = true;
 	this.draw = function(context){
-		//context.drawImage(imageTool.hitBox, this.x, this.y, this.width, this.height);
+		if(hitBox)context.drawImage(imageTool.hitBox, this.x, this.y, this.width, this.height);
 		switch(this.rand){
 			case 1: context.drawImage(imageTool.block, this.x, this.y-5, 64, 80);;break;
 			case 2: context.drawImage(imageTool.block1, this.x, this.y-5, 64, 80);;break;
 			case 3: context.drawImage(imageTool.block2, this.x, this.y-5, 64, 80);;break;
 			default: context.drawImage(imageTool.block, this.x, this.y-5, 64, 80);;break;}}
 }
+function Poop(x,y){
+	this.type = "poop";
+	this.x = x+12;
+	this.y = y+12;
+	this.state = 1; //Étapes de destruction
+	this.width = 40;
+	this.height = 40;
+	this.isColliding = true;
+	this.canAnim = true;
+	this.draw = function(context){
+		if(hitBox){context.drawImage(imageTool.hitBox, this.x, this.y, this.width, this.height);}
+		if(this.state == 1) context.drawImage(imageTool.poop1, this.x-20, this.y-24, 78, 78);
+		else if(this.state == 2) context.drawImage(imageTool.poop2, this.x-20, this.y-18, 78, 78);
+		else if(this.state == 3) context.drawImage(imageTool.poop3, this.x-20, this.y-17, 78, 78);
+		else if(this.state == 4) context.drawImage(imageTool.poop4, this.x-20, this.y-15, 78, 78);
+		else if(this.state >= 5){ context.drawImage(imageTool.poop5, this.x-20, this.y-14, 78, 78);
+			if(this.canAnim){
+				sounds.bullet.currentTime = 0;
+				sounds.bullet.play();
+				createItem(this.x,this.y,"poop");
+				tempAnimations.push(new Animation(7,this.x,this.y,200,200,45,imageTool.poopAnim,-58,-102,1));
+				this.canAnim = false;} this.isColliding = false;}
+		context.restore();
+	}
+}
+
 function Hole(x,y){
+	this.type = "hole";
+	this.x = x;
+	this.y = y;
+	this.width = 64;
+	this.height = 64;
+	this.isColliding = true;
+	this.draw = function(context){
+		if(hitBox)context.drawImage(imageTool.hitBox, this.x, this.y, this.width, this.height);
+		context.drawImage(imageTool.hole, x-5, y-5, 74, 74);	}
+}
+
+function Glue(x,y){
+	this.type = "glue";
 	this.x = x;
 	this.y = y;
 	this.width = 64;
 	this.height = 64;
 	this.draw = function(context){
-		//context.drawImage(imageTool.hitBox, this.x, this.y, this.width, this.height);
-		context.drawImage(imageTool.hole, x, y, 64, 64);	}
+		if(hitBox)context.drawImage(imageTool.hitBox, this.x, this.y, this.width, this.height);
+		context.drawImage(imageTool.glue, x-15, y-13, 96, 96);}
 }
 
-function Blood(x,y,tary){
+function Blood(x,y,tary,bossroom){
 	this.x = x;
 	this.y = y;
 	this.tary = tary;
@@ -339,6 +485,7 @@ function Blood(x,y,tary){
 	this.rand = getRand(3,1);
 	this.dir = getRand(5,1);
 	this.update = function(){
+		if(!bossroom){
 		if(this.y < this.tary) {
 			this.y += this.speed;
 			switch(this.dir){
@@ -346,26 +493,32 @@ function Blood(x,y,tary){
 				case 2: this.x--;break;
 				case 3: this.x-=2;break;
 				case 4: this.x+=2; break;
-				default: ;}}
+				default: ;}}}
 	}
 	this.draw = function(context){
+	if(bossroom){
+		context.drawImage(imageTool.bloodRoom, this.x, this.y, canvas.width, canvas.height);
+	}
+	else{
 		switch(this.rand){
 			case 1: context.drawImage(imageTool.blood1, this.x, this.y, this.width, this.height);;break;
 			case 2: context.drawImage(imageTool.blood2, this.x, this.y, this.width, this.height);;break;
 			case 3: context.drawImage(imageTool.blood3, this.x, this.y, this.width, this.height);;break;
-			default: context.drawImage(imageTool.blood1, this.x, this.y, this.width, this.height);;break;}}
-	
+			default: context.drawImage(imageTool.blood1, this.x, this.y, this.width, this.height);;break;}}}
 }
 
 function bleed(nb,x,y,tary,height,width,ox,oy,scale){
 	for(var l = 0; l <  nb; l++){
 		var randx = getRand(ox,-ox/2);
 		var randy = getRand(oy,-oy/2);
-		Gamelevel.sprites.push(new Blood(x-randx,y,tary-randy));}
-	tempAnimations.push(new Animation(7,x,y,200,200,30,imageTool.bloodAnim,ox,oy,scale));}
+		Game.sprites.push(new Blood(x-randx,y,tary-randy,false));}
+	tempAnimations.push(new Animation(7,x,y,200,200,30,imageTool.bloodAnim,ox,oy,scale));
+}
 	
+function bulletImpact(obj,x,y,ox,oy){
+	if(obj == "player") tempAnimations.push(new Animation(14,x,y,200,200,16,imageTool.pBulletAnim,ox,oy,2/3));
+	else if(obj == "enemy")  tempAnimations.push(new Animation(14,x,y,200,200,16,imageTool.eBulletAnim,ox,oy,2/3));
 	
-
-
+}
 function getRand(nbPos,nbDep){ return Math.floor(Math.random()*nbPos + nbDep);}
 function getEl(id){ return document.getElementById(id);}

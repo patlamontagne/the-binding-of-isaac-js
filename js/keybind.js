@@ -1,10 +1,9 @@
 function keyboardEvent(){
 	//Gestion des touches du clavier
 	window.addEventListener("keydown", onKeyDown, false);
-	window.addEventListener("keyup", onKeyUp, false);
-}
+	window.addEventListener("keyup", onKeyUp, false);}
 
-var keyW = false, keyA = false, keyS = false, keyD = false; //WASD
+var keyW = false, keyA = false, keyS = false, keyD = false, keyQ = false;; //WASD
 var keyLeft = false, keyUp = false, keyRight = false, keyDown = false; //ARROWS
 var keyPause = false; // ENTER
 
@@ -19,6 +18,7 @@ function onKeyDown(event){
 		case 83: keyS = true; break; 		//s
 		case 65: keyA = true; break; 		//a
 		case 87: keyW = true; break;		//w
+		case 81: keyQ = true; break;		//q
 		case 13: keyPause = true; break;	//enter
 	}
 }
@@ -32,7 +32,8 @@ function onKeyUp(event){
 		case 68: keyD = false; break; 		//d
 		case 83: keyS = false; break;		//s
 		case 65: keyA = false; break; 		//a
-		case 87: keyW = false; break; 		//w
+		case 87: keyW = false; break; 		//ww
+		case 81: keyQ = false; break;		//q
 		case 13: keyPause = false; break; 	//enter
 	}
 }

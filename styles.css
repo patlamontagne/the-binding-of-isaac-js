@@ -2,9 +2,7 @@ html { background: #111;	font: 1em Arial; }
 * {	padding: 0px; margin: 0px; }
 @font-face {
     font-family: 'wendy';
-    src: url("font/wendy.ttf");
-}
-
+    src: url("font/wendy.ttf");}
 #game {
 	width: 970px;
 	margin: auto;
