@@ -46,8 +46,10 @@ var imageTool = new function() {
 	this.fireRateBoost = new Image();
 	this.bulletSpeedBoost = new Image();
 	this.shadow = new Image();
+	this.bodyAnim = new Image();
+	this.bodyIdle = new Image();
 	//Préchargement
-	var numImages = 34;
+	var numImages = 36;
 	var numLoaded = 0;
 	function imageLoaded() {
 		numLoaded++;
@@ -86,6 +88,8 @@ var imageTool = new function() {
 	this.fireRateBoost.onload = function() {imageLoaded();}
 	this.bulletSpeedBoost.onload = function() {imageLoaded();}
 	this.shadow.onload = function() {imageLoaded();}
+	this.bodyAnim.onload = function() {imageLoaded();}
+	this.bodyIdle.onload = function() {imageLoaded();}
 	//Sources
 	this.background.src = "img/bg.png";
 	this.pauseScreen.src = "img/pause.png";
@@ -121,4 +125,60 @@ var imageTool = new function() {
 	this.fireRateBoost.src = "img/firerateboost.png";
 	this.bulletSpeedBoost.src = "img/bulletspeedboost.png";
 	this.shadow.src = "img/shadow.png";
+	this.bodyAnim.src = "img/bodyanimation.png";
+	this.bodyIdle.src = "img/bodyidle.png";
+}
+
+var bodyAnim = {
+	frame: 0,
+	maxFrame: 11,
+	currentFrameTime : Date.now(),
+	lastFrameTime : Date.now(),
+	x: 0,
+	y: 0,
+	width:100,
+	height:80,
+	updateTime: 45,
+	update: function(context){
+		this.currentFrameTime= Date.now();
+		this.draw(context);
+			if(this.currentFrameTime - this.lastFrameTime > this.updateTime){
+				this.frame++;
+				if (this.frame > this.maxFrame) this.frame = 0;
+				this.draw(context);
+				this.lastFrameTime=Date.now();
+			}
+	
+	},
+	draw: function(context){
+		context.drawImage(imageTool.bodyAnim,  this.frame*this.width, 0, this.width, this.height, Player.x, Player.y+30, this.width/2, this.height/2);
+
+	}
+};
+
+function Animation(maxframe,x,y,width,height,updatetime,spritesheet){
+	this.frame= 0;
+	this.maxFrame= maxframe;
+	this.currentFrameTime=Date.now();
+	this.lastFrameTime = Date.now();
+	this.x= x;
+	this.y= y;
+	this.width=width;
+	this.height=height;
+	this.updateTime= updatetime;
+	this.update= function(context){
+		this.currentFrameTime= Date.now();
+		this.draw(context);
+			if(this.currentFrameTime - this.lastFrameTime > this.updateTime){
+				this.frame++;
+				if (this.frame > this.maxFrame) this.frame = 0;
+				this.draw(context);
+				this.lastFrameTime=Date.now();
+			}
+	
+	}
+	this.draw= function(context){
+		context.drawImage(spritesheet,  this.frame*this.width, 0, this.width, this.height, Player.x, Player.y+30, this.width/2, this.height/2);
+
+	}
 }

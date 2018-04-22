@@ -38,11 +38,17 @@ function gameInit(){
 	var statCanvas = getEl("statCanvas");
     var statContext = statCanvas.getContext('2d');
 	Level.create();
+	createAnimations();
 	keyboardEvent();
 	//minionInit(6);
 	fpsCounter();
 	animFrame(recursiveAnim);
 }
+
+var Animations = [];
+function createAnimations(){
+	Animations[0] = new Animation(11,Player.x+2,Player.y+30,46,40,45,imageTool.bodyAnim);}
+
 
 // Pause
 function gameIsPaused(){
@@ -106,12 +112,37 @@ function drawGame(){
 	context.clearRect(0,0,canvas.width,canvas.height);
 	statContext.clearRect(0,0,statCanvas.width,statCanvas.height);
 	
+	/* 
+	Draw order
+	
+	Background
+	Éléments du sol
+	Sprites de débris, sang
+	Ombres
+	Obstacles
+	Animations de monstres
+	Têtes
+	Animations de projectiles
+	Projectiles
+	
+	*/
+	
+	
 	//Éléments
 	Background.draw(context);
 	//uiData.draw();
 	for(var c=0;c<collideMaps.length;c++){collideMaps[c].draw(context);}
 	for(var h=0;h<holeMaps.length;h++){holeMaps[h].draw(context);}
 	for(var u=0;u<Items.length;u++){Items[u].draw(context);}
+	
+			context.save();
+			context.globalAlpha = 0.15;
+			context.drawImage(imageTool.shadow, Player.x-2, Player.y+24, Player.width+4, Player.height+4);
+			context.restore();
+	
+	if(keyW || keyS || keyA || keyD){bodyAnim.update(context);}
+	else context.drawImage(imageTool.bodyIdle,Player.x+2, Player.y+30, 46, 40);
+	
 	for(var j=0;j<playerBullets.length;j++){playerBullets[j].draw(context);}
 	Player.draw(context,statContext);
 	for(var t=0;t<Towers.length;t++){Towers[t].draw(context);}
@@ -119,6 +150,7 @@ function drawGame(){
 	for(var tb=0;tb<towerBullets.length;tb++){towerBullets[tb].draw(context);}
 	//Écran de pause
 	if( gameIsPaused() ) pauseScreen(context);
+	
 }
 
 //fps
@@ -143,15 +175,15 @@ var Background = {
 // Niveau
 var Level = {
 	map: [
-		[" "," "," "," "," "," "," ","P"," "," "," "," "," "," "," "],
 		[" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "],
+		[" "," "," "," "," "," "," "," "," "," "," "," "," ","T"," "],
+		[" "," "," "," "," ","M"," "," "," ","M"," "," "," "," "," "],
 		[" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "],
+		[" "," "," ","F"," "," "," "," ","F"," "," "," "," "," "," "],
 		[" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "],
-		[" "," ","H"," ","H"," ","H","4","H"," ","H"," ","H"," "," "],
-		[" "," "," "," "," "," ","B","H","B"," "," "," "," "," "," "],
-		[" ","H"," "," "," "," "," ","M"," "," "," "," "," ","H"," "],
-		["H"," ","H"," "," "," "," ","M"," "," "," "," ","H"," ","H"],
-		[" ","H"," "," "," "," ","B","M","B"," "," "," "," ","H"," "]
+		[" "," "," "," "," "," "," "," "," "," "," "," ","T"," "," "],
+		[" "," "," "," "," "," ","M"," "," "," "," "," "," "," "," "],
+		[" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "] 
 	],
 	create: function(){
 		var minionCounter=0;
@@ -217,10 +249,10 @@ function Block(x,y){
 	}
 }
 function Hole(x,y){
-	this.x = x+4;
-	this.y = y+4;
-	this.width = 56;
-	this.height = 56;
+	this.x = x;
+	this.y = y;
+	this.width = 64;
+	this.height = 64;
 	this.draw = function(context){
 		context.drawImage(imageTool.hole, x, y, 64, 64);
 	}

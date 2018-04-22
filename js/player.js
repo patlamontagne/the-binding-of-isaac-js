@@ -133,14 +133,21 @@ var Player = {
 	width: 50,
 	x : 100,//Gauche
 	y : 100,//Haut
-	velx: 0,
-	vely: 0,
+	lastx: this.x,
+	lasty: this.y,
+	dirx: 0,
+	diry: 0,
 	speedBoost:0, 
 	dmgBoost:0, 
 	fireRateBoost:0,
 	bulletSpeedBoost:0,
 	rangeBoost:0, 
-	speed : 3,
+	speed : 2,
+	speedy : 1.5,
+	speedx : 2,
+	accelx : 0,
+	accely : 0,
+	friction : 0.3,
 	damage : 1,
 	range : 400,
 	fireRate: 700,
@@ -166,47 +173,70 @@ var Player = {
 			//Orientation du mouvement
 			var currentMoving = "";
 			//Calcul Boost
-			this.speed = 3 + this.speedBoost/2;
+			this.speed  = 2 + this.speedBoost/2;
+			this.speedx = 2 + this.speedBoost/2;
+			this.speedy = 1.5 + this.speedBoost*2/5;
 			this.damage = 1 + this.dmgBoost*0.4;
 			this.range = 400 + this.rangeBoost*70;
 			this.fireRate = 700 - this.fireRateBoost*50;
 			this.attackSpeed = 3 + this.bulletSpeedBoost;
-			
-				if(keyW && this.y > 110 ){
-					this.y -= this.speed;
-					currentMoving = "up";
-					detectCollision(Towers);
-					this.checkCollideW(collideMaps);
-					this.checkCollideW(holeMaps);
-					this.checkCollideW(Towers);}				
-				if(keyS && this.y < 680 - this.height){
-					this.y += this.speed;
-					currentMoving = "down";
-					detectCollision(Towers);
+				
+				if(keyW){
+					if(this.accely > 0-this.speedy){this.accely -= this.friction;}
+					currentMoving = "up";}				
+				if(keyS){
+					if(this.accely < this.speedy){this.accely += this.friction;}
+					currentMoving = "down";}
+				if(keyA){
+					if(this.accelx > 0-this.speedx){this.accelx -= this.friction;}
+					currentMoving = "left";}
+				if(keyD){
+					if(this.accelx < this.speedx){this.accelx += this.friction;}
+					currentMoving = "right";}
+					
+				//Ralentissement X et Y
+				//Si les deux touches d'une meme dimension sont relachées ou enfoncées(elles s'annulent)
+				if(!keyS && !keyW){if(this.accely != 0){this.accely  -= this.accely/7;}} 
+				if(keyS && keyW){if(this.accely != 0){this.accely  -= this.accely/7;}}
+				if(!keyD && !keyA ){if(this.accelx != 0){this.accelx -= this.accelx/7;}}
+				if(keyA && keyD){if(this.accelx != 0){this.accelx -= this.accelx/7;}}
+				
+				//Assignation de la velocité
+				this.x += this.accelx*2;	
+				this.y += this.accely*2;
+				
+				//detectCollision(Towers);
+				
+				
+				// ICI détection en X utilisée quand il ne faut pas.... 
+				if(this.y - this.lasty >0){
 					this.checkCollideS(collideMaps);
 					this.checkCollideS(holeMaps);
-					this.checkCollideS(Towers);}
-				
-				if(keyA && this.x > 90){					
-					this.x -= this.speed;
-					currentMoving = "left";
-					detectCollision(Towers);
-					this.checkCollideA(collideMaps);
-					this.checkCollideA(holeMaps);
-					this.checkCollideA(Towers);}
-				if(keyD && this.x < 1050 - this.width){
-					this.x += this.speed;
-					currentMoving = "right";
-					detectCollision(Towers);
+					this.checkCollideS(Towers);
+				}
+				if(this.y - this.lasty <0){
+					this.checkCollideW(collideMaps);
+					this.checkCollideW(holeMaps);
+					this.checkCollideW(Towers);
+				}
+				if(this.x - this.lastx >0){
 					this.checkCollideD(collideMaps);
 					this.checkCollideD(holeMaps);
-					this.checkCollideD(Towers);}
+					this.checkCollideD(Towers);
+				}
+				if(this.x - this.lastx <0){
+					this.checkCollideA(collideMaps);
+					this.checkCollideA(holeMaps);
+					this.checkCollideA(Towers);
+				}
+				this.lasty = this.y;
+				this.lastx = this.x;
 			
 			//Limites du canvas
-			if(this.x >= canvas.width-this.width){this.x = canvas.width-this.width;} 	// droit
-			if(this.y >= canvas.height-this.height){this.y = canvas.height-this.height;}// bas
-			if(this.x <= 0){this.x = 0;} // gauche
-			if(this.y <= 0){this.y = 0;} // haut
+			if(this.x <= 80){this.x = 80} 	// droit
+			if(this.y <= 100){this.y = 100;}// bas
+			if(this.x >= 1060 - this.width){this.x = 1060 - this.width;} // gauche
+			if(this.y >= 680 - this.height){this.y = 680 - this.height;} // haut
 			
 			//Direction tête
 			if(keyLeft){
@@ -221,11 +251,12 @@ var Player = {
 		}
 	},
 	draw : function(context,statContext){
+		
 		if(this.alive){
-			context.save();
-			context.globalAlpha = 0.15;
-			context.drawImage(imageTool.shadow, this.x-2, this.y+10, this.width+4, this.height+4);
-			context.restore();
+			
+			
+			
+			
 			
 			if(this.canGetDamage){ //Joueur Normal
 				context.drawImage(this.head, this.x-2, this.y-2, this.width+4, this.height+4);}
@@ -284,12 +315,7 @@ var Player = {
 		// RANGE
 		for(var r = 0; r < Player.rangeBoost; r++){
 			statContext.drawImage(imageTool.stat,(r*10)+246,100,6,13);		}
-		/*
-		statContext.fillText(Player.speedBoost, 200, 65);
-		statContext.fillText(Player.dmgBoost, 200, 95);
-		statContext.fillText(Player.fireRateBoost, 200, 125);
-		statContext.fillText(Player.bulletSpeedBoost, 200, 155);
-		statContext.fillText(Player.rangeBoost, 200, 185); */
+		
 	},
 	getDamage : function(dmg){
 		if(this.alive && this.hp > 0){ //Si vivant
@@ -311,22 +337,32 @@ var Player = {
 		else this.canGetDamage = false;
 	},
 	checkCollideW : function(obj){ //calcul de collision W
-		for(var i=0;i<obj.length;i++){
-			if(this.y < obj[i].y + obj[i].height && this.y + this.height > obj[i].y && this.x + this.width  > obj[i].x && this.x < obj[i].x + obj[i].width )
-			{this.y = obj[i].y+obj[i].height;}}},
+		for(var w=0;w<obj.length;w++){
+			if(this.y < obj[w].y + obj[w].height && this.y + this.height > obj[w].y && this.x + this.width  > obj[w].x && this.x < obj[w].x + obj[w].width )
+			{this.y = obj[w].y+obj[w].height;}}},
 	checkCollideS : function(obj){ //calcul de collision S
-		for(var i=0;i<obj.length;i++){
-			if(this.y < obj[i].y + obj[i].height && this.y + this.height > obj[i].y && this.x + this.width  > obj[i].x && this.x < obj[i].x + obj[i].width )
-			{this.y = obj[i].y-this.height;}}},
+		for(var s=0;s<obj.length;s++){
+			if(this.y < obj[s].y + obj[s].height && this.y + this.height > obj[s].y && this.x + this.width  > obj[s].x && this.x < obj[s].x + obj[s].width )
+			{this.y = obj[s].y-this.height;}}},
 	checkCollideA : function(obj){ //calcul de collision A
-		for(var i=0;i<obj.length;i++){
-			if(this.y < obj[i].y + obj[i].height && this.y + this.height > obj[i].y && this.x + this.width  > obj[i].x && this.x < obj[i].x + obj[i].width)
-			{this.x = obj[i].x+obj[i].width;}}},
+		for(var a=0;a<obj.length;a++){
+			if(this.y < obj[a].y + obj[a].height && this.y + this.height > obj[a].y && this.x + this.width  > obj[a].x && this.x < obj[a].x + obj[a].width)
+			{this.x = obj[a].x+obj[a].width;}}},
 	checkCollideD : function(obj){ //calcul de collision D
-		for(var i=0;i<obj.length;i++){
-			if(this.y < obj[i].y + obj[i].height && this.y + this.height > obj[i].y && this.x + this.width  > obj[i].x && this.x < obj[i].x + obj[i].width)
-			{this.x = obj[i].x-this.width;}}}
+		for(var d=0;d<obj.length;d++){
+			if(this.y < obj[d].y + obj[d].height && this.y + this.height > obj[d].y && this.x + this.width  > obj[d].x && this.x < obj[d].x + obj[d].width)
+			{this.x = obj[d].x-this.width;}}}
 };
+
+/*
+function isCollide(a, b) {
+    return !(
+        ((a.y + a.height) < (b.y)) ||
+        (a.y > (b.y + b.height)) ||
+        ((a.x + a.width) < b.x) ||
+        (a.x > (b.x + b.width))
+    );
+}*/
 
 //Attaquer
 function playerFire(dir,mov){
@@ -396,7 +432,14 @@ function Bullet(side,speed,range,bulx,buly,dmg){
 			if(this.side == "down"){			
 				this.targety = this.iniy + this.range;
 				if(this.y < this.targety) this.y += this.speed;
-				else this.alive = false;}	}	
+				else this.alive = false;}
+			//Limites du canvas
+			if(this.x <= 40){this.alive = false;} 	//gauche
+			if(this.y <= 60){this.alive = false;}  //haut
+			if(this.x >= 1100 - this.width){this.alive = false;} //droite
+			if(this.y >= 720 - this.height){this.alive = false;} //bas
+			
+				}	
 	}
 	this.draw = function(context){  //Affichage
 		if(this.alive){
