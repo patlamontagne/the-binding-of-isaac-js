@@ -1,17 +1,30 @@
 <!DOCTYPE html>
 <html lang="fr"><head>
-	<title>JAVASCRIPT ISAAC</title>
+	<title>JavaScript Isaac</title>
 	<meta charset="UTF-8">
-	<link rel="shortcut icon" href="../favicon.ico" type="image/x-icon" />
+
+	<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no'>
+	<meta name='apple-mobile-web-app-capable' content='yes'>
+	<meta name="mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="default" >
+
+	<link rel="apple-touch-icon" href="icon/icone-60.png">
+	<link rel="apple-touch-icon" sizes="76x76" href="icon/icone-76.png">
+	<link rel="apple-touch-icon" sizes="120x120" href="icon/icone-120.png">
+	<link rel="apple-touch-icon" sizes="152x152" href="icon/icone-152.png">
+	<link rel="shortcut icon" sizes="196x196" href="icon/icone-196.png">
+
+	<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+	<link href='http://fonts.googleapis.com/css?family=Pacifico' rel='stylesheet' type='text/css'>
+	<link href='http://fonts.googleapis.com/css?family=Kaushan+Script' rel='stylesheet' type='text/css'>
 	<script>
 	  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
 	  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
 	  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-	  })(window,document,'script','/isaac_latest/lib/analytics.js','ga');
+	  })(window,document,'script','lib/analytics.js','ga');
 
 	  ga('create', 'UA-62196403-1', 'auto');
 	  ga('send', 'pageview');
-
 	</script>
 	<style>
 
@@ -22,35 +35,58 @@
 		    font-family: 'danielbk';
 		    src: url("font/danielbk.ttf");}
 
-		 html {font: 1em Arial; background: #111;}
-
 		* {	padding: 0px; margin: 0px; }
+		html {font: 1em Arial; background: #111;}
+		html, body { height: 100%; }
+		body { position: relative;}
 
+		#warning {
+			width: 95%;
+			height: auto;
+			margin: 20vh auto;
+			display: none;
+			color: #FFF;
+			text-align: center;
+		}
+		#warning span {
+			font: normal 4vh serif;
+		}
+		#warning div {
+			display: block;
+			width: 100%;
+			font-size: 10em;
+			text-align: center;
+			margin: 8vh auto;
+		}
 		#game {
 			position: relative;
-			max-width: 1024px;
-			height: 614px;
 			margin: 0 auto;
 			line-height:0px;
 			text-align: center;
 		}
-		canvas {
-			margin: auto;
-			width: 1024px;
-			height: 614px;
+		.gamecanvas {
 			position: absolute;
-			top: 0px;
-			left: 0px;
+			top: 0;
+			left: 0;
+			right: 0;
+			margin: auto;
+			/*
+			width: 100%;
+			max-width: 1024px;
+			height: auto;
+			max-height: 100%;*/
 		}
 		#canvas {
 			color:#fff;
 		}
 		#uicanvas{ 
+			z-index: 10;
 		}
 		#bgcanvas{
 		}
 
 		#editorlink{
+			display: none;
 			margin: 30px auto 0;
 			text-align: center;
 		}
@@ -60,7 +96,14 @@
 			text-align: center;
 			color: #aaa;
 		}
-
+		#msg {/*
+			position: absolute;
+			color: #FFF;
+			font-size: 1em;
+			top: 20px;*/
+			left: 0;
+			z-index: 999;
+		}
 		#editorlink > a{background: #aaa;font-weight: bold;text-decoration: none; color:#151515;padding: 8px; margin: 8px;}
 		#editorlink > a.active{background: #fff;}
 		#editorlink > a:hover{background: #cbeba5;font-weight: bold;text-decoration: none; color:#151515;padding: 8px;}
@@ -68,24 +111,36 @@
 		#editorlink ul a:hover{text-decoration: underline;}
     </style>
 </head>
-<body>
-	<br>
+<body onorientationchange="canvasResize();">
 	<div id="game">
-		<canvas id="uicanvas" width="960" height="120" oncontextmenu="return false;"></canvas>
-		<canvas id="bgcanvas" width="960" height="576" oncontextmenu="return false;"></canvas>
-		<canvas id="canvas" width="960" height="576" oncontextmenu="return false;">Ce navigateur ne supporte pas HTML5 et Canvas, vous devez posséder la dernière version.</canvas>
+		<canvas class='gamecanvas' id="uicanvas" width="960" height="576" oncontextmenu="return false;"></canvas>
+		<canvas class='gamecanvas' id="bgcanvas" width="960" height="576" oncontextmenu="return false;"></canvas>
+		<canvas class='gamecanvas' id="canvas" width="960" height="576" oncontextmenu="return false;">
+			Ce navigateur ne supporte pas HTML5 et Canvas, vous devez posséder la dernière version.
+		</canvas>
 	</div>
+	<div id='warning'>
+		<span>Tenez votre appareil en mode paysage!</span>
+		<div class="fa fa-refresh"></div>
+		<span>Hold your device in landscape mode!</span>
+	</div>
+
+	<!-- <canvas id="controlcanvas" width="960" height="225" oncontextmenu="return false;"> -->
 	<div id="editorlink">
 		<a href="" class='keyboard active' id="qwerty">QWERTY</a><a href="" class='keyboard' id="azerty">AZERTY</a>
 	</div>
-	<script src="lib/jquery-1.11.2.min.js"></script>
+	<script src="lib/jquery.js"></script>
 	<script src="lib/js.cookie.js"></script>
 	<script src="js/preloader.js"></script>
 	<script src="js/assets.js"></script>
 	<script src="js/maps.js"></script>
 	<script src="js/game.js"></script>
 	<script src="js/keybind.js"></script>
+
 	<script>
+		var mobile = (/iphone|ipad|ipod|android|blackberry|mini|windows\sce|palm/i.test(navigator.userAgent.toLowerCase()));
+		if (!mobile)  $('#editorlink').show();
+
 		$(document).ready(function(){
 			var mode = "";
 			if(Cookies.get("mode") == 1){
@@ -114,8 +169,63 @@
 				// effacer les classes des liens, leur réassigner keyboard et assigner active à this seulement
 				$('.keyboard').attr('class', '').attr('class', 'keyboard');
 				$(this).attr('class', 'keyboard active');
+
+				
+    			
 			});
 
 		});
+
+		window.addEventListener("resize", canvasResize, false);
+
+		/* canvas dimensions */
+		var canvas_w;
+		var canvas_h;
+		var window_w;
+		var window_h;
+
+		canvasResize();
+		// onorientationchange="canvasResize();"
+
+		function canvasResize(){
+			window_w = $(window).width();
+			window_h = $(window).height();
+
+			if(window_w > window_h){
+
+				$('#warning:visible').hide();
+				$('#game:hidden').fadeIn();
+
+				canvas_w = $('#canvas').css('width');
+				canvas_h = $('#canvas').css('height');
+				window_w = window_w > 1280 ? 1280 : window_w;
+
+				$('.gamecanvas').each(function(){
+					$(this).width(window_w);
+					if( $(this).height() > window_h){
+						$(this).height(window_h);
+						$(this).width(window_h * 1.67);
+					}
+				});
+
+				$("#game").width(window_w);
+				$("#game").height($('#canvas').height());
+				if( $("#game").height() > window_h){
+					$("#game").height(window_h);
+					$("#game").width(window_h * 1.67);
+				}
+			} else {
+				$('#game:visible').hide();
+				$('#warning:hidden').fadeIn();
+			}
+
+			/*
+			console.log('Resized !');
+			console.log("canvas width: " + canvas_w + ", window width:" + window_w);
+			console.log("canvas height: " + canvas_h + ", window height: " + window_h);
+			*/
+
+			console.log('Resized !');
+		}
 	</script>
 </body></html>

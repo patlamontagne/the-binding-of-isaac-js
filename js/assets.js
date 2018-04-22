@@ -1,5 +1,7 @@
 var assetsReady = false, loader = new PxLoader();
 var imageTool = {
+	ctrl_left: loader.addImage("control/ctrl_left.png"),
+	ctrl_right: loader.addImage("control/ctrl_right.png"),
 	//Sources
 	loading : loader.addImage("img/loading.png"),
 	xmark : loader.addImage("img/xmark.png"),

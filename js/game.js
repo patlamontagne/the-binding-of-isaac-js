@@ -1,4 +1,3 @@
-/*jshint esnext: true */
 /*
 *** CHANGEMENTS À FAIRE ***
 
@@ -36,6 +35,8 @@
 
 
 *** CHANGE LOG ***
+    - Les noms et la santé des boss s'affiche à partir de drawUI qui est maintenant une méthode de l'objet game
+    - Création de la nouvelle minimap
     - L'overlay Hitbox ne fait plus crasher le jeu lorsque des bombes sont utilisées pendant les combats de boss
     - L'overlay Hitbox est maintenant proprement aligné pendant les combats de boss
     - La trappe de salle de boss devient interactive 2.5 secondes après la mort de tous les ennemis dans la salle
@@ -144,7 +145,7 @@ function gameInit() {
     playerAnimations();
     keyboardEvent();
     animFrame(recursiveAnim);
-    game.updateBackground();
+    game.drawBG();
 }
 
 function loading(state) {
@@ -166,6 +167,7 @@ function loading(state) {
     } else if (!state) {
         context.clearRect(0, 0, canvas.width, canvas.height);
     }
+
 }
 
 // loop du jeu
@@ -183,7 +185,7 @@ function mainloop() {
             game.clear();
         }
 
-        if (Date.now() - lastChange > 900 && Date.now() - lastChange < 1100) game.updateBackground();
+        if (Date.now() - lastChange > 900 && Date.now() - lastChange < 1100) game.drawBG();
 
         showAdjacentRooms();
 
@@ -207,7 +209,6 @@ function mainloop() {
 
     if (transitionStage !== 0) {
         transition();
-        uicontext.drawImage(imageTool.blackScreen, 0, 0, uicanvas.width, uicanvas.height);
     }
     // fps calcul
     var thisFrameTime = (thisLoop = new Date()) - lastLoop;
@@ -356,7 +357,7 @@ function toggleHitbox() {
     if (Date.now() - hitboxToggleDate > 300) {
         if (hitBox) hitBox = false;
         else hitBox = true;
-        game.updateBackground();
+        game.drawBG();
         hitboxToggleDate = Date.now();
     }
 }
@@ -421,7 +422,7 @@ function newRoom() {
         gameStats.rooms++;
     }
     game.isCurrent = true;
-    game.updateBackground();
+    game.drawBG();
 }
 
 function transition() {
@@ -432,7 +433,7 @@ function transition() {
         if (roomChangeOpac >= 1 && transitionStage == 1) {
             transitionStage = 2;
             generateFloor();
-            game.updateBackground();
+            game.drawBG();
         }
         if (transitionStage == 2 && timeCounter < 120) {
             Player.accelx = 0;
@@ -489,7 +490,7 @@ function transition() {
         if (roomChangeOpac >= 1 && transitionStage == 5) {
             transitionStage = 6;
             newRoom();
-            game.updateBackground();
+            game.drawBG();
         }
         if (roomChangeOpac > 0 && transitionStage == 6) roomChangeOpac -= 0.05;
         if (roomChangeOpac <= 0 && transitionStage == 6) {
@@ -504,7 +505,7 @@ function transition() {
         playerBullets = [];
     }
 
-    game.updateBackground();
+    game.drawBG();
 }
 
 function changeFloor() {
@@ -515,7 +516,7 @@ function changeFloor() {
     Player.accely = 0;
     transitionStage = 1;
 
-    game.updateBackground();
+    game.drawBG();
 }
 
 function showAdjacentRooms() {
@@ -606,6 +607,8 @@ function Room(type, map, locy, locx, title) {
     this.chestPresent = false;
     this.bombPresent = false;
     this.hpPresent = false;
+
+    this.uiUpdated = Date.now();
 
     this.shopCreate = function () {
         if (this.type == "Shop") {
@@ -760,7 +763,7 @@ function Room(type, map, locy, locx, title) {
                 } else if (this.map[i][j] == "X2") {
                     this.boss.push(new Duke(x, y, 200, 2));
                 } else if (this.map[i][j] == "X3") {
-                    this.boss.push(new Project(422, 230, 300));
+                    this.boss.push(new Meatspin(422, 230, 300));
                 } else if (this.map[i][j] == "ZZ") {
                     this.Items.push(new TrapDoor(x, y));
                 }
@@ -836,14 +839,13 @@ function Room(type, map, locy, locx, title) {
         for (var i = 0; i < this.Items.length; i++) {
             if (this.Items[i].type == "Half Heart" || this.Items[i].type == "Heart" || this.Items[i].type == "Soul Heart") this.hpPresent = true;
             else if (this.Items[i].type == "Nickel" || this.Items[i].type == "Coin" || this.Items[i].type == "Dime") this.coinPresent = true;
-            else if (this.Items[i].type == "Chest" || this.Items[i].type == "Redchest")
-                if (this.Items[i].canBeUsed) this.chestPresent = true;
+            else if (this.Items[i].type == "Chest" || this.Items[i].type == "Redchest" && this.Items[i].canBeUsed ) this.chestPresent = true;
             else if (this.Items[i].type == "Key") this.keyPresent = true;
             else if (this.Items[i].type == "Bomb") this.bombPresent = true;
         }
 
         // maximum de sprites
-        if (this.sprites.length > 300) this.sprites.splice(10, 1);
+        if (this.sprites.length > 100) this.sprites.splice(10, 1);
 
         for (var k = 0; k < this.sprites.length; k++) {
             this.sprites[k].update();
@@ -925,7 +927,7 @@ function Room(type, map, locy, locx, title) {
         else this.combatMode = 1;
     };
     // afficher le background
-    this.updateBackground = function () {
+    this.drawBG = function () {
         bgcontext.clearRect(0, 0, bgcanvas.width, canvas.height);
         Background.draw(bgcontext);
         this.flagCollision();
@@ -943,15 +945,6 @@ function Room(type, map, locy, locx, title) {
             }
         }
 
-        bgcontext.drawImage(imageTool.uinote, -60, canvas.height - 30, 300, 40);
-        bgcontext.font = "12pt wendy";
-        bgcontext.fillStyle = 'white';
-        if (this.type == "Room") {
-            if (floorCount == 1) floorname = "Basement " + this.title;
-            else if (floorCount == 2) floorname = "Caves " + this.title;
-            else if (floorCount == 3) floorname = "The Depths " + this.title;
-        } else floorname = this.title;
-        bgcontext.fillText(floorname, 8, canvas.height - 8);
         // console.log("background updated!");
     };
     this.draw = function () {
@@ -1031,30 +1024,6 @@ function Room(type, map, locy, locx, title) {
                 }
             }
         }
-        
-
-
-
-
-
-        // texte de loot
-        if (Player.textShowing) {
-            context.save();
-            context.fillStyle = 'white';
-            context.textAlign = 'center';
-            context.font = "20pt wendy";
-            context.drawImage(imageTool.uibar, 0, 0, 960, 60);
-            context.fillText(Player.itemHoldingName, canvas.width / 2, 35);
-            if (Player.itemHoldingDesc != " ") {
-                context.font = "12pt wendy";
-                context.textAlign = 'right';
-                context.drawImage(imageTool.uinote, canvas.width - 240, canvas.height - 30, 300, 40);
-                context.fillText(Player.itemHoldingDesc, canvas.width - 8, canvas.height - 8);
-            }
-            context.restore();
-        }
-
-
 
         /*
          *
@@ -1078,6 +1047,9 @@ function Room(type, map, locy, locx, title) {
         for (; os < overSpritesLength; os++){
             if(this.overSprites[os].y >= Player.y + y_gap) this.overSprites[os].draw(context);
         }
+
+
+
 
         if (hitBox) this.drawHitBox(context, Player, true, true);
 
@@ -1128,6 +1100,10 @@ function Room(type, map, locy, locx, title) {
         }
 
 
+        if (!gameOver && transitionStage === 0) this.drawUI(uicontext);
+        
+
+
         //game Over Screen
         if (gameOver) {
             context.save();
@@ -1154,8 +1130,6 @@ function Room(type, map, locy, locx, title) {
                 context.restore();
             }
         }
-        //UI
-        Player.drawUI(uicontext);
 
         //Debug
         if (hitBox) {
@@ -1215,6 +1189,174 @@ function Room(type, map, locy, locx, title) {
             context.restore();
             context.drawImage(imageTool.pauseScreen, 0, 0, canvas.width, canvas.height);
         }
+
+
+       /* context.font="14px Arial";
+        for(var zx = 0; zx < movepad.length; zx++){
+            context.fillStyle = 'red';
+            movepad[zx].draw(context);
+            context.fillStyle = 'white';
+            context.fillText(Math.round(movepad[zx].x) + '.' + Math.round(movepad[zx].y),movepad[zx].x,movepad[zx].y - 10);
+        }*/
+    };
+    this.drawUI = function (uicontext) {
+        var top = 6;
+        var line = 3;
+        var barWidth = 500;
+        var barHeight = 14;
+        var barCenter = canvas.width / 2 - barWidth / 2;
+
+        if (Date.now() - this.uiUpdated > 200) { // Draw à toutes les x millisecondes
+            uicontext.clearRect(0, 0, uicanvas.width, uicanvas.height);
+            // ui background
+            // life bar
+            // items
+
+            // minimap
+                var x_offset = 0;
+                var y_offset = 0;
+                var base_left = 6;
+                var height = 18;
+                var width = 20;
+                var margin = 2;
+                var minimapSize = 48;
+                left = uicanvas.width - minimapSize*2 - base_left;
+                x_offset = (minimapSize - width/2 )  + (game.locx*-(width+margin));
+                y_offset = (minimapSize - height/2 )  + (game.locy*-(height+margin));
+
+                uicontext.save();
+                uicontext.fillStyle = "rgba(0,0,0,0.5)";
+                uicontext.beginPath();
+                uicontext.arc(minimapSize+left,minimapSize+top,minimapSize,0,2*Math.PI);
+                uicontext.closePath();
+                uicontext.fill();
+                uicontext.clip();
+
+                // carrés bg
+                uicontext.fillStyle = '#000';
+                for(var y=0; y < currentFloor.length; y++){
+                  for(var x=0; x < currentFloor[y].length; x++){                                                                    
+                      if(currentFloor[y][x].isCurrent && currentFloor[y][x].type != "Secret" ){                                   uicontext.fillRect((x * (width + margin) ) + (left - base_left/2) + x_offset,(y * (height + margin) ) +top/2 + y_offset, width + base_left, height + top);}
+                      else if(currentFloor[y][x].exists && currentFloor[y][x].isVisited && currentFloor[y][x].type != "Secret" ){ uicontext.fillRect((x * (width + margin) ) + (left - base_left/2) + x_offset,(y * (height + margin) ) +top/2+ y_offset, width + base_left, height + top);}
+                      else if(currentFloor[y][x].exists && currentFloor[y][x].isVisible && currentFloor[y][x].type != "Secret" ){ uicontext.fillRect((x * (width + margin) ) + (left - base_left/2) + x_offset,(y * (height + margin) ) +top/2+ y_offset, width + base_left, height + top);}
+                  }
+                }
+
+                // salles
+                for(var y=0; y < currentFloor.length; y++){
+                  for(var x=0; x < currentFloor[y].length; x++){
+                      if(currentFloor[y][x].isCurrent && currentFloor[y][x].type != "Secret" ){                                   uicontext.drawImage(imageTool.current,(x * (width + margin) ) + (left) + x_offset,(y * (height + margin) ) +top+ y_offset, width, height);}
+                      else if(currentFloor[y][x].exists && currentFloor[y][x].isVisited && currentFloor[y][x].type != "Secret" ){ uicontext.drawImage(imageTool.visited,(x * (width + margin) ) + (left) + x_offset,(y * (height + margin) ) +top+ y_offset, width, height);}
+                      else if(currentFloor[y][x].exists && currentFloor[y][x].isVisible && currentFloor[y][x].type != "Secret" ){ uicontext.drawImage(imageTool.unvisited,(x * (width + margin) ) + (left) + x_offset,(y * (height + margin) ) +top+ y_offset, width, height);}
+                  }
+                }
+
+                // icones 
+                for(var y2=0; y2 < currentFloor.length; y2++){
+                    for(var x2=0; x2 < currentFloor[y2].length; x2++){          
+                        if(currentFloor[y2][x2].exists && currentFloor[y2][x2].iconVisible && currentFloor[y2][x2].type =="Boss"){                                            uicontext.drawImage(imageTool.boss,     (x2 * (width + margin) ) + (left) + x_offset,(y2 * (height + margin) ) +top+ y_offset, width, height);}
+                        else if(currentFloor[y2][x2].exists && currentFloor[y2][x2].iconVisible && currentFloor[y2][x2].type =="Treasure"){                                   uicontext.drawImage(imageTool.treasure, (x2 * (width + margin) ) + (left) + x_offset,(y2 * (height + margin) ) +top+ y_offset, width, height);}
+                        else if(currentFloor[y2][x2].exists && currentFloor[y2][x2].iconVisible && currentFloor[y2][x2].type =="Shop"){                                       uicontext.drawImage(imageTool.shop,     (x2 * (width + margin) ) + (left) + x_offset,(y2 * (height + margin) ) +top+ y_offset, width, height);}
+                        else if(currentFloor[y2][x2].exists && currentFloor[y2][x2].iconVisible && currentFloor[y2][x2].type =="Sacrifice"){                                  uicontext.drawImage(imageTool.sacrifice,(x2 * (width + margin) ) + (left) + x_offset,(y2 * (height + margin) ) +top+ y_offset, width, height);}
+                        else if(currentFloor[y2][x2].exists && currentFloor[y2][x2].iconVisible && currentFloor[y2][x2].type =="Cursed"){                                     uicontext.drawImage(imageTool.cursed,   (x2 * (width + margin) ) + (left) + x_offset,(y2 * (height + margin) ) +top+ y_offset, width, height);}
+                        else if(currentFloor[y2][x2].exists && (currentFloor[y2][x2].isVisible || currentFloor[y2][x2].isVisible) && currentFloor[y2][x2].type == "Secret" ){ uicontext.drawImage(imageTool.secret,   (x2 * (width + margin) ) + (left) + x_offset,(y2 * (height + margin) ) +top+ y_offset, width, height);}
+                        
+                        if(currentFloor[y2][x2].exists && currentFloor[y2][x2].chestPresent){ uicontext.drawImage(imageTool.minichest,(x2 * (width + margin) ) + (left) + x_offset,(y2 * (height + margin) ) +top+ y_offset, width, height);}
+                        if(currentFloor[y2][x2].exists && currentFloor[y2][x2].hpPresent){ uicontext.drawImage(imageTool.minihp,(x2 * (width + margin) ) + (left) + x_offset,(y2 * (height + margin) ) +top+ y_offset, width, height);}
+                        if(currentFloor[y2][x2].exists && currentFloor[y2][x2].keyPresent){ uicontext.drawImage(imageTool.minikey,(x2 * (width + margin) ) + (left) + x_offset,(y2 * (height + margin) ) +top+ y_offset, width, height);}
+                        if(currentFloor[y2][x2].exists && currentFloor[y2][x2].bombPresent){ uicontext.drawImage(imageTool.minibomb,(x2 * (width + margin) ) + (left) + x_offset,(y2 * (height + margin) ) +top+ y_offset, width, height);}
+                    }
+                }
+                uicontext.restore();
+
+                //bg minimap
+                uicontext.strokeStyle = "rgba(0,0,0,1)";
+                uicontext.lineWidth = line;
+                uicontext.beginPath();
+                uicontext.arc(minimapSize+left,minimapSize+top,minimapSize,0,2*Math.PI);
+                uicontext.stroke();
+
+            // nom du niveau
+                uicontext.font = "20px Kaushan Script";
+                uicontext.textAlign = "right";
+                uicontext.fillStyle = 'white';
+                if (this.type == "Room") {
+                    if (floorCount == 1) floorname = "Basement " + this.title;
+                    else if (floorCount == 2) floorname = "Caves " + this.title;
+                    else if (floorCount == 3) floorname = "The Depths " + this.title;
+                } else floorname = this.title;
+                uicontext.fillText(floorname, canvas.width - 10, 120);
+
+            // nom du boss
+                if(this.boss.length > 0){
+                    var nameX = canvas.width / 2 - barWidth / 2;
+                    boss = this.boss[0];
+                    uicontext.font = "20px Kaushan Script";
+                    uicontext.fillStyle = 'white';
+                    uicontext.textAlign = 'center';
+                    //uicontext.drawImage(imageTool.uinote, canvas.width - 240, canvas.height - 30, 300, 40);
+                    uicontext.fillText(boss.name, canvas.width / 2, 44);
+                    uicontext.textAlign = 'left';
+                }
+
+            // texte de loot
+                if (Player.textShowing) {
+                    // uicontext.fillStyle = "rgba(0,0,0,0.5)";
+                    uicontext.fillStyle = 'white';
+                    uicontext.textAlign = 'left';
+                    uicontext.font = "26px Kaushan Script";
+                    // uicontext.drawImage(imageTool.uibar, 0, 0, 960, 60);
+                    uicontext.fillText(Player.itemHoldingName, 12, 35);
+                    if (Player.itemHoldingDesc != " ") {
+                        uicontext.font = "20px Kaushan Script";
+                        // uicontext.drawImage(imageTool.uinote, canvas.width - 240, canvas.height - 30, 300, 40);
+                        uicontext.fillText(Player.itemHoldingDesc, 12, 65);
+                    }
+                }
+
+
+            // game pad
+            if(mobile){
+                for(var c = 0; c < controls.length; c++){
+                    controls[c].draw(uicontext);
+                }
+            }
+            
+
+
+            // update timer
+            this.uiUpdated = Date.now();
+
+        }
+
+        // hp du boss
+            if(this.boss.length > 0){
+                var percentLeft = (boss.hp / boss.maxHp) * 100;
+               /* context.drawImage(imageTool.bossBg, 280, 0, 410, 43);
+                if (boss.isHit) context.drawImage(imageTool.bossHpHit, 316, 10, (367 / 100) * percentLeft, 27);
+                else context.drawImage(imageTool.bossHp, 316, 10, (367 / 100) * percentLeft, 27);
+                context.drawImage(imageTool.bossBar, 280, 0, 410, 43);*/
+                
+                context.lineWidth = line;
+                context.fillStyle = "rgba(0,0,0,0.5)";
+                context.fillRect(barCenter, top, barWidth, barHeight); 
+
+
+                context.beginPath();
+                if (boss.isHit){
+                    context.fillStyle = "#D00";
+                }
+                else {
+                    context.fillStyle = "#7e1b1b";
+                }
+                context.fillRect(barCenter, top, (barWidth / 100) * percentLeft, barHeight); 
+
+                context.beginPath();
+                context.strokeStyle = "rgba(0,0,0,1)";
+                context.rect(barCenter, top, barWidth, barHeight); 
+                context.stroke();
+            }
+
     };
     this.drawHitBox = function (cxt, obj, square, circle) {
 
@@ -1353,7 +1495,7 @@ function Block(x, y) {
         this.colDown = false;
         this.colLeft = false;
         this.colRight = false;
-        game.updateBackground();
+        game.drawBG();
     };
     this.draw = function (context) {
         if (this.rand == 1) this.type = "xblock";
@@ -1425,11 +1567,11 @@ function Door(x, y, side, type, locked) {
                 this.locked = false;
                 this.obstacle = false;
                 Player.keys--;
-                game.updateBackground();
+                game.drawBG();
             } else if (this.type == "Cursed" || game.type == "Cursed") {
                 //this.locked = false;
                 //this.obstacle = false;
-                game.updateBackground();
+                game.drawBG();
                 Player.getDamage(0.5);
             }
         }
@@ -1437,7 +1579,7 @@ function Door(x, y, side, type, locked) {
     this.destroy = function () {
         if (game.type != "Boss") {
             this.alive = false;
-            game.updateBackground();
+            game.drawBG();
         }
     };
     this.draw = function (context) {
@@ -1636,7 +1778,7 @@ function Poop(x, y) {
         this.colDown = false;
         this.colLeft = false;
         this.colRight = false;
-        game.updateBackground();
+        game.drawBG();
     };
     this.draw = function (context) {
         if (this.state < 1) context.drawImage(imageTool.poop1, this.x-3, this.y - 4, this.width * 1.1, this.height * 1.2);
@@ -1659,7 +1801,7 @@ function Poop(x, y) {
     this.use = function (obj) {
         if(obj.type == "projectile"){
             this.state += obj.dmg;
-            game.updateBackground();
+            game.drawBG();
         }
     };
 }
@@ -1689,7 +1831,7 @@ function Tnt(x, y) {
         this.colDown = false;
         this.colLeft = false;
         this.colRight = false;
-        game.updateBackground();
+        game.drawBG();
     };
     this.draw = function (context) {
 
@@ -1709,7 +1851,7 @@ function Tnt(x, y) {
     this.use = function (obj) {
         if(obj.type == "projectile"){
             this.state += obj.dmg;
-            game.updateBackground();
+            game.drawBG();
         }
     };
 }
@@ -1733,7 +1875,7 @@ function Glue(x, y) {
     this.destroy = function () {
         this.alive = false;
         this.type = "";
-        game.updateBackground();
+        game.drawBG();
     };
     this.draw = function (context) {
         if (this.alive) context.drawImage(imageTool.glue, x - 5, y - 5, 74, 74);
@@ -1825,7 +1967,7 @@ function Fireplace(x, y, type) {
         this.colDown = false;
         this.colLeft = false;
         this.colRight = false;
-        game.updateBackground();
+        game.drawBG();
     };
     this.draw = function (context) {
         if (this.type == "fireplace" && this.rand == 1) this.type = "hellfireplace";
@@ -1951,7 +2093,7 @@ function Blood(x, y, tary, bossroom) {
     this.update = function () {
         if (!bossroom) {
             if (this.y < this.tary) {
-                game.updateBackground();
+                game.drawBG();
                 this.y += this.speed;
                 switch (this.dir) {
                 case 1:
@@ -1992,12 +2134,10 @@ function Blood(x, y, tary, bossroom) {
     };
 }
 
-function bleed(nb, x, y, tary, ox, oy, scale) {
-    for (var l = 0; l < nb; l++) {
-        var randx = getRand(ox, -ox / 2);
-        var randy = getRand(oy, -oy / 2);
-        game.sprites.push(new Blood(x - randx, y, tary - randy, false));
-    }
+function bleed(x, y, tary, ox, oy, scale) {
+    var randx = getRand(ox, -ox / 2);
+    var randy = getRand(oy, -oy / 2);
+    game.sprites.push(new Blood(x - randx, y, tary - randy, false));
     tempAnimations.push(new Animation(7, x, y, 200, 200, 30, imageTool.bloodAnim, ox, oy, scale));
 }
 
@@ -2124,7 +2264,7 @@ function Explosion(x, y) {
 
             if( hitDetection(this, Player)) this.use(Player);
 
-            game.updateBackground();
+            game.drawBG();
         }
         if (Date.now() - this.currentTimer > this.timer) {
             this.alive = false;
@@ -2134,7 +2274,7 @@ function Explosion(x, y) {
         if (this.canAnim) {
             tempAnimations.push(new Animation(19, this.x, this.y - 15, 200, 150, 16, imageTool.explosion, 0, 0, 1));
             game.sprites.push(new Sprite(imageTool.explosionmark, this.x + 10, this.y + 50, 188, 100));
-            game.updateBackground();
+            game.drawBG();
             this.canAnim = false;
         }
     };
@@ -3052,19 +3192,12 @@ var Player = {
     dmgMult: 1,
     bombDmg: 15,
     bombMult: 1,
-    // hp: 3,
-    // maxhp: 3, //HP : Vie restante, MAXHP : Vie totale
-    // soul: 0, //"Armure"
-    // gold: 5,
-    // keys: 1,
-    // bombs: 1, //Pickups
-    hp: 10,
-    maxhp: 6, //HP : Vie restante, MAXHP : Vie totale
-    soul: 4, //"Armure"
-    gold: 50,
-    keys: 99,
-    bombs: 99, //Pickups
-
+    hp: 3,
+    maxhp: 3, //HP : Vie restante, MAXHP : Vie totale
+    soul: 0, //"Armure"
+    gold: 5,
+    keys: 1,
+    bombs: 1, //Pickups
     bombPosed: Date.now(),
     head: imageTool.playerDown,
     orientation: "down", //Orientation de la tête
@@ -3133,7 +3266,7 @@ var Player = {
             this.isLooting = false;
         }
         if (this.isLooting) this.textShowing = true;
-        if (Date.now() - this.lootTimer > 3000) {
+        if (Date.now() - this.lootTimer > 4500) {
             this.textShowing = false;
         }
 
@@ -3522,19 +3655,6 @@ var Player = {
             context.restore();
         }
     },
-    drawUI: function (uicontext) {
-        //Interface
-        if (Date.now() - this.uiUpdated > 200) { // Draw à toutes les x millisecondes
-            uicontext.clearRect(0, 0, uicanvas.width, canvas.height);
-            // ui background
-            // life bar
-            // items
-            // minimap
-
-            // update timer
-            this.uiUpdated = Date.now();
-        }
-    },
     playLoot: function (item) {
         this.itemHolding = item.img;
         this.itemHoldingName = item.type;
@@ -3853,11 +3973,11 @@ function Spider(x, y, hp, type, sleeping) {
             if (this.hp <= 0) {
                 if (this.type == "buttspider") {
                     for (var s = 0; s < 2; s++) {
-                        bleed(2, this.x, this.y - 10, this.y + 20, -50, -50, 2 / 3);
+                        bleed(this.x, this.y - 10, this.y + 20, -50, -50, 2 / 3);
                         game.enemies.push(new Spider(this.x + getRand(20, 0), this.y + getRand(20, 0), 1 + floorCount * 3 / 2, "spider", false));
                     }
                 }
-                bleed(2, this.x, this.y - 10, this.y + 20, -50, -50, 2 / 3);
+                bleed(this.x, this.y - 10, this.y + 20, -50, -50, 2 / 3);
                 sounds.enemyDeath.currentTime = 0;
                 sounds.enemyDeath.play();
                 createItem(this.x + 5, this.y + 5, "basic");
@@ -4102,7 +4222,7 @@ function Fly(x, y, hp, type, immune, bossfollow, swarmAngle) {
     this.attack = function () {
         if (Date.now() - this.lastFire > this.fireRate) { //compare le temps actuel avec le temps de la derniere attaque
             game.enemyBullets.push(new enemyBullet(this.attackSpeed, this.range, this.x + 5, this.y + 22, this.dirx, this.diry, 0.5, 26));
-            bleed(2, this.x + 18, this.y + 18, this.y + 20, -50, -50, 1 / 2);
+            bleed(this.x + 18, this.y + 18, this.y + 20, -50, -50, 1 / 2);
             this.lastFire = Date.now();
         }
     };
@@ -4120,7 +4240,7 @@ function Fly(x, y, hp, type, immune, bossfollow, swarmAngle) {
                     game.boss[0].swarm.splice(spot, 1);
                     game.boss[0].swarmSpots.push(swarmAngle);
                 }
-                bleed(1, this.x, this.y - 10, this.y + 30, -40, -40, 1 / 2);
+                bleed(this.x, this.y - 10, this.y + 30, -40, -40, 1 / 2);
                 sounds.enemyDeath.currentTime = 0;
                 sounds.enemyDeath.play();
                 this.alive = false;
@@ -4347,7 +4467,7 @@ function Zombie(x, y, hp) {
                     else if (flyrand == 2) game.enemies.push(new Fly(sx * 64, sy * 64, 1 + floorCount * 3 / 2, "Attack", true));
                     else if (flyrand == 3) game.enemies.push(new Fly(sx * 64, sy * 64, 2 + floorCount * 3 / 2, "Pooter", true));
                 }
-                bleed(1, this.x, this.y - 10, this.y + 30, -40, -40, 1 / 2);
+                bleed(this.x, this.y - 10, this.y + 30, -40, -40, 1 / 2);
                 sounds.enemyDeath.currentTime = 0;
                 sounds.enemyDeath.play();
                 createItem(this.x, this.y + 5, "basic");
@@ -4572,7 +4692,7 @@ function Clotty(posy, posx, x, y, hp) {
             this.hp -= dmg;
             this.lastDamaged = Date.now();
             if (this.hp <= 0) {
-                bleed(2, this.x, this.y - 10, this.y + 20, -50, -50, 2 / 3);
+                bleed(this.x, this.y - 10, this.y + 20, -50, -50, 2 / 3);
                 sounds.enemyDeath.currentTime = 0;
                 sounds.enemyDeath.play();
                 createItem(this.x + 5, this.y + 5, "basic");
@@ -4622,7 +4742,7 @@ function Clotty(posy, posx, x, y, hp) {
                 game.enemyBullets.push(new enemyBullet(this.attackSpeed * 1.33, this.range, this.x + 12, this.y - 12, attx, atty, this.dmg, 26));
             }
             this.fireRate = getRand(2300, 700);
-            bleed(2, this.x - 5, this.y - 30, this.y + 20, -50, -50, 3 / 4);
+            bleed(this.x - 5, this.y - 30, this.y + 20, -50, -50, 3 / 4);
             this.lastFire = Date.now();
         } else if (Date.now() - this.lastFire > (this.fireRate - 260)) {
             this.isAttacking = true;
@@ -4813,7 +4933,7 @@ function Maggot(posy, posx, x, y, hp) {
             this.hp -= dmg;
             this.lastDamaged = Date.now();
             if (this.hp <= 0) {
-                bleed(2, this.x, this.y - 10, this.y + 20, -50, -50, 2 / 3);
+                bleed(this.x, this.y - 10, this.y + 20, -50, -50, 2 / 3);
                 sounds.enemyDeath.currentTime = 0;
                 sounds.enemyDeath.play();
                 createItem(this.x + 5, this.y + 5, "basic");
@@ -4991,7 +5111,7 @@ function Tower(x, y, hp, sleeping) {
             this.hp -= dmg;
             this.lastDamaged = Date.now();
             if (this.hp <= 0) {
-                bleed(3, this.x, this.y - 10, this.y + 20, -50, -50, 4 / 5);
+                bleed(this.x, this.y - 10, this.y + 20, -50, -50, 4 / 5);
                 createItem(this.x, this.y, "basic");
                 sounds.enemyDeath.currentTime = 0;
                 sounds.enemyDeath.play();
@@ -5008,7 +5128,7 @@ function Tower(x, y, hp, sleeping) {
     this.attack = function () {
         this.now = Date.now();
         if (this.now - this.lastFire > this.fireRate) { // compare le temps actuel avec le temps de la derniere attaque
-            bleed(2, this.x + 20, this.y, this.y + 70, -50, -50, 2 / 3);
+            bleed(this.x + 20, this.y, this.y + 70, -50, -50, 2 / 3);
             game.enemyBullets.push(new enemyBullet(this.attackSpeed, this.range, this.x + 18, this.y + 20, this.dirx, this.diry, 0.5, 26));
             this.lastFire = Date.now();
         }
@@ -5096,6 +5216,9 @@ function Duke(x, y, hp, version) {
         this.isBerserk = false;
     };
     this.update = function () {
+        if (this.version == 1) this.name = "Duke of Flies I";
+        else if (this.version == 2) this.name = "Duke of Flies II";
+
         if (this.alive) {
             if (this.version == 2) this.speed = 5;
             if (this.phase == 1) {
@@ -5156,7 +5279,7 @@ function Duke(x, y, hp, version) {
                 if (Date.now() - this.killTimer > 220) {
                     this.dmg = 0;
                     this.killCount++;
-                    if (this.killCount % 3 === 0) bleed(6, this.x + getRand(150, -50), this.y + getRand(150, -50), this.y + 60, -80, -80, 1.2);
+                    if (this.killCount % 3 === 0) bleed(this.x + getRand(150, -50), this.y + getRand(150, -50), this.y + 60, -80, -80, 1.2);
                     sounds.enemyDeath.currentTime = 0;
                     sounds.enemyDeath.play();
                     if (this.killCount >= 15) {
@@ -5197,29 +5320,6 @@ function Duke(x, y, hp, version) {
             } else if (this.isHit) context.drawImage(imageTool.dukehit, this.x - 22, this.y - 22, this.width + 42, this.height + 42);
             else if (this.version == 2) context.drawImage(imageTool.duke2, this.x - 22, this.y - 22, this.width + 42, this.height + 42);
             else context.drawImage(imageTool.duke, this.x - 22, this.y - 22, this.width + 42, this.height + 42);
-
-            //HP BAR
-            
-            if (this.hp >= 0) {
-                var percentLeft = (this.hp / this.maxHp) * 100;
-                context.drawImage(imageTool.bossBg, 280, 0, 410, 43);
-                if (this.isHit) context.drawImage(imageTool.bossHpHit, 316, 10, (367 / 100) * percentLeft, 27);
-                else context.drawImage(imageTool.bossHp, 316, 10, (367 / 100) * percentLeft, 27);
-
-                context.drawImage(imageTool.bossBar, 280, 0, 410, 43);
-                
-                // boss name
-
-                context.font = "12pt wendy";
-                context.textAlign = 'right';
-                context.fillStyle = 'white';
-                context.drawImage(imageTool.uinote, canvas.width - 240, canvas.height - 30, 300, 40);
-                var nameShow = "";
-                if (floorCount == 3) nameShow = this.name + " II";
-                else nameShow = this.name + " I";
-                context.fillText(nameShow, canvas.width - 8, canvas.height - 8);
-                context.textAlign = 'left';
-            }
         }
     };
     this.clear = function () { //Supprimer
@@ -5346,7 +5446,7 @@ function Duke(x, y, hp, version) {
     };
 }
 
-function Project(x, y, hp) {
+function Meatspin(x, y, hp) {
     this.name = "Meatspin";
     this.faction = 'enemy';
     this.x = x;
@@ -5502,7 +5602,7 @@ function Project(x, y, hp) {
 
                 this.dmg = 0;
                 this.killCount++;
-                bleed(6, this.x + getRand(150, -50), this.y + getRand(150, -50), this.y + 60, -80, -80, 1.2);
+                bleed(this.x + getRand(150, -50), this.y + getRand(150, -50), this.y + 60, -80, -80, 1.2);
                 sounds.enemyDeath.currentTime = 0;
                 sounds.enemyDeath.play();
                 if (this.killCount >= 20) {
@@ -5607,8 +5707,6 @@ function Project(x, y, hp) {
                 else this.tail[d].update(this.tail[d - 1].x, this.tail[d - 1].y, this.tail[d - 1].width, this.tail[d - 1].height);
             }
         }
-
-
     };
     this.move = function () {
         // appliquer le mouvement
@@ -5656,24 +5754,6 @@ function Project(x, y, hp) {
             //BODY
             if (this.isHit) context.drawImage(imageTool.projecthit, this.x - 32, this.y - 22, this.width + 52, this.height + 42);
             else context.drawImage(imageTool.project, this.x - 32, this.y - 22, this.width + 52, this.height + 42);
-            //HP BAR
-            if (this.hp >= 0) {
-                var percentLeft = (this.hp / this.maxHp) * 100;
-                context.drawImage(imageTool.bossBg, 280, 0, 410, 43);
-                if (this.isHit) context.drawImage(imageTool.bossHpHit, 316, 10, (367 / 100) * percentLeft, 27);
-                else context.drawImage(imageTool.bossHp, 316, 10, (367 / 100) * percentLeft, 27);
-                context.drawImage(imageTool.bossBar, 280, 0, 410, 43);
-
-                // boss name
-                context.font = "12pt wendy";
-                context.textAlign = 'right';
-                context.fillStyle = 'white';
-                context.drawImage(imageTool.uinote, canvas.width - 240, canvas.height - 30, 300, 40);
-                var nameShow = "";
-                if (floorCount == 3) nameShow = this.name + " II";
-                else nameShow = this.name;
-                context.fillText(nameShow, canvas.width - 8, canvas.height - 8);
-            }
         }
     };
     this.clear = function () { //Supprimer
@@ -5848,7 +5928,7 @@ function Project(x, y, hp) {
                 this.hp -= dmg;
                 this.lastDamaged = Date.now();
                 if (this.hp <= 0) {
-                    bleed(6, this.x, this.y - 20, this.y + 40, -80, -80, 1.2);
+                    bleed(this.x, this.y - 20, this.y + 40, -80, -80, 1.2);
                     sounds.enemyDeath.currentTime = 0;
                     sounds.enemyDeath.play();
                     this.alive = false;
@@ -5856,7 +5936,7 @@ function Project(x, y, hp) {
             }
         };
         this.kill = function () {
-            bleed(2, this.x, this.y - 10, this.y + 20, -50, -50, 2 / 3);
+            bleed(this.x, this.y - 10, this.y + 20, -50, -50, 2 / 3);
             this.alive = false;
         };
         this.checkCollide = function (obj) { //calcul de collision hitbox ronde
@@ -5998,7 +6078,7 @@ function Project(x, y, hp) {
                 this.lastDamaged = Date.now();
 
                 if (this.hp <= 0) {
-                    bleed(6, this.x, this.y - 20, this.y + 40, -80, -80, 1.2);
+                    bleed(this.x, this.y - 20, this.y + 40, -80, -80, 1.2);
                     sounds.enemyDeath.currentTime = 0;
                     sounds.enemyDeath.play();
                     this.alive = false;
@@ -6006,7 +6086,7 @@ function Project(x, y, hp) {
             }
         };
         this.kill = function () {
-            bleed(2, this.x, this.y - 10, this.y + 20, -50, -50, 2 / 3);
+            bleed(this.x, this.y - 10, this.y + 20, -50, -50, 2 / 3);
             this.alive = false;
         };
         this.checkCollide = function (obj) { //calcul de collision hitbox ronde
@@ -6091,7 +6171,7 @@ function Project(x, y, hp) {
             }
         };
         this.kill = function () {
-            bleed(2, this.x, this.y - 10, this.y + 20, -50, -50, 2 / 3);
+            bleed(this.x, this.y - 10, this.y + 20, -50, -50, 2 / 3);
             this.alive = false;
         };
         this.getDamage = function (dmg) {
