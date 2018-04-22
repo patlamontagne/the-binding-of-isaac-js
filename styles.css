@@ -1,32 +1,29 @@
-html { background: #222;	font: 1em Arial; }
+html { background: #111;	font: 1em Arial; }
 * {	padding: 0px; margin: 0px; }
+@font-face {
+    font-family: 'wendy';
+    src: url("font/wendy.ttf");
+}
+
 #game {
-	width: 1200px;
+	width: 970px;
 	margin: auto;
 	line-height:0px;
-	text-align: center;
-}
+	text-align: center;}
 #label {
 	position: absolute;
 	height: 32px;
 	z-index: 1;
 	font: bold 1.1em Verdana;
 	color: #fff;
-	float: right;
-}
+	float: right;}
 #fps {
 	font: 1.1em Verdana;
 	position: relative;
 	left: 740px;
-	float: right;
-}
+	float: right;}
 #score {
 	font: bold 1.1em Verdana;
 	position: relative;
-	left: 12px;
-}
-canvas { border: solid 6px #000; cursor: none; background: #444; margin: auto;}
-
-#statCanvas {
-	border-top: solid 0px #000;
-}
+	left: 12px;}
+canvas { border: solid 5px #fff;cursor: crosshair; background: #222; margin: auto;}

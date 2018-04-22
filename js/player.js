@@ -1,54 +1,21 @@
 //Item loot collision
 function itemCollision(){
-	for(var i=0;i<Items.length;i++){
-		if (Player.x < Items[i].x + Items[i].width  && Player.x + Player.width  > Items[i].x &&
-			Player.y < Items[i].y + Items[i].height && Player.y + Player.height > Items[i].y) {
-			Items[i].use();}
+	for(var i=0;i<Gamelevel.Items.length;i++){
+		if (Player.x < Gamelevel.Items[i].x + Gamelevel.Items[i].width  && Player.x + Player.width  > Gamelevel.Items[i].x &&
+			Player.y < Gamelevel.Items[i].y + Gamelevel.Items[i].height && Player.y + Player.height > Gamelevel.Items[i].y) {
+			Gamelevel.Items[i].use();}
 	}
 }
 
 //items
-function Item(x,y,type){ // type 1 = coin, 2 = health, 3 = maxhealth...
-	this.x = x;
-	this.y = y;
-	this.dirx = 0;
-	this.diry = 0;
+function Item(x,y,type){ 
+	this.x = x, this.y = y;
+	this.height = 32, this.width = 32;
 	this.type = type;
-	this.height = 32;
-	this.width = 32;
 	this.alive = true;
-	this.now = Date.now();
-	this.lastDamaged = Date.now();
-	this.damagedNow = this.lastDamaged-2000;
-	this.isHit = false;
-	this.update = function(){
-		this.dirx = (Player.x - Player.width/2) - (this.x - this.width/2);
-		this.diry = (Player.y - Player.height/2) - (this.y - this.height/2);
-		var hyp = Math.sqrt(this.dirx*this.dirx + this.diry*this.diry);
-		this.dirx = this.dirx/hyp;
-		this.diry = this.diry/hyp;
-		// Mode "bump" (a été touché)
-			this.checkDamage();
-			if(this.isHit){
-				this.x -= this.dirx*(Player.attackSpeed);
-					if(this.dirx < 0){ //Est à gauche du joueur
-						this.checkCollideRight(collideMaps);this.checkCollideRight(holeMaps);}
-					if(this.dirx > 0){ //Est à droite du joueur
-						this.checkCollideLeft(collideMaps);this.checkCollideLeft(holeMaps);}					
-				this.y -= this.diry*(Player.attackSpeed);
-					if(this.diry < 0){ //Est au dessus du joueur
-						this.checkCollideDown(collideMaps);this.checkCollideDown(holeMaps);}
-					if(this.diry > 0){ //Est en dessous du joueur
-						this.checkCollideUp(collideMaps);this.checkCollideUp(holeMaps);}
-			}
-			if(!this.isHit){
-				this.x +=0;
-				this.y +=0;
-			}
-	}
+	this.update = function(){}
 	this.draw = function(context){
 		if(this.alive){
-			
 			context.save();
 			context.globalAlpha = 0.15;
 			context.drawImage(imageTool.shadow, this.x+3, this.y, this.width-6, this.height-4);
@@ -67,7 +34,8 @@ function Item(x,y,type){ // type 1 = coin, 2 = health, 3 = maxhealth...
 	}
 	this.use = function(){
 		if(this.type == 1){Player.gold++;sounds.gold.currentTime = 0;sounds.gold.play();this.alive=false;}
-		if(this.type == 2){if(Player.hp < Player.maxhp){Player.hp++;this.alive=false;}}
+		if(this.type == 2){if(Player.maxhp - Player.hp == 0.5){Player.hp+= 0.5;this.alive=false;}
+							else if(Player.maxhp - Player.hp >= 1){ Player.hp++;this.alive=false;}}
 		if(this.type == 3){if(Player.maxhp < Player.lifebar){Player.maxhp++;Player.hp++;this.alive=false;}}
 		if(this.type == 4){if(Player.speedBoost < 5){Player.speedBoost++;this.alive=false;}}
 		if(this.type == 5){if(Player.dmgBoost < 5){Player.dmgBoost++;this.alive=false;}}
@@ -82,361 +50,327 @@ function Item(x,y,type){ // type 1 = coin, 2 = health, 3 = maxhealth...
 		this.width = 0;
 		this.alive = false;
 	}
-	this.getDamage = function(dmg){
-		if(this.alive){this.lastDamaged = Date.now();}
-		}
-	this.checkDamage = function(){ //calcul réaction aux balles
-		this.now = Date.now();
-		if( this.now - this.lastDamaged < 60){ //compare le temps actuel avec le temps du dernier dégat
-			this.isHit = true;}
-		else this.isHit = false;
-	}
-	this.checkCollideUp = function(obj){ //calcul de collision Up
-		for(var i=0;i<obj.length;i++){
-			if(this.y < obj[i].y + obj[i].height && this.y + this.height > obj[i].y && this.x + this.width  > obj[i].x && this.x < obj[i].x + obj[i].width ){
-			this.y = obj[i].y+obj[i].height;}}}
-			
-	this.checkCollideDown = function(obj){ //calcul de collision S
-		for(var i=0;i<obj.length;i++){
-			if(this.y < obj[i].y + obj[i].height && this.y + this.height > obj[i].y && this.x + this.width  > obj[i].x && this.x < obj[i].x + obj[i].width ){
-			this.y = obj[i].y-this.height;}}}
-			
-	this.checkCollideLeft = function(obj){ //calcul de collision W
-		for(var i=0;i<obj.length;i++){
-			if(this.y < obj[i].y + obj[i].height && this.y + this.height > obj[i].y && this.x + this.width  > obj[i].x && this.x < obj[i].x + obj[i].width ){
-			this.x = obj[i].x+obj[i].width;}}}
-			
-	this.checkCollideRight = function(obj){ //calcul de collision S
-		for(var i=0;i<obj.length;i++){
-			if(this.y < obj[i].y + obj[i].height && this.y + this.height > obj[i].y && this.x + this.width  > obj[i].x && this.x < obj[i].x + obj[i].width ){
-			this.x = obj[i].x-this.width;}}}
 }
 
 function createItem(x,y){
 	var drop = getRand(100,1);
-	var type = 1;
-	if(drop >= 95){type = 2;}
-	if(drop == 1){type = 3;}
-	if(drop == 3){type = 4;}
-	if(drop == 5){type = 5;}
-	if(drop == 7){type = 6;}
-	if(drop == 9){type = 7;}
-	if(drop == 11){type = 8;}
-	
-	Items[ItemCounter] = new Item(x,y,type);
-	ItemCounter ++;
+	if(drop >= 99){Gamelevel.Items.push(new Item(x,y,1));}
+	if(drop <= 1){Gamelevel.Items.push(new Item(x,y,2));}
 }
 
 //Objet joueur
+
 var Player = {
-	height: 50,
-	width: 50,
-	x : 100,//Gauche
-	y : 100,//Haut
-	lastx: this.x,
-	lasty: this.y,
-	dirx: 0,
-	diry: 0,
+	x : 100, y : 100,
+	height: 50,	width: 40,
+	speed : 2.5, accelx : 0, accely : 0, friction : 0.4,
 	speedBoost:0, 
-	dmgBoost:0, 
-	fireRateBoost:0,
-	bulletSpeedBoost:0,
-	rangeBoost:0, 
-	speed : 1.5,
-	speedy : 1,
-	speedx : 2,
-	accelx : 0,
-	accely : 0,
-	friction : 0.3,
-	damage : 1,
-	range : 400,
-	fireRate: 700,
-	attackSpeed: 4,
-	hp : 3,	// Vie (actuelle)
-	maxhp: 3,	// Vie (pleine)
-	lifebar :24, // HP boosté maximum
+	damage : 1,	range : 400, fireRate: 350,	attackSpeed: 8,
+	dmgBoost:0, rangeBoost:0, fireRateBoost:0, bulletSpeedBoost:0,
+	hp : 15,	maxhp: 15, lifebar :15, //HP : Vie restante, MAXHP : Vie totale, LIFEBAR : Maximum de vie possible
 	gold : 0,
 	head: imageTool.playerDown, //Orientation de la tête
-	alive: true,
-	canGetDamage: true,
-	now : Date.now(),
-	lastDamaged : Date.now(),
-	damagedNow : this.lastDamaged-2000,
+	alive: true, canGetDamage: true, isBumped: false,
+	now : Date.now(), lastDamaged : Date.now(), damagedNow : Date.now(),
 	update: function(){
 		if(this.hp ==0) this.alive = false; //Si plus d'HP, le joueur n'est plus vivant
 		//Déplacement
 		if(this.alive){
-			//Vérifications
-			itemCollision();
-			detectCollision(Minions);
-			this.checkDamage();
-			//Orientation du mouvement
-			var currentMoving = "";
-			//Calcul Boost
-			this.speed  = 1.5 + this.speedBoost/2;
-			this.speedx = 1.5 + this.speedBoost/2;
-			this.speedy = 1 + this.speedBoost*2/5;
+			
+			//Additions Boost
+			this.speed  = 2.5 + this.speedBoost/2;
 			this.damage = 1 + this.dmgBoost*0.4;
 			this.range = 400 + this.rangeBoost*70;
-			this.fireRate = 700 - this.fireRateBoost*50;
-			this.attackSpeed = 4 + this.bulletSpeedBoost;
-				
-				if(keyW){
-					if(this.accely > 0-this.speedy){this.accely -= this.friction;}
-					currentMoving = "up";}				
-				if(keyS){
-					if(this.accely < this.speedy){this.accely += this.friction;}
-					currentMoving = "down";}
-				if(keyA){
-					if(this.accelx > 0-this.speedx){this.accelx -= this.friction;}
-					currentMoving = "left";}
-				if(keyD){
-					if(this.accelx < this.speedx){this.accelx += this.friction;}
-					currentMoving = "right";}
-					
-				//Ralentissement X et Y
-				//Si les deux touches d'une meme dimension sont relachées ou enfoncées(elles s'annulent)
-				if(!keyS && !keyW){if(this.accely != 0){this.accely  -= this.accely/7;}} 
-				if(keyS && keyW){if(this.accely != 0){this.accely  -= this.accely/7;}}
-				if(!keyD && !keyA ){if(this.accelx != 0){this.accelx -= this.accelx/7;}}
-				if(keyA && keyD){if(this.accelx != 0){this.accelx -= this.accelx/7;}}
-				
-				//Assignation de la velocité
-				this.x += this.accelx*2;	
-				this.y += this.accely*2;
-				
-				//detectCollision(Towers);
-				
-				
-				// ICI détection en X utilisée quand il ne faut pas.... 
-				if(this.y - this.lasty >0){
-					this.checkCollideS(collideMaps);
-					this.checkCollideS(holeMaps);
-					this.checkCollideS(Towers);
-				}
-				if(this.y - this.lasty <0){
-					this.checkCollideW(collideMaps);
-					this.checkCollideW(holeMaps);
-					this.checkCollideW(Towers);
-				}
-				if(this.x - this.lastx >0){
-					this.checkCollideD(collideMaps);
-					this.checkCollideD(holeMaps);
-					this.checkCollideD(Towers);
-				}
-				if(this.x - this.lastx <0){
-					this.checkCollideA(collideMaps);
-					this.checkCollideA(holeMaps);
-					this.checkCollideA(Towers);
-				}
-				this.lasty = this.y;
-				this.lastx = this.x;
+			this.fireRate = 350 - this.fireRateBoost*50;
+			this.attackSpeed = 8 + this.bulletSpeedBoost;
+			if((keyW || keyS) && (keyA || keyD)) this.speed = this.speed/2; //Vitesse diagonale
 			
-			//Limites du canvas
-			if(this.x <= 80){this.x = 80} 	// droit
-			if(this.y <= 100){this.y = 100;}// bas
-			if(this.x >= 1060 - this.width){this.x = 1060 - this.width;} // gauche
-			if(this.y >= 700 - this.height){this.y = 700 - this.height;} // haut
+			//Orientation du mouvement
+			var currentMoving = "";
+			if(keyW){ if(this.accely > 0-this.speed){this.accely -= this.friction;}
+				currentMoving = "up";}				
+			if(keyS){ if(this.accely < this.speed){this.accely += this.friction;}
+				currentMoving = "down";}
+			if(keyA){ if(this.accelx > 0-this.speed){this.accelx -= this.friction;}
+				currentMoving = "left";}
+			if(keyD){ if(this.accelx < this.speed){this.accelx += this.friction;}
+				currentMoving = "right";}
 			
-			//Direction tête
+			//Direction attaque
 			if(keyLeft){
-				this.head = imageTool.playerLeft;playerFire("left",currentMoving);}
+				this.head = imageTool.playerLeft;playerFire("left",currentMoving,this.accelx,this.accely);}
 			else if(keyUp){
-				this.head = imageTool.playerUp;playerFire("up",currentMoving);}
+				this.head = imageTool.playerUp;playerFire("up",currentMoving,this.accelx,this.accely);}
 			else if(keyRight){
-				this.head = imageTool.playerRight;playerFire("right",currentMoving);}
+				this.head = imageTool.playerRight;playerFire("right",currentMoving,this.accelx,this.accely);}
 			else if(keyDown){
-				this.head = imageTool.playerDown;playerFire("down",currentMoving);}
-			else this.head = imageTool.playerDown;
-		}
-	},
-	drawBody : function(context){
+				this.head = imageTool.playerDown;playerFire("down",currentMoving,this.accelx,this.accely);}
+			else this.head = imageTool.playerDown;	}
+				
+			//Décélération
+			//Si les deux touches d'une meme dimension sont relachées ou enfoncées(elles s'annulent)
+			if(!keyS && !keyW){if(this.accely != 0){this.accely  -= this.accely/7;}} 
+			if(keyS && keyW){if(this.accely != 0){this.accely  -= this.accely/7;}}
+			if(!keyD && !keyA ){if(this.accelx != 0){this.accelx -= this.accelx/7;}}
+			if(keyA && keyD){if(this.accelx != 0){this.accelx -= this.accelx/7;}}
 		
+				//Accélération X
+				this.x += this.accelx*2;	
+					if(this.accelx*2 > 0){ 
+						this.checkCollide(Gamelevel.collideMaps,"right");
+						this.checkCollide(Gamelevel.holeMaps,"right");
+						if(Gamelevel.combatMode!=0){this.checkCollide(Gamelevel.Doors,"right");}
+						}
+					if(this.accelx*2 < 0){ 
+						this.checkCollide(Gamelevel.collideMaps,"left");
+						this.checkCollide(Gamelevel.holeMaps,"left");
+						if(Gamelevel.combatMode!=0){this.checkCollide(Gamelevel.Doors,"left");}
+						}
+				//Accélération Y
+				this.y += this.accely*2;
+					if(this.accely*2 > 0){ 
+						this.checkCollide(Gamelevel.collideMaps,"down");
+						this.checkCollide(Gamelevel.holeMaps,"down");}
+					if(this.accely*2 < 0){ 
+						this.checkCollide(Gamelevel.collideMaps,"up");
+						this.checkCollide(Gamelevel.holeMaps,"up");}
+			
+			//Vérifications
+			itemCollision();
+			detectCollision(Gamelevel.Minions);
+			detectCollision(Gamelevel.Towers);
+			detectCollision(Gamelevel.Bosses);
+			this.checkDamage();	
+			
+			//PORTES 
+			if(this.x <= 0){this.changeLevel("left");} // Salle précédente
+			if(this.x >= canvas.width -this.width){this.changeLevel("right");} //Salle suivante
+		
+			
+	},
+	
+	drawBody : function(context){
+			//context.drawImage(imageTool.hitBox, this.x, this.y, this.width, this.height);
 			context.save();
 			context.globalAlpha = 0.15;
-			context.drawImage(imageTool.shadow, Player.x-4, Player.y, Player.width, Player.height);
+			context.drawImage(imageTool.shadow, this.x-8, this.y+10, this.width+16, this.height);
 			context.restore();
 			
 		if(this.alive){
-	
-			
-		
-			if(this.canGetDamage){ //Joueur Normalelse 
+			if(this.canGetDamage){ //Joueur Normale
 				if(keyD){Animations[1].draw(context);}
 				else if(keyA){Animations[2].draw(context);}
 				else if(keyW || keyS){Animations[0].draw(context);}
-				else context.drawImage(imageTool.bodyIdle,Player.x, Player.y, 46, 40);}
+				else context.drawImage(imageTool.bodyIdle,this.x, this.y+12, 40, 40);}
 			if(!this.canGetDamage){ // Joueur invincible
 				context.save();
 				context.globalAlpha = 0.6;
 				if(keyW || keyS){Animations[0].draw(context);}
 				else if(keyD){Animations[1].draw(context);}
 				else if(keyA){Animations[2].draw(context);}
-				else context.drawImage(imageTool.bodyIdle,Player.x, Player.y, 46, 40);
-				context.restore();
-			}
-		}
-		if(!this.alive){
-			context.drawImage(imageTool.bodyIdle,Player.x, Player.y, 46, 40);}//joueur mort		
+				else context.drawImage(imageTool.bodyIdle,this.x, this.y+12, 40, 40);
+				context.restore();	}		}
+				
+		if(!this.alive){ //joueur mort		
+			context.drawImage(imageTool.bodyIdle,this.x, this.y+12, 40, 40);}
 	},
+	
 	drawHead : function(context){
 		if(this.alive){
 			if(this.canGetDamage){ //Joueur Normal
-				context.drawImage(this.head, this.x-13, this.y-43, 70, 64);}
+				context.drawImage(this.head, this.x-12, this.y-22, 64, 55);}
 			if(!this.canGetDamage){ // Joueur invincible
 				context.save();
 				context.globalAlpha = 0.6;
-				context.drawImage(this.head, this.x-13, this.y-43, 70, 64);
+				context.drawImage(this.head, this.x-12, this.y-22, 64, 55);
 				context.restore();}	}
 				
 		if(!this.alive){
-			context.drawImage(imageTool.playerDead, this.x-13, this.y-43, 70, 64);} //joueur mort		
+			context.drawImage(imageTool.playerDead, this.x-12, this.y-22, 64, 55);} //joueur mort		
 	},
 	
-	drawUI : function(context,statContext){
-	//LifeBar
-		var diffHp = this.maxhp - this.hp;
+	drawUI : function(context){
+		//LifeBar
+		var half = this.hp%1;
+		var intHp = this.hp - half;
+		var diffHp = this.maxhp - (this.hp+half);
 		var pool = 0;
-		for(var h = 0; h < this.hp; h++){
-			context.drawImage(imageTool.hp,(pool*39)+10,canvas.height-50,40,29);
-			pool++;
-		}
-		for(var d = 0; d < diffHp; d++){
-			context.drawImage(imageTool.emptyHp,(pool*39)+10,canvas.height-46,39,27);
-			pool++;
-		}
-		/* BOOST ICONS
-		statContext.drawImage(imageTool.speedBoost,10,36,32,32);
-		statContext.drawImage(imageTool.dmgBoost,10,70,32,32);
-		statContext.drawImage(imageTool.fireRateBoost,10,105,32,32);
-		statContext.drawImage(imageTool.bulletSpeedBoost,10,135,32,32);
-		statContext.drawImage(imageTool.rangeBoost,10,170,32,32);*/
-
-		// Gold
-		context.drawImage(imageTool.gold,1020,canvas.height-50,50,27);
-		context.font = "21pt Impact";
-		context.fillStyle = 'white';
-		context.fillText(Player.gold, 1072, canvas.height-26);
+		context.drawImage(imageTool.hpbg,-311+(this.maxhp*17),20,400,24); //15 HP = 0-60
+		for(var h = 0; h < intHp; h++){context.drawImage(imageTool.hp,(pool*17)+24,24,18,16); pool++;}
+		if(half !=0){context.drawImage(imageTool.halfHp,(pool*17)+24,24,18,16); pool++;}
+		for(var d = 0; d < diffHp; d++){ context.drawImage(imageTool.emptyHp,(pool*17)+24,24,18,16); pool++;}
 		
-		//Stats
-		statContext.drawImage(imageTool.stats,10,0,240,120);
-		// SPEED
-		for(var s = 0; s < Player.speedBoost; s++){
-			statContext.drawImage(imageTool.stat,(s*10)+246,8,6,13);		}
-		// DMG
-		for(var d = 0; d < Player.dmgBoost; d++){
-			statContext.drawImage(imageTool.stat,(d*10)+246,31,6,13);		}
-		// FIRERATE
-		for(var f = 0; f < Player.fireRateBoost; f++){
-			statContext.drawImage(imageTool.stat,(f*10)+246,54,6,13);		}
-		// BULLSPEED
-		for(var b = 0; b < Player.bulletSpeedBoost; b++){
-			statContext.drawImage(imageTool.stat,(b*10)+246,77,6,13);		}
-		// RANGE
-		for(var r = 0; r < Player.rangeBoost; r++){
-			statContext.drawImage(imageTool.stat,(r*10)+246,100,6,13);		}
-	
+		// Gold
+		context.drawImage(imageTool.goldbg,canvas.width-100,20,400,24);
+		context.drawImage(imageTool.gold,canvas.width-45,25,14,14);
+		context.font = "18pt Wendy";
+		context.fillStyle = 'black';
+		context.fillText(Player.gold, canvas.width-27,38);
+		
+		//
+		context.font = "15pt Wendy";
+		context.fillStyle = 'white';
+		var fpsOut = (1000/frameTime).toFixed() + " FPS";
+		context.fillText(fpsOut, canvas.width-50,canvas.height-8);
+
+		if(gameIsPaused()){
+		var gap = 300;
+			context.drawImage(imageTool.stats,220,300,240,120); //Stats		
+			for(var s = 0; s < Player.speedBoost; s++){	context.drawImage(imageTool.stat,(s*10)+456,8+gap,6,13); } //SPEED
+			for(var d = 0; d < Player.dmgBoost; d++){ context.drawImage(imageTool.stat,(d*10)+456,31+gap,6,13); } //DMG
+			for(var f = 0; f < Player.fireRateBoost; f++){ context.drawImage(imageTool.stat,(f*10)+456,54+gap,6,13); } //FIRERATE
+			for(var b = 0; b < Player.bulletSpeedBoost; b++){ context.drawImage(imageTool.stat,(b*10)+456,77+gap,6,13); } //BULLSPEED
+			for(var r = 0; r < Player.rangeBoost; r++){	context.drawImage(imageTool.stat,(r*10)+456,100+gap,6,13); } //RANGE
+		}
 	},
-	getDamage : function(dmg){
+	getDamage : function(dmg,enemyx,enemyy){
+		this.enemyx = enemyx;
+		this.enemyy = enemyy;
 		if(this.alive && this.hp > 0){ //Si vivant
 			this.damagedNow = Date.now(); //Moment ou le dégat est pris
 			if( this.damagedNow - this.lastDamaged > 1000){ //Si le dernier dégat date d'une seconde
 				this.hp -= dmg;//retirer les points de vie
-				if(this.hp <= 0){
-				sounds.playerDeath.currentTime = 0;sounds.playerDeath.play();}
-				else {sounds.playerDmg.currentTime = 0;sounds.playerDmg.play();}
-				this.lastDamaged = Date.now();
-				}
-			
+				if(this.hp <= 0){ sounds.playerDeath.currentTime = 0;sounds.playerDeath.play();}
+				else { sounds.playerDmg.currentTime = 0;sounds.playerDmg.play();}
+				this.lastDamaged = Date.now(); }
 		}
 	},
 	checkDamage : function(){ //calcul d'invulnérabilité temporaire
 		this.now = Date.now();
-		if( this.now - this.lastDamaged > 1000){ //compare le temps actuel avec le temps du dernier dégat
-			this.canGetDamage = true;}
+		if( this.now - this.lastDamaged > 1000){this.canGetDamage = true;}	//compare le temps actuel avec le temps du dernier dégat
 		else this.canGetDamage = false;
 	},
-	checkCollideW : function(obj){ //calcul de collision W
-		for(var w=0;w<obj.length;w++){
-			if(this.y < obj[w].y + obj[w].height && this.y + this.height > obj[w].y && this.x + this.width  > obj[w].x && this.x < obj[w].x + obj[w].width )
-			{this.y = obj[w].y+obj[w].height;}}},
-	checkCollideS : function(obj){ //calcul de collision S
-		for(var s=0;s<obj.length;s++){
-			if(this.y < obj[s].y + obj[s].height && this.y + this.height > obj[s].y && this.x + this.width  > obj[s].x && this.x < obj[s].x + obj[s].width )
-			{this.y = obj[s].y-this.height;}}},
-	checkCollideA : function(obj){ //calcul de collision A
-		for(var a=0;a<obj.length;a++){
-			if(this.y < obj[a].y + obj[a].height && this.y + this.height > obj[a].y && this.x + this.width  > obj[a].x && this.x < obj[a].x + obj[a].width)
-			{this.x = obj[a].x+obj[a].width;}}},
-	checkCollideD : function(obj){ //calcul de collision D
-		for(var d=0;d<obj.length;d++){
-			if(this.y < obj[d].y + obj[d].height && this.y + this.height > obj[d].y && this.x + this.width  > obj[d].x && this.x < obj[d].x + obj[d].width)
-			{this.x = obj[d].x-this.width;}}}
+	checkCollide : function(obj,pos){ //calcul de collision Up
+		for(var i=0;i<obj.length;i++){
+			if(this.y < obj[i].y + obj[i].height &&
+			this.y + this.height > obj[i].y &&
+			this.x + this.width  > obj[i].x && 
+			this.x < obj[i].x + obj[i].width ){
+				if(pos == "up")this.y = obj[i].y+obj[i].height;
+				else if(pos == "down")this.y = obj[i].y-this.height;
+				else if(pos == "left")this.x = obj[i].x+obj[i].width;
+				else if(pos == "right")this.x = obj[i].x-this.width;}}},
+	changeLevel : function(side){
+		var ox = 0;
+		if(side == "left") {currentLevel--; ox = canvas.width - 128;}
+		else if(side == "right") {currentLevel++; ox = 128;}
+		Gamelevel = Dungeon[currentLevel];
+		this.x = ox;
+		this.y = this.y; }
 };
 
-/*
-function isCollide(a, b) {
-    return !(
-        ((a.y + a.height) < (b.y)) ||
-        (a.y > (b.y + b.height)) ||
-        ((a.x + a.width) < b.x) ||
-        (a.x > (b.x + b.width))
-    );
-}*/
-
 //Attaquer
-function playerFire(dir,mov){
+var eyeSwitch=1;
+function playerFire(dir,mov,accelx,accely){
 	var bulx = 0;
 	var buly = 0;
-	if(dir == mov){	var range = Player.range*(1.2);	var speed = Player.attackSpeed+Player.speed/3;	}
-	else {var range = Player.range; var speed = Player.attackSpeed;}
+	if(dir == mov){ var range = Player.range*(1.2);	var speed = Player.attackSpeed+Player.speed/2;	}
+	else {
+	var range = Player.range; var speed = Player.attackSpeed;}
 	
 	var fireNow = Date.now();
 	if( fireNow - lastFire > Player.fireRate){
 		switch(dir){
 			case "left":	bulx = Player.x-10;
+							buly = Player.y +(5*eyeSwitch);
+							if(eyeSwitch ==-1) playerBulletsBack.push(new Bullet("left",speed,range,bulx,buly,accelx,accely,Player.damage));
+							else  playerBullets.push(new Bullet("left",speed,range,bulx,buly,accelx,accely,Player.damage));
+							break;
+			case "up":		bulx = Player.x +8+(8*eyeSwitch);
 							buly = Player.y -20;
-							playerBullets.push(new Bullet("left",speed,range,bulx,buly,Player.damage));
+							playerBulletsBack.push(new Bullet("up",speed,range,bulx,buly,accelx,accely,Player.damage));
 							break;
-			case "up":		bulx = Player.x +12;
-							buly = Player.y -30;
-							playerBullets.push(new Bullet("up",speed,range,bulx,buly,Player.damage));
+			case "right": 	bulx = Player.x +25;
+							buly = Player.y +(5*eyeSwitch);
+							if(eyeSwitch ==-1) playerBulletsBack.push(new Bullet("right",speed,range,bulx,buly,accelx,accely,Player.damage));
+							else  playerBullets.push(new Bullet("right",speed,range,bulx,buly,accelx,accely,Player.damage));
 							break;
-			case "right": 	bulx = Player.x +30;
-							buly = Player.y -20;
-							playerBullets.push(new Bullet("right",speed,range,bulx,buly,Player.damage));
-							break;
-			case "down": 	bulx = Player.x +12;
-							buly = Player.y -15;
-							playerBullets.push(new Bullet("down",speed,range,bulx,buly,Player.damage));
+			case "down": 	bulx = Player.x +8+(8*eyeSwitch);
+							buly = Player.y +5 ;
+							playerBullets.push(new Bullet("down",speed,range,bulx,buly,accelx,accely,Player.damage));
 							break;
 		}
 		lastFire = Date.now();
+		if(eyeSwitch ==1) eyeSwitch = -1;
+		else eyeSwitch =1;
 		sounds.bullet.currentTime = 0;
 		sounds.bullet.play();
 	}
 }
 
 //projectile
-function Bullet(side,speed,range,bulx,buly,dmg){
+function Bullet(side,speed,range,bulx,buly,accelx,accely,dmg){
 	this.side = side;
 	this.range = range;
 	this.inix = bulx;
 	this.iniy = buly;
 	this.x = this.inix;
 	this.y = this.iniy;
+	this.dirx = 0;
+	this.diry = 0;
 	this.targetx = 0;
-	this.targety = 0;
-	this.height = 22;
-	this.width = 22;
+	this.targetx = 0;
+	this.height = 26;
+	this.width = 26;
 	this.dmg = dmg;
 	this.speed = speed;
 	this.alive = true;
 	this.update = function(){	//Calcul
 		if(this.alive){
-		bulletCollision(Minions);
-		bulletCollision(Towers);
-		bulletCollision(Items);
+		bulletCollision(playerBulletsBack, Gamelevel.Bosses);
+		bulletCollision(playerBullets, Gamelevel.Bosses);
+		bulletCollision(playerBulletsBack, Gamelevel.Minions);
+		bulletCollision(playerBullets, Gamelevel.Minions);
+		bulletCollision(playerBulletsBack, Gamelevel.Towers);
+		bulletCollision(playerBullets, Gamelevel.Towers);
+		bulletCollision(playerBulletsBack, Gamelevel.collideMaps);
+		bulletCollision(playerBullets, Gamelevel.collideMaps);
+		
+		if(Gamelevel.combatMode!=0){bulletCollision(playerBulletsBack, Gamelevel.Doors);}
+		if(Gamelevel.combatMode!=0){bulletCollision(playerBullets, Gamelevel.Doors);}
+		
+		if(this.side == "up"){
+			this.dirx = (Player.x - Player.width/2) - ((Player.x - Player.width/2) + accelx*50);
+			this.diry = (Player.y - Player.height/2) - ((Player.y - Player.width/2)-this.range);
+			this.targety = this.iniy - this.range;
+			var hyp = Math.sqrt(this.dirx*this.dirx + this.diry*this.diry);
+			this.dirx = this.dirx/hyp;
+			this.diry = this.diry/hyp;
+			if(this.y > this.targety){ this.x -= this.dirx*this.speed; this.y -= this.diry*this.speed;}
+			else this.alive = false;}
+			
+		else if(this.side == "down"){
+			this.dirx = (Player.x - Player.width/2) - ((Player.x - Player.width/2) + accelx*50);
+			this.diry = (Player.y - Player.height/2) - ((Player.y - Player.width/2)+this.range);
+			this.targety = this.iniy + this.range;			
+			var hyp = Math.sqrt(this.dirx*this.dirx + this.diry*this.diry);
+			this.dirx = this.dirx/hyp;
+			this.diry = this.diry/hyp;
+			if(this.y < this.targety){ this.x -= this.dirx*this.speed; this.y -= this.diry*this.speed;}
+			else this.alive = false;}
+			
+		else if(this.side == "right"){
+			this.dirx = (Player.x - Player.width/2) - ((Player.x - Player.width/2) +this.range);
+			this.diry = (Player.y - Player.height/2) - ((Player.y - Player.width/2)+ accely*50);	
+			this.targetx = this.inix + this.range;					
+			var hyp = Math.sqrt(this.dirx*this.dirx + this.diry*this.diry);
+			this.dirx = this.dirx/hyp;
+			this.diry = this.diry/hyp;
+			if(this.x < this.targetx){this.x -= this.dirx*this.speed;this.y -= this.diry*this.speed;}
+			else this.alive = false;}
+			
+		else if(this.side == "left"){
+			this.dirx = (Player.x - Player.width/2) - ((Player.x - Player.width/2) -this.range);
+			this.diry = (Player.y - Player.height/2) - ((Player.y - Player.width/2)+ accely*50);		
+			this.targetx = this.inix - this.range;							
+			var hyp = Math.sqrt(this.dirx*this.dirx + this.diry*this.diry);
+			this.dirx = this.dirx/hyp;
+			this.diry = this.diry/hyp;
+			if(this.x > this.targetx){this.x -= this.dirx*this.speed;this.y -= this.diry*this.speed;}
+			else this.alive = false;}
+		
+		
+		/*
 			if(this.side == "right"){			
 				this.targetx = this.inix + this.range;
 				if(this.x < this.targetx) this.x += this.speed;
@@ -452,20 +386,15 @@ function Bullet(side,speed,range,bulx,buly,dmg){
 			if(this.side == "down"){			
 				this.targety = this.iniy + this.range;
 				if(this.y < this.targety) this.y += this.speed;
-				else this.alive = false;}
-			//Limites du canvas
-			if(this.x <= 40){this.alive = false;} 	//gauche
-			if(this.y <= 60){this.alive = false;}  //haut
-			if(this.x >= 1100 - this.width){this.alive = false;} //droite
-			if(this.y >= 720 - this.height){this.alive = false;} //bas
-			
-				}	
+				else this.alive = false;}*/
+		}	
 	}
+	
 	this.draw = function(context){  //Affichage
 		if(this.alive){
 			context.save();
 			context.globalAlpha = 0.15;
-			context.drawImage(imageTool.shadow, this.x, this.y+20, this.width, this.height);
+			context.drawImage(imageTool.shadow, this.x, this.y+30, this.width, this.height);
 			context.restore();
 		context.drawImage(imageTool.playerBullet, this.x, this.y, this.width, this.height);}
 	}
@@ -486,7 +415,8 @@ function detectCollision(obj){
 	for(var i=0;i<obj.length;i++){
 		if (Player.x < obj[i].x + obj[i].width-safeGap  && Player.x + Player.width-safeGap  > obj[i].x &&
 			Player.y < obj[i].y + obj[i].height-safeGap && Player.y + Player.height-safeGap > obj[i].y) {
-			Player.getDamage(obj[i].dmg);}
+				if(obj == Gamelevel.Minions || obj == Gamelevel.Towers || obj == Gamelevel.Bosses) Player.getDamage(obj[i].dmg, obj[i].x, obj[i].y);
+				else if(obj == Gamelevel.Doors) obj[i].use(); }
 	}
 }
 
@@ -499,25 +429,18 @@ function holeCollision(obj){
 	}
 }
 
-function bulletCollision(obj){
-	for(var i=0;i<playerBullets.length;i++){
+function bulletCollision(projectile,obj){
+	var safeGap = 0;
+	if((obj == Gamelevel.collideMaps) || (obj == Gamelevel.Doors)) safeGap = 10;
+	for(var i=0;i<projectile.length;i++){
 		// Enemies
 		for(var j=0;j<obj.length;j++){
-			if (playerBullets[i].x < obj[j].x + obj[j].width-1  && playerBullets[i].x + (playerBullets[i].width-1)  > obj[j].x &&
-			playerBullets[i].y < obj[j].y + obj[j].height-1 && playerBullets[i].y + (playerBullets[i].height-1) > obj[j].y) {
-				obj[j].getDamage(playerBullets[i].dmg);
+			if (projectile[i].x < obj[j].x + (obj[j].width-safeGap)  && projectile[i].x + (projectile[i].width-safeGap)  > obj[j].x &&
+			projectile[i].y < obj[j].y + (obj[j].height-safeGap) && projectile[i].y + (projectile[i].height-safeGap) > obj[j].y) {
+				if((obj == Gamelevel.Minions) || (obj == Gamelevel.Towers) || (obj == Gamelevel.Bosses)) obj[j].getDamage(projectile[i].dmg);
 				sounds.impact.currentTime = 0;
 				sounds.impact.play();
-				playerBullets[i].clear();
-				}
-		}
-		// Collision map
-		for(var m=0; m<collideMaps.length;m++){
-			if (playerBullets[i].x < collideMaps[m].x + collideMaps[m].width-5  && playerBullets[i].x + (playerBullets[i].width-5)  > collideMaps[m].x &&
-			playerBullets[i].y < collideMaps[m].y + collideMaps[m].height-5 && playerBullets[i].y + (playerBullets[i].height-5) > collideMaps[m].y) {
-				sounds.impact.currentTime = 0;
-				sounds.impact.play();
-				playerBullets[i].clear();
+				projectile[i].clear();
 				}
 		}
 	}
