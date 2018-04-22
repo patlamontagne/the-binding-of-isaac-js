@@ -5,126 +5,82 @@
             window.oRequestAnimationFrame      ||
             window.msRequestAnimationFrame     ||
             null ;
+var recursiveAnim = function() {
+    mainloop();
+	animFrame( recursiveAnim );
+};
 
+// Start le mainloop
+animFrame( recursiveAnim );
 
 // Loop du jeu
 function mainloop(){
-	Player.Update();
-	Player.Draw();
+    updateGame();
+    drawGame();
 }
-
-// Initiation du canvas
-window.onload = function() {
-    var canvas = getEl("canvas");
-    var ctx = canvas.getContext('2d');
-	canvas.width = 800;
-	canvas.height = 500;
+function updateGame(){
+	updatePlayer();
+}
+function drawGame(){
+	drawPlayer();
+}
+function updatePlayer(){
+	var headMove;
+	//Déplacement
+	if(keyD){
+		Player.PosX += Player.Speed;}
+	if(keyS){
+		Player.PosY += Player.Speed;}
+	if(keyA){
+		Player.PosX -= Player.Speed;}
+	if(keyW){
+		Player.PosY -= Player.Speed;}
+	//Limites déplacement
+	if(Player.PosX >= canvas.width-Player.Width){Player.PosX = canvas.width-Player.Width;}
+	if(Player.PosY >= canvas.height-Player.Height){Player.PosY = canvas.height-Player.Height;}
+	if(Player.PosX <= 0){Player.PosX = 0;}
+	if(Player.PosY <= 0){Player.PosY = 0;}
+	//Direction tête
+	if(!keyDown || !keyLeft || !keyUp || !keyRight){headDirection = Player.HeadDown;}
+	if(keyLeft){headDirection = Player.HeadLeft;}
+	if(keyUp){headDirection = Player.HeadUp;}
+	if(keyRight){headDirection = Player.HeadRight;}
+	if(keyDown){headDirection = Player.HeadDown;}
+	imagePlayer.src = headDirection;
+}
+function drawPlayer(){
+	var canvas = getEl("canvas");
+	var ctx = canvas.getContext('2d');
 	ctx.clearRect(0,0,canvas.width,canvas.height);
+	ctx.drawImage(imagePlayer, Player.PosX, Player.PosY, Player.Width, Player.Height);
 }
-
-var imageTool = new function() {
-	this.Background = new Image();
-	this.PlayerDown = new Image();
-	this.PlayerLeft = new Image();
-	this.PlayerUp = new Image();
-	this.PlayerRight = new Image();
-	this.PlayerBullet = new Image();
-	this.Minion = new Image();
-	this.MinionBullet = new Image();
-	
-	// S'assure que les images on chargé avant de lancer le jeu
-	var numImages = 8;
-	var numLoaded = 0;
-	function imageLoaded() {
-		numLoaded++;
-		if (numLoaded === numImages) {animFrame(recursiveAnim);}
-	}
-	this.Background.onload = function() {imageLoaded();}
-	this.PlayerDown.onload = function() {imageLoaded();}
-	this.PlayerLeft.onload = function() {imageLoaded();}
-	this.PlayerUp.onload = function() {imageLoaded();}
-	this.PlayerRight.onload = function() {imageLoaded();}
-	this.PlayerBullet.onload = function() {imageLoaded();}
-	this.Minion.onload = function() {imageLoaded();}
-	this.MinionBullet.onload = function() {imageLoaded();}
-	// Sources des images
-	this.Background.src = "img/bg.png";
-	this.PlayerDown.src = "img/player.png";
-	this.PlayerLeft.src = "img/player1.png";
-	this.PlayerUp.src = "img/player2.png";
-	this.PlayerRight.src = "img/player3.png";
-	this.PlayerBullet.src = "img/playerbullet.png";
-	this.Minion.src = "img/minion.png";
-	this.MinionBullet.src = "img/minionbullet.png";
-}
-
 
 //Objet joueur
 var Player = {
-	PosX : 20,		//Gauche
-	PosY : 225, 	//Haut
+	PosX : 300,		//Gauche
+	PosY : 300, 	//Haut
 	Height: 40,
 	Width: 40,
 	Speed : 5,
 	HeadDown: "img/player.png",
 	HeadLeft: "img/player1.png",
 	HeadUp: "img/player2.png",
-	HeadRight: "img/player3.png",
-	Update: function(){
-		//Déplacement
-		if(keyW){this.PosY -= this.Speed;headDirection = this.HeadUp;}
-		if(keyS){this.PosY += this.Speed;headDirection = this.HeadDown;}
-		if(keyA){this.PosX -= this.Speed;headDirection = this.HeadLeft;}
-		if(keyD){this.PosX += this.Speed;headDirection = this.HeadRight;}
-		//Limites déplacement
-		if(this.PosX >= canvas.width-this.Width){this.PosX = canvas.width-this.Width;}
-		if(this.PosY >= canvas.height-this.Height){this.PosY = canvas.height-this.Height;}
-		if(this.PosX <= 0){this.PosX = 0;}
-		if(this.PosY <= 0){this.PosY = 0;}
-		//Direction tête
-		if(keyLeft){headDirection = this.HeadLeft;}
-		if(keyUp){headDirection = this.HeadUp;}
-		if(keyRight){headDirection = this.HeadRight;}
-		if(keyDown){headDirection = this.HeadDown;}
-		imagePlayer.src = headDirection;
-	},
-	Draw: function(){
-		var canvas = getEl("canvas");
-		var ctx = canvas.getContext('2d');
-		ctx.clearRect(0,0,canvas.width,canvas.height);
-		ctx.drawImage(imagePlayer, this.PosX, this.PosY, this.Width, this.Height);
-	}
+	HeadRight: "img/player3.png"
 };
 
 //Image joueur
 var imagePlayer = new Image();
-var headDirection = Player.HeadRight;
+var headDirection = Player.HeadDown;
 imagePlayer.src = headDirection;
 
-//objet minion
-function Minion(PosX,PosY,Height,Width,Speed,Image){
-	this.PosX = PosX;
-	this.PosY = PosY;
-	this.Height = Height;
-	this.Width = Width;
-	this.Speed = Speed;
-	this.Image = Image;
-	this.Update = function(){
-		if(this.PosX >= canvas.width-this.Width){this.PosX = canvas.width-this.Width;}
-		if(this.PosY >= canvas.height-this.Height){this.PosY = canvas.height-this.Height;}
-		if(this.PosX <= 0){this.PosX = 0;}
-		if(this.PosY <= 0){this.PosY = 0;}
-	};
-	this.Draw = function(){
-		var canvas = getEl("canvas");
-		var ctx = canvas.getContext('2d');
-	};
+// Initiation du canvas
+window.onload = function() {
+    var canvas = getEl("canvas");
+    var ctx = canvas.getContext('2d');
+	canvas.width = 600;
+	canvas.height = 400;
+	mainloop();
 }
-
-var recursiveAnim = function() {
-    mainloop();
-	animFrame( recursiveAnim );
-};
 
 //Gestion des touches du clavier
 window.addEventListener("keydown", onKeyDown, false);

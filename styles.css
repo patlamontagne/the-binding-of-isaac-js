@@ -1,4 +1,4 @@
 html { background: #fff;	font: 1em Arial; }
 * {	padding: 0px; margin: 0px; }
 
-canvas { border: solid 1px #000; position: absolute; top: 50px; left: 200px;}
+canvas { border: solid 1px #000;}
