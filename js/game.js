@@ -111,10 +111,10 @@ function drawGame(){
 	for(var c=0;c<collideMaps.length;c++){collideMaps[c].draw(context);}
 	for(var h=0;h<holeMaps.length;h++){holeMaps[h].draw(context);}
 	for(var u=0;u<Items.length;u++){Items[u].draw(context);}
+	for(var j=0;j<playerBullets.length;j++){playerBullets[j].draw(context);}
 	Player.draw(context,statContext);
 	for(var t=0;t<Towers.length;t++){Towers[t].draw(context);}
 	for(var i=0;i<Minions.length;i++){Minions[i].draw(context);}
-	for(var j=0;j<playerBullets.length;j++){playerBullets[j].draw(context);}
 	for(var tb=0;tb<towerBullets.length;tb++){towerBullets[tb].draw(context);}
 	//Écran de pause
 	if( gameIsPaused() ) pauseScreen(context);
@@ -132,8 +132,8 @@ function fpsCounter(){
 var Background = {
 	x: 0,
 	y: 0,
-	height: 576,
-	width: 960,
+	height: 790,
+	width: 1140,
 	draw : function(context){
 		context.drawImage(imageTool.background, this.x, this.y, this.width, this.height);
 	}
@@ -142,12 +142,12 @@ var Background = {
 // Niveau
 var Level = {
 	map: [
-		["B","B","B","B","M"," "," "," "," "," ","M","B","B","B","B"],
+		[" "," "," "," ","M"," "," "," "," "," ","F"," "," "," "," "],
 		[" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "],
 		[" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "],
-		[" "," "," "," "," "," "," ","H"," "," "," "," "," "," "," "],
+		[" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "],
 		[" "," ","H"," ","H"," ","H","4","H"," ","H"," ","H"," "," "],
-		[" "," "," "," "," "," "," ","H"," "," "," "," "," "," "," "],
+		[" "," "," "," "," "," ","B","H","B"," "," "," "," "," "," "],
 		[" ","H"," "," "," "," "," "," "," "," "," "," "," ","H"," "],
 		["H","T","H"," "," "," "," "," "," "," "," "," ","H","T","H"],
 		[" ","H"," "," "," "," ","B","P","B"," "," "," "," ","H"," "]
@@ -157,16 +157,19 @@ var Level = {
 		var towerCounter=0;
 		var collideMapsCounter=0;
 		var holeMapsCounter = 0;
-		for(var i=0,y=0; i< this.map.length; i++,y+=64){
-			for(var j=0,x=0; j< this.map[i].length; j++,x+=64){ 
+		for(var i=0,y=110; i< this.map.length; i++,y+=64){
+			for(var j=0,x=90; j< this.map[i].length; j++,x+=64){ 
 				if(this.map[i][j] == "P") {
 					Player.x=x;
 					Player.y=y;}
 				if(this.map[i][j] == "M") {
-					Minions[minionCounter] = new Minion(x,y,2);
+					Minions[minionCounter] = new Minion(x,y,4);
+					minionCounter++;}
+				if(this.map[i][j] == "F") {
+					Minions[minionCounter] = new Fly(x,y,2);
 					minionCounter++;}
 				if(this.map[i][j] == "T") {
-					Towers[towerCounter] = new Tower(x,y);
+					Towers[towerCounter] = new Tower(x,y,6);
 					towerCounter++;}
 				if(this.map[i][j] == "B") {
 					collideMaps[collideMapsCounter] = new Block(x,y);

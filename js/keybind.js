@@ -11,10 +11,10 @@ var keyPause = false; // ENTER
 function onKeyDown(event){
 	var keyCode = event.keyCode;
 	switch(keyCode){
-		case 37: keyLeft = true; break;		// Left arrow
-		case 38: keyUp = true; break;		// up arrow
-		case 39: keyRight = true; break; 	// right arrow
-		case 40: keyDown = true; break; 	// down arrow
+		case 37: keyLeft = true;event.preventDefault(); break;		// Left arrow
+		case 38: keyUp = true;event.preventDefault(); break;		// up arrow
+		case 39: keyRight = true;event.preventDefault(); break; 	// right arrow
+		case 40: keyDown = true;event.preventDefault(); break; 	// down arrow
 		case 68: keyD = true; break; 		//d
 		case 83: keyS = true; break; 		//s
 		case 65: keyA = true; break; 		//a

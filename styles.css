@@ -2,7 +2,7 @@ html { background: #222;	font: 1em Arial; }
 * {	padding: 0px; margin: 0px; }
 #game {
 	width: 1200px;
-	margin: 50px auto;
+	margin: auto;
 	line-height:0px;
 	text-align: center;
 }
@@ -10,10 +10,9 @@ html { background: #222;	font: 1em Arial; }
 	position: absolute;
 	height: 32px;
 	z-index: 1;
-	padding: 12px 20px;
 	font: bold 1.1em Verdana;
 	color: #fff;
-	margin: auto;
+	float: right;
 }
 #fps {
 	font: 1.1em Verdana;

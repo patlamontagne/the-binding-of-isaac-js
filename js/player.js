@@ -48,6 +48,11 @@ function Item(x,y,type){ // type 1 = coin, 2 = health, 3 = maxhealth...
 	}
 	this.draw = function(context){
 		if(this.alive){
+			
+			context.save();
+			context.globalAlpha = 0.15;
+			context.drawImage(imageTool.shadow, this.x+3, this.y, this.width-6, this.height-4);
+			context.restore();
 			var img;
 			if(this.type == 1){img = imageTool.coin;}
 			if(this.type == 2){img = imageTool.health;}
@@ -82,7 +87,7 @@ function Item(x,y,type){ // type 1 = coin, 2 = health, 3 = maxhealth...
 		}
 	this.checkDamage = function(){ //calcul réaction aux balles
 		this.now = Date.now();
-		if( this.now - this.lastDamaged < 40){ //compare le temps actuel avec le temps du dernier dégat
+		if( this.now - this.lastDamaged < 60){ //compare le temps actuel avec le temps du dernier dégat
 			this.isHit = true;}
 		else this.isHit = false;
 	}
@@ -118,7 +123,7 @@ function createItem(x,y){
 	if(drop == 9){type = 7;}
 	if(drop == 11){type = 8;}
 	
-	Items[ItemCounter] = new Item(x+20,y+20,type);
+	Items[ItemCounter] = new Item(x,y,type);
 	ItemCounter ++;
 }
 
@@ -139,7 +144,7 @@ var Player = {
 	damage : 1,
 	range : 400,
 	fireRate: 700,
-	attackSpeed: 4,
+	attackSpeed: 1,
 	hp : 3,	// Vie (actuelle)
 	maxhp: 3,	// Vie (pleine)
 	lifebar :24, // HP boosté maximum
@@ -165,36 +170,32 @@ var Player = {
 			this.damage = 1 + this.dmgBoost*0.4;
 			this.range = 400 + this.rangeBoost*70;
 			this.fireRate = 700 - this.fireRateBoost*50;
-			this.attackSpeed = 4 + this.bulletSpeedBoost;
+			this.attackSpeed = 3 + this.bulletSpeedBoost;
 			
-				if(keyW){
+				if(keyW && this.y > 110 ){
 					this.y -= this.speed;
-					this.head = imageTool.playerUp;
 					currentMoving = "up";
 					detectCollision(Towers);
 					this.checkCollideW(collideMaps);
 					this.checkCollideW(holeMaps);
 					this.checkCollideW(Towers);}				
-				if(keyS){
+				if(keyS && this.y < 680 - this.height){
 					this.y += this.speed;
-					this.head = imageTool.playerDown;
 					currentMoving = "down";
 					detectCollision(Towers);
 					this.checkCollideS(collideMaps);
 					this.checkCollideS(holeMaps);
 					this.checkCollideS(Towers);}
 				
-				if(keyA){					
+				if(keyA && this.x > 90){					
 					this.x -= this.speed;
-					this.head = imageTool.playerLeft;
 					currentMoving = "left";
 					detectCollision(Towers);
 					this.checkCollideA(collideMaps);
 					this.checkCollideA(holeMaps);
 					this.checkCollideA(Towers);}
-				if(keyD){
+				if(keyD && this.x < 1050 - this.width){
 					this.x += this.speed;
-					this.head = imageTool.playerRight;
 					currentMoving = "right";
 					detectCollision(Towers);
 					this.checkCollideD(collideMaps);
@@ -210,34 +211,47 @@ var Player = {
 			//Direction tête
 			if(keyLeft){
 				this.head = imageTool.playerLeft;playerFire("left",currentMoving);}
-			if(keyUp){
+			else if(keyUp){
 				this.head = imageTool.playerUp;playerFire("up",currentMoving);}
-			if(keyRight){
+			else if(keyRight){
 				this.head = imageTool.playerRight;playerFire("right",currentMoving);}
-			if(keyDown){
+			else if(keyDown){
 				this.head = imageTool.playerDown;playerFire("down",currentMoving);}
+			else this.head = imageTool.playerDown;
 		}
 	},
 	draw : function(context,statContext){
-		if(this.alive){ 
+		if(this.alive){
+			context.save();
+			context.globalAlpha = 0.15;
+			context.drawImage(imageTool.shadow, this.x-2, this.y+10, this.width+4, this.height+4);
+			context.restore();
+			
 			if(this.canGetDamage){ //Joueur Normal
-				context.drawImage(this.head, this.x, this.y, this.width, this.height);}
+				context.drawImage(this.head, this.x-2, this.y-2, this.width+4, this.height+4);}
 			if(!this.canGetDamage){ // Joueur invincible
-				context.drawImage(this.head, this.x, this.y, this.width, this.height);
-				context.drawImage(imageTool.noDamage, this.x-10, this.y-10, 70, 70);
+				context.save();
+				context.globalAlpha = 0.6;
+				context.drawImage(this.head, this.x-2, this.y-2, this.width+4, this.height+4);
+				context.restore();
 			}
 		}
-		if(!this.alive) context.drawImage(imageTool.playerDead, this.x, this.y, this.width, this.height); //joueur mort
+		if(!this.alive){ 
+			context.save();
+			context.globalAlpha = 0.15;
+			context.drawImage(imageTool.shadow, this.x-2, this.y+10, this.width+4, this.height+4);
+			context.restore();
+			context.drawImage(imageTool.playerDead, this.x-2, this.y-2, this.width+4, this.height+4);} //joueur mort
 		
 		//LifeBar
 		var diffHp = this.maxhp - this.hp;
 		var pool = 0;
 		for(var h = 0; h < this.hp; h++){
-			statContext.drawImage(imageTool.hp,(pool*35)+10,4,40,29);
+			context.drawImage(imageTool.hp,(pool*39)+10,canvas.height-50,40,29);
 			pool++;
 		}
 		for(var d = 0; d < diffHp; d++){
-			statContext.drawImage(imageTool.emptyHp,(pool*35)+10,6,39,27);
+			context.drawImage(imageTool.emptyHp,(pool*39)+10,canvas.height-46,39,27);
 			pool++;
 		}
 		/* BOOST ICONS
@@ -248,27 +262,28 @@ var Player = {
 		statContext.drawImage(imageTool.rangeBoost,10,170,32,32);*/
 
 		// Gold
-		statContext.drawImage(imageTool.gold,870,4,50,27);
-		statContext.font = "21pt Impact";
-		statContext.fillText(Player.gold, 920, 28);
+		context.drawImage(imageTool.gold,1020,canvas.height-50,50,27);
+		context.font = "21pt Impact";
+		context.fillStyle = 'white';
+		context.fillText(Player.gold, 1072, canvas.height-26);
 		
 		//Stats
-		statContext.drawImage(imageTool.stats,0,28,250,170);
+		statContext.drawImage(imageTool.stats,10,0,240,120);
 		// SPEED
 		for(var s = 0; s < Player.speedBoost; s++){
-			statContext.drawImage(imageTool.stat,(s*10)+242,42,18,24);		}
+			statContext.drawImage(imageTool.stat,(s*10)+246,8,6,13);		}
 		// DMG
 		for(var d = 0; d < Player.dmgBoost; d++){
-			statContext.drawImage(imageTool.stat,(d*10)+242,73,18,24);		}
+			statContext.drawImage(imageTool.stat,(d*10)+246,31,6,13);		}
 		// FIRERATE
 		for(var f = 0; f < Player.fireRateBoost; f++){
-			statContext.drawImage(imageTool.stat,(f*10)+242,104,18,24);		}
+			statContext.drawImage(imageTool.stat,(f*10)+246,54,6,13);		}
 		// BULLSPEED
 		for(var b = 0; b < Player.bulletSpeedBoost; b++){
-			statContext.drawImage(imageTool.stat,(b*10)+242,135,18,24);		}
+			statContext.drawImage(imageTool.stat,(b*10)+246,77,6,13);		}
 		// RANGE
 		for(var r = 0; r < Player.rangeBoost; r++){
-			statContext.drawImage(imageTool.stat,(r*10)+242,166,18,24);		}
+			statContext.drawImage(imageTool.stat,(r*10)+246,100,6,13);		}
 		/*
 		statContext.fillText(Player.speedBoost, 200, 65);
 		statContext.fillText(Player.dmgBoost, 200, 95);
@@ -323,19 +338,19 @@ function playerFire(dir,mov){
 	var fireNow = Date.now();
 	if( fireNow - lastFire > Player.fireRate){
 		switch(dir){
-			case "left":	bulx = Player.x-9;
-							buly = Player.y + (Player.height/2)-9;
+			case "left":	bulx = Player.x-5;
+							buly = Player.y + (Player.height/2);
 							playerBullets.push(new Bullet("left",speed,range,bulx,buly,Player.damage));
 							break;
-			case "up":		bulx = Player.x + (Player.width/2)-9;
-							buly = Player.y-9;
+			case "up":		bulx = Player.x + (Player.width/2)-11;
+							buly = Player.y;
 							playerBullets.push(new Bullet("up",speed,range,bulx,buly,Player.damage));
 							break;
-			case "right": 	bulx = Player.x + (Player.width/2)+18;
-							buly = Player.y + (Player.height/2)-9;
+			case "right": 	bulx = Player.x + (Player.width/2)+14;
+							buly = Player.y + (Player.height/2);
 							playerBullets.push(new Bullet("right",speed,range,bulx,buly,Player.damage));
 							break;
-			case "down": 	bulx = Player.x + (Player.width/2)-9;
+			case "down": 	bulx = Player.x + (Player.width/2)-11;
 							buly = Player.y + (Player.height/2)+18;
 							playerBullets.push(new Bullet("down",speed,range,bulx,buly,Player.damage));
 							break;
@@ -356,8 +371,8 @@ function Bullet(side,speed,range,bulx,buly,dmg){
 	this.y = this.iniy;
 	this.targetx = 0;
 	this.targety = 0;
-	this.height = 18;
-	this.width = 18;
+	this.height = 22;
+	this.width = 22;
 	this.dmg = dmg;
 	this.speed = speed;
 	this.alive = true;
@@ -384,7 +399,12 @@ function Bullet(side,speed,range,bulx,buly,dmg){
 				else this.alive = false;}	}	
 	}
 	this.draw = function(context){  //Affichage
-		if(this.alive) context.drawImage(imageTool.playerBullet, this.x, this.y, this.width, this.height);
+		if(this.alive){
+			context.save();
+			context.globalAlpha = 0.15;
+			context.drawImage(imageTool.shadow, this.x, this.y+20, this.width, this.height);
+			context.restore();
+		context.drawImage(imageTool.playerBullet, this.x, this.y, this.width, this.height);}
 	}
 	this.clear = function(){
 		this.range = 0;
