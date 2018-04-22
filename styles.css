@@ -11,22 +11,7 @@ html { background: #151515;	font: 1em Arial; }
 	margin: 20px auto;
 	line-height:0px;
 	text-align: center;}
-#label {
-	position: absolute;
-	height: 32px;
-	z-index: 1;
-	font: bold 1.1em Verdana;
-	color: #fff;
-	float: right;}
-#fps {
-	font: 1.1em Verdana;
-	position: relative;
-	left: 740px;
-	float: right;}
-#score {
-	font: bold 1.1em Verdana;
-	position: relative;
-	left: 12px;}
-canvas { border-left: solid 6px #000;border-right: solid 6px #000;cursor: crosshair; background: #272727; margin: auto;}
+canvas { border-left: solid 6px #000;border-right: solid 6px #000;cursor: crosshair; margin: auto;}
 #canvas { border-bottom: solid 6px #000;color:#fff;}
 #uicanvas{border-bottom: solid 0px #323131;}
+#bgcanvas{border-bottom: solid 0px #323131;position: absolute; top: 140px; z-index: -10;}

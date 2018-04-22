@@ -2,6 +2,7 @@
 //PAUSE
 var isChanging = false;
 var lastChange = Date.now();
+var updatingBackground = false;
 var isPaused = false, lastPaused = Date.now();
 var gameOver = false;
 var gameOverOpac=0;
@@ -18,6 +19,10 @@ var rockIsDropped = false;
 var numImages = 0;
 var numLoaded = 0;
 var floorCount = 0;
+var Game;
+var floorStructure;
+var currentFloor;
+var possibleRooms;
 	
 // Compatibilité browser
  var animFrame = window.requestAnimationFrame ||
@@ -40,6 +45,7 @@ function gameInit(){
 	playerAnimations();
 	keyboardEvent();
 	animFrame(recursiveAnim);
+	updatingBackground = true;
 }
 
 function loading(state){
@@ -57,10 +63,35 @@ function loading(state){
 	else if(!state){context.clearRect(0,0,canvas.width,canvas.height);}
 }
 
-var Game;
-var floorStructure;
-var currentFloor;
-var possibleRooms;
+// Loop du jeu
+function mainloop(){	
+	if(keyQ)toggleHitbox();
+	if(Date.now() - lastChange < 350){
+		isChanging = true;}
+	else isChanging = false;	
+	if(!gameOver && !gameIsPaused() && !isChanging){
+	
+		if( Date.now() - lastChange > 700){
+			Game.update();}
+		if( Date.now() - lastChange > 701 && Date.now() - lastChange < 750 ){
+			updatingBackground = true;}
+		Game.clear();
+		Player.update();
+		showAdjacentRooms();
+		if(keyW || keyS){Animations[0].update(Player.x,Player.y);}
+		if(keyD){Animations[1].update(Player.x,Player.y);}
+		if(keyA){Animations[2].update(Player.x,Player.y);}
+		//Sang
+		for(var s=0; s<tempAnimations.length;s++){
+			tempAnimations[s].playOnce();
+			if(tempAnimations[s].isOver)tempAnimations.splice(s,1);}
+		}
+		Game.draw();
+	//fps calcul
+	var thisFrameTime = (thisLoop=new Date) - lastLoop;
+	frameTime+= (thisFrameTime - frameTime) / filterStrength;
+	lastLoop = thisLoop;
+}
 
 function generateFloor(){
 	floorCount++;
@@ -84,8 +115,7 @@ function generateFloor(){
 				
 		//BOSS
 		if(floorStructure[y][x] == "B"){ 
-			var randBoss = getRand(bossRooms.length,0)
-			currentFloor[y][x] = new Room("Boss",bossRooms[randBoss],y,x);}//Assigner la Boss room
+			currentFloor[y][x] = new Room("Boss",bossRooms[floorCount-1],y,x);}//Assigner la Boss room
 				
 			
 		}
@@ -126,14 +156,16 @@ function generateFloor(){
 			currentFloor[ry][rx].isCurrent = true;
 		}
 	}
-	
 	//Créer le niveau
 	for(var i=0; i<currentFloor.length;i++){
 		for(var j=0; j<currentFloor[i].length;j++){
 			//alert("i = "+i+"... j = "+j);
-			if(currentFloor[i][j].exists) currentFloor[i][j].create();
+			if(currentFloor[i][j].exists){
+				currentFloor[i][j].create();
+				currentFloor[i][j].shopCreate();}
 		}
 	}
+	
 }
 
 function playerAnimations(){//(maxframe,x,y,width,height,updatetime,spritesheet,offsetx,offsety)
@@ -152,44 +184,15 @@ function gameIsPaused(){
 	return isPaused;
 }
 
-function pauseScreen(context){
-	
-	
-}
+// Mode Hitbox / debug
 var lastToggle = Date.now();
 function toggleHitbox(){
  var nowToggle = Date.now();
 	if(Date.now() - lastToggle > 300){
 		if(hitBox) hitBox =false;
 		else hitBox = true;
+		updatingBackground = true;
 		lastToggle = Date.now();}
-}
-// Loop du jeu
-function mainloop(){	
-		//if(keyQ)toggleHitbox();
-	if(Date.now() - lastChange < 350){
-		isChanging = true;}
-	else isChanging = false;	
-	if(!gameOver && !gameIsPaused() && !isChanging){
-	
-		if( Date.now() - lastChange > 700){
-			Game.update();}
-		Game.clear();
-		Player.update();
-		showAdjacentRooms();
-		if(keyW || keyS){Animations[0].update(Player.x,Player.y);}
-		if(keyD){Animations[1].update(Player.x,Player.y);}
-		if(keyA){Animations[2].update(Player.x,Player.y);}
-		//Sang
-		for(var s=0; s<tempAnimations.length;s++){
-			tempAnimations[s].playOnce();
-			if(tempAnimations[s].isOver)tempAnimations.splice(s,1);}
-		}
-		Game.draw();
-	//fps calcul
-	var thisFrameTime = (thisLoop=new Date) - lastLoop;
-	frameTime+= (thisFrameTime - frameTime) / filterStrength;
-	lastLoop = thisLoop;
 }
 
 //Image de fond
@@ -197,321 +200,19 @@ var Background = {
 	x: 0, y: 0,	height: 576, width: 960,
 	draw : function(context){
 		if(Game.type == "Secret") context.drawImage(imageTool.secretbackground, this.x, this.y, this.width, this.height);
+		else if (Game.type == "Boss") context.drawImage(imageTool.bossroombackground, this.x, this.y, this.width, this.height);
 		else {
 			context.drawImage(imageTool.background, this.x, this.y, this.width, this.height);
 			if(floorCount ==2) context.drawImage(imageTool.secondfloor, this.x, this.y, this.width, this.height);
 
-			}}
+		}
+	}
 };
 
 //Vide
 function Nothing(){
 	this.exists = false;
 }
-
-// Niveau
-function Room(type,map,locy,locx){
-	this.type = type;
-	this.locy = locy; //Position Y dans l'array d'étage
-	this.locx = locx; // Position X dans l'array d'étage
-	this.grid = [];
-	this.shop = [];
-	this.pickupPool = pickupPool;
-	this.shopPool = 0;
-	this.Minions = []; //Monstres errants
-	this.Towers = []; //Monstres fixes
-	this.enemyBullets = [];
-	this.collideMaps = []; //Objets infranchissables par le joueur et par les projectiles
-	this.wallMaps = []; //Murs invisibles
-	this.traps = []; // Pièges
-	this.holeMaps=[]; //Objets franchissables par les projectiles et certains Monstres, mais pas par le joueur
-	this.freeCells = []; //Espace libre, franchissable par tout
-	this.Items = []; // Drops, gold, boosts, hp, tout objets
-	this.Doors = []; // Permet de transitionner entre les salles
-	this.Bombs = [];
-	this.Explosions = [];
-	this.Bosses = []; 
-	this.sprites = []; //Images fixes, sang, taches, etc
-	this.enemies = 0; //Total d'ennemies présents
-	this.combatMode = 1; //Mode de combat
-	this.lootx = 0; //Positionx du loot de room
-	this.looty = 0; //Positiony du loot de room
-	this.canSpawnLoot = false; // Détermine si la room peut donner du loot ou pas
-	this.exists = true; //Propriété pour filtrer l'array des salles existantes et des emplacements vides
-	this.isVisited = false; //Minimap, la salle a été visité
-	this.isCurrent = false; //Minimap, la salle actuelle
-	this.isVisible = false; //Minimap, la salle est visible (adjacente à une salle visitée, ou le joueur possède une carte)
-	this.iconVisible = false;  //Minimap, l'icone de la salle est visible (adjacente à une salle visitée, ou le joueur possède une boussole)
-	this.map = map; //Tileset
-	this.create= function(){
-		this.shopPool = shopPool;
-	
-		for(var i=0,y=0; i< this.map.length; i++,y+=64){
-			this.grid[i] = new Array(this.map[i].length);
-			for(var j=0,x=0; j< this.map[i].length; j++,x+=64){
-			var locked =false;
-				this.grid[i][j]=0;
-				if(this.map[i][j] == "Pl") {this.freeCells.push(new freeCell(x,y));Player.x=x;	Player.y=y;
-				if(floorCount ==1)this.sprites.push(new Sprite(imageTool.tutorial,130,100, 700, 238));}
-				//PORTES
-				else if(this.map[i][j] == "+L") {
-					if(this.locx > 0){
-						if(currentFloor[this.locy][this.locx-1].exists){
-							if((currentFloor[this.locy][this.locx-1].type=="Treasure" && floorCount > 1) || currentFloor[this.locy][this.locx-1].type=="Shop") locked = true;
-							else locked = false;
-							this.Doors.push(new Door(x,y,"left",currentFloor[this.locy][this.locx-1].type,locked));}
-						else this.wallMaps.push(new Wall(x,y));}
-					else this.wallMaps.push(new Wall(x,y));}
-					
-					
-				else if(this.map[i][j] == "+R") {
-					if(this.locx < currentFloor[this.locy].length-1){
-						if(currentFloor[this.locy][this.locx+1].exists){
-							if((currentFloor[this.locy][this.locx+1].type=="Treasure" && floorCount > 1) || currentFloor[this.locy][this.locx+1].type=="Shop") locked = true;
-							else locked = false;
-							this.Doors.push(new Door(x,y,"right",currentFloor[this.locy][this.locx+1].type,locked));}
-						else this.wallMaps.push(new Wall(x,y));}
-					else this.wallMaps.push(new Wall(x,y));	}
-					
-					
-				else if(this.map[i][j] == "+U") {
-					if(this.locy > 0){
-						if(currentFloor[this.locy-1][this.locx].exists){
-							if((currentFloor[this.locy-1][this.locx].type=="Treasure" && floorCount > 1) || currentFloor[this.locy-1][this.locx].type=="Shop") locked = true;
-							else locked = false;
-							this.Doors.push(new Door(x,y,"up",currentFloor[this.locy-1][this.locx].type,locked));}
-						else this.wallMaps.push(new Wall(x,y));}
-					else this.wallMaps.push(new Wall(x,y));	}
-					
-					
-				else if(this.map[i][j] == "+D") {
-					if(this.locy < currentFloor.length-1){
-						if(currentFloor[this.locy+1][this.locx].exists){
-							if((currentFloor[this.locy+1][this.locx].type=="Treasure" && floorCount > 1) || currentFloor[this.locy+1][this.locx].type=="Shop") locked = true;
-							else locked = false;
-							this.Doors.push(new Door(x,y,"down",currentFloor[this.locy+1][this.locx].type,locked));}
-						else this.wallMaps.push(new Wall(x,y));}
-					else this.wallMaps.push(new Wall(x,y));	}
-				//Obstacles
-				else if(this.map[i][j] == "  ") {	this.freeCells.push(new freeCell(x,y)); this.grid[i][j]=1;}
-				else if(this.map[i][j] == "Tg") {	this.traps.push(new Glue(x,y)); this.grid[i][j]=1;}
-				else if(this.map[i][j] == "!!") {	this.wallMaps.push(new Wall(x,y));this.grid[i][j]=0;}
-				else if(this.map[i][j] == "Bl") {	this.collideMaps.push(new Block(x,y));this.grid[i][j]=0;}
-				else if(this.map[i][j] == "Oo") {	this.collideMaps.push(new Poop(x,y));this.grid[i][j]=0;}
-				else if(this.map[i][j] == "Tn") {	this.collideMaps.push(new Tnt(x,y));this.grid[i][j]=0;}
-				else if(this.map[i][j] == "Tf") {	this.collideMaps.push(new Fireplace(x,y)); this.grid[i][j]=0;}
-				else if(this.map[i][j] == "Ho") {	this.holeMaps.push(new Hole(x,y));this.grid[i][j]=0;}
-				//Ennemis
-				else if(this.map[i][j] == "Sp") {	this.Minions.push(new Spider(x+15,y+25,1.5,"spider",true)); this.grid[i][j]=1;}
-				else if(this.map[i][j] == "Sb") {	this.Minions.push(new Spider(x+15,y+25,3.25,"buttspider",true)); this.grid[i][j]=1;}
-				else if(this.map[i][j] == "Zo") {	this.Minions.push(new Zombie(x+10,y+20,3.25)); this.grid[i][j]=1;}
-				else if(this.map[i][j] == "Cl") {	this.Minions.push(new Clotty(i,j,x+10,y+20,5.5)); this.grid[i][j]=1;}
-				else if(this.map[i][j] == "Ma") {	this.Minions.push(new Maggot(i,j,x+10,y+20,3.25)); this.grid[i][j]=1;}
-				else if(this.map[i][j] == "Fl") {	this.Minions.push(new Fly(x,y,1.25,"Black",true)); this.grid[i][j]=1;}
-				else if(this.map[i][j] == "Af") {	this.Minions.push(new Fly(x,y,1.25,"Attack",true)); this.grid[i][j]=1;}
-				else if(this.map[i][j] == "Pf") {	this.Minions.push(new Fly(x,y,2.5,"Pooter",true)); this.grid[i][j]=1;}
-				else if(this.map[i][j] == "To") {	this.Towers.push(new Tower(x,y,4.25,true)); this.grid[i][j]=1;}
-				//Bosses
-				else if(this.map[i][j] == "X1") {	this.Bosses.push(new Duke(x,y,40));this.sprites.push(new Blood(0,0,0,true)); this.grid[i][j]=1;}
-				else if(this.map[i][j] == "ZZ") {	this.Items.push(new TrapDoor(x,y));this.grid[i][j]=1;}
-				//Shop
-				else if(this.map[i][j] == "Sh") {	this.shop.push(new shopItem(x,y));}
-				//Items
-				else if(this.map[i][j] == "CC") {	this.Items.push(new Chest(x,y));this.grid[i][j]=1;}
-				else if(this.map[i][j] == "XY") {	this.lootx = x+10; this.looty = y+10;this.canSpawnLoot=true; this.grid[i][j]=1;}
-				else if(this.map[i][j] == "00") {	loot("Health",x+10,y+10,this);this.grid[i][j]=1;}
-				else if(this.map[i][j] == "01") {	loot("Money",x+10,y+10,this);this.grid[i][j]=1;}
-				else if(this.map[i][j] == "02") {	this.Items.push(new Item(x+16,y+16,"Bomb"));this.grid[i][j]=1;}
-				else if(this.map[i][j] == "03") {	this.Items.push(new Item(x+16,y+16,"Tooth Picks"));this.grid[i][j]=1;}
-				else if(this.map[i][j] == "04") {	this.Items.push(new Item(x+16,y+16,"Number One"));this.grid[i][j]=1;}
-				else if(this.map[i][j] == "05") {	this.Items.push(new Item(x+16,y+16,"Wiggle Worm"));this.grid[i][j]=1;}
-				else if(this.map[i][j] == "06") {	this.Items.push(new Item(x+16,y+16,"The Halo"));this.grid[i][j]=1;}
-				else if(this.map[i][j] == "07") {	this.Items.push(new Item(x+16,y+16,"Pyro"));this.grid[i][j]=1;}
-				else if(this.map[i][j] == "00") {	this.Items.push(new Item(x+16,y+16,"Health"));this.grid[i][j]=1;}
-			}
-		}
-	}
-	this.update = function(){
-		for(var k=0; k<this.sprites.length;k++){
-			this.sprites[k].update();			}			
-		for(var u=0;u<this.Items.length;u++){
-			this.Items[u].update();
-			if( !this.Items[u].alive ) this.Items.splice(u,1);}		
-			
-		for(var u=0;u<this.Bombs.length;u++){
-			this.Bombs[u].update();
-			if( !this.Bombs[u].alive ) this.Bombs.splice(u,1);}	
-			
-		for(var u=0;u<this.Explosions.length;u++){
-			this.Explosions[u].update();
-			if( !this.Explosions[u].alive ) this.Explosions.splice(u,1);}		
-			
-		for(var xb=0;xb<this.Bosses.length;xb++){
-			this.Bosses[xb].update();
-			if( !this.Bosses[xb].alive ){ this.Bosses.splice(xb,1);gameStats.kill++;}}			
-		for(var i=0;i<this.Minions.length;i++){
-			this.Minions[i].update();
-			if( !this.Minions[i].alive ){ this.Minions.splice(i,1);gameStats.kill++;}}				
-		for(var t=0;t<this.Towers.length;t++){
-			this.Towers[t].update();
-			if( !this.Towers[t].alive ){this.Towers.splice(t,1);gameStats.kill++;}}	
-		for(var j=0;j<playerBullets.length;j++){
-			playerBullets[j].update();
-			if( !playerBullets[j].alive ){
-				bulletImpact("player",playerBullets[j].x,playerBullets[j].y,-50,-50);
-				playerBullets.splice(j,1);}}			
-		for(var b=0;b<playerBulletsBack.length;b++){
-			playerBulletsBack[b].update();
-			if( !playerBulletsBack[b].alive ){
-				bulletImpact("player",playerBulletsBack[b].x,playerBulletsBack[b].y,-50,-50);
-				playerBulletsBack.splice(b,1);}}			
-		for(var tb=0;tb<this.enemyBullets.length;tb++){
-			this.enemyBullets[tb].update();}
-		for(var tb=0;tb<this.collideMaps.length;tb++){
-			if(this.collideMaps[tb].type == "Chest")this.collideMaps[tb].update();}
-			
-		this.enemies = this.Minions.length + this.Towers.length + this.Bosses.length;
-		if(this.enemies <=0){
-			if(this.canSpawnLoot){
-				createItem(this.lootx,this.looty,this.type,false);
-				this.canSpawnLoot = false;}
-			this.combatMode = 0;}
-		else if(this.Bosses.length !=0) this.combatMode = 2;
-		else this.combatMode = 1;
-	}
-	this.draw = function(){
-		//Definition contexte canvas
-		var canvas = getEl("canvas");
-		var context = canvas.getContext('2d');
-		var uicanvas = getEl("uicanvas");
-		var uicontext = uicanvas.getContext('2d');
-		context.clearRect(0,0,uicanvas.width,canvas.height);
-		uicontext.clearRect(0,0,uicanvas.width,canvas.height);
-		if(hitBox){context.globalAlpha = 0.5;}
-		else context.globalAlpha = 1;
-		//Éléments
-		Background.draw(context);
-		for(var k=0;k<this.freeCells.length;k++){this.freeCells[k].draw(context);}
-		for(var k=0;k<this.sprites.length;k++){this.sprites[k].draw(context);}
-		for(var d=0;d<this.Doors.length;d++){this.Doors[d].draw(context);}
-		for(var c=0;c<this.collideMaps.length;c++){this.collideMaps[c].draw(context);}
-		for(var h=0;h<this.holeMaps.length;h++){this.holeMaps[h].draw(context);}
-		for(var t=0;t<this.traps.length;t++){this.traps[t].draw(context);}
-		for(var u=0;u<this.Items.length;u++){this.Items[u].draw(context);}	
-		for(var s=0;s<this.shop.length;s++){
-			this.shop[s].draw(context);
-			if(!this.shop[s].alive)this.shop.splice(s,1);}	
-		
-		//GAME OVER
-		if(gameOver){
-			context.save();
-			if(gameOverOpac < 0.8) gameOverOpac +=0.03;
-			context.globalAlpha = gameOverOpac;
-			context.drawImage(imageTool.blackScreen, 0, 0, canvas.width, canvas.height);
-			context.drawImage(imageTool.deathlight, Player.x-60, Player.y-430,150, 500);
-			context.restore();
-		}
-		
-		//Monstres et joueur
-		Player.drawBody(context);
-		if(!gameOver){
-			for(var i=0;i<this.Minions.length;i++){this.Minions[i].draw(context);}
-			for(var t=0;t<this.Towers.length;t++){this.Towers[t].draw(context);}
-			for(var b=0;b<playerBulletsBack.length;b++){playerBulletsBack[b].draw(context);}
-			for(var u=0;u<this.Bombs.length;u++){this.Bombs[u].draw(context);}}
-		Player.drawHead(context);
-		if(!gameOver){
-			for(var u=0;u<this.Explosions.length;u++){this.Explosions[u].draw(context);}	
-			for(var tb=0;tb<this.enemyBullets.length;tb++){this.enemyBullets[tb].draw(context);}
-			for(var xb=0;xb<this.Bosses.length;xb++){this.Bosses[xb].draw(context);}
-			for(var j=0;j<playerBullets.length;j++){playerBullets[j].draw(context);}
-			//Sang
-			for(var s=0; s<tempAnimations.length;s++) tempAnimations[s].drawOnce(context);}		
-		
-		if(gameOver){
-			if(Date.now() - gameOverTime > 1000){
-			context.drawImage(imageTool.gameover, 260,40,450, 500);
-			context.save();
-			context.font = "14pt danielbk";
-			context.fillStyle = 'black';
-			context.rotate(6*Math.PI/180);
-			context.globalAlpha = 0.65;
-			context.fillText(gameStats.rooms-1,504,162);
-			context.fillText(gameStats.kill,409,203);
-			context.fillText(gameStats.bullet,456,242);
-			var hitpercent = (gameStats.hit / gameStats.bullet)*100;
-			if(isNaN(hitpercent)) hitpercent =0;
-			context.fillText(hitpercent.toFixed(),406,281);
-			context.restore();
-
-			}
-		}
-		//Écran de pause
-		Player.drawUI(context,uicontext);
-		
-		//Debug
-		if(hitBox){
-			context.font = "12pt Arial";
-			context.fillStyle = 'white';
-			//context.fillText("BOSS: "+this.Bosses.length,5,15);
-			//context.fillText("MINIONS: "+this.Minions.length,5,35);
-			context.fillText("MODE: "+this.combatMode,5,55);
-			//context.fillText("BOSS: "+this.Bosses[0].swarm,5,75);
-			
-			context.fillText("X: "+Game.Minions[0].posx,5,75);
-			context.fillText("Y: "+Game.Minions[0].posy,5,95);
-			context.fillText("Target X: "+Game.Minions[0].rx,5,115);
-			context.fillText("Target Y: "+Game.Minions[0].ry,5,135);
-			context.fillText("Arrived: "+Game.Minions[0].isArrived,5,155);
-			
-		}
-		
-		//Minimap
-		var top = 10;
-		var left = 10;
-		for(var y=0; y < currentFloor.length; y++){
-			for(var x=0; x < currentFloor[y].length; x++){
-				if(currentFloor[y][x].isCurrent && currentFloor[y][x].type != "Secret" ){ uicontext.drawImage(imageTool.current,(x*42)+left,(y*17)+top, 44, 21);}
-				else if(currentFloor[y][x].exists && currentFloor[y][x].isVisited && currentFloor[y][x].type != "Secret" ){ uicontext.drawImage(imageTool.visited,(x*42)+left,(y*17)+top, 44, 21);}
-				else if(currentFloor[y][x].exists && currentFloor[y][x].isVisible && currentFloor[y][x].type != "Secret" ){ uicontext.drawImage(imageTool.unvisited,(x*42)+left,(y*17)+top, 44, 21);}
-			}
-		}
-		for(var y=0; y < currentFloor.length; y++){
-			for(var x=0; x < currentFloor[y].length; x++){			
-				if(currentFloor[y][x].exists && currentFloor[y][x].iconVisible && currentFloor[y][x].type =="Boss"){ uicontext.drawImage(imageTool.boss,(x*42)+left,(y*17)+top-8, 44, 32);}
-				else if(currentFloor[y][x].exists && currentFloor[y][x].iconVisible && currentFloor[y][x].type =="Treasure"){ uicontext.drawImage(imageTool.treasure,(x*42)+left,(y*17)+top-8, 44, 32);}
-				else if(currentFloor[y][x].exists && currentFloor[y][x].iconVisible && currentFloor[y][x].type =="Shop"){ uicontext.drawImage(imageTool.shop,(x*42)+left+10,(y*17)+top-4, 26, 28);}else if(currentFloor[y][x].exists && (currentFloor[y][x].isVisible || currentFloor[y][x].isVisible) && currentFloor[y][x].type == "Secret" ){ uicontext.drawImage(imageTool.secret,(x*42)+left,(y*17)+top-4, 44, 26);}
-			}
-		}
-		
-		//Pause
-		if(isPaused){
-			context.save();
-			context.globalAlpha = 0.7;
-			context.drawImage(imageTool.blackScreen, 0, 0, canvas.width, canvas.height);
-			context.restore();
-			context.drawImage(imageTool.pauseScreen, 0, 0, canvas.width, canvas.height);
-		}
-	
-	
-	}
-	this.reset = function(){
-		for(var i=0;i<this.Minions.length;i++){this.Minions[i].reset();}
-		for(var t=0;t<this.Towers.length;t++){this.Towers[t].reset();}
-		for(var xb=0;xb<this.Bosses.length;xb++){this.Bosses[xb].reset();}
-		this.enemyBullets = [];
-		this.Bombs = [];
-		playerBullets = [];
-		playerBulletsBack= [];
-	}	
-	this.clear = function(){
-		for(var i = 0; i<  this.enemyBullets.length; i++){
-		if (!this.enemyBullets[i].alive){
-			bulletImpact("enemy",this.enemyBullets[i].x,this.enemyBullets[i].y,-50,-50);
-			this.enemyBullets.splice(i,1);}}
-	}
-}
-
 
 function changeRoom(side){
 	lastChange = Date.now();
@@ -525,19 +226,20 @@ function changeRoom(side){
 			Player.x  = canvas.width - 100;}
 			
 		else if(side == "right"){
-			Game =currentFloor[Game.locy][Game.locx+1];
+			Game = currentFloor[Game.locy][Game.locx+1];
 			Player.x = 74;}
 		
 		else if(side == "up"){
-			Game =currentFloor[Game.locy-1][Game.locx];
+			Game = currentFloor[Game.locy-1][Game.locx];
 			Player.y = canvas.height-120;}
 		
 		else if(side == "down"){
-			Game =currentFloor[Game.locy+1][Game.locx];
+			Game = currentFloor[Game.locy+1][Game.locx];
 			Player.y = 74;}
 	
 	if(!Game.isVisited){Game.isVisited= true;gameStats.rooms++;}
 	Game.isCurrent = true;
+	updatingBackground = true;
 }
 
 function changeFloor(){
@@ -545,6 +247,7 @@ function changeFloor(){
 	Game.isCurrent = false;
 	Game.reset();
 	generateFloor();
+	updatingBackground = true;
 }
 
 function showAdjacentRooms(){ //Découvrir les pièces adjacentes
@@ -599,15 +302,18 @@ function Door(x,y,side,type,locked){
 	this.isDestroyed = false;
 	this.isColliding = true;
 	this.use = function(){
-		if(this.locked){
+		if(this.locked && Game.combatMode ==0){
 			if(Player.keys > 0){
 				this.locked=false;
 				Player.keys--;
+				updatingBackground = true;
 			}
 		}
 	}
 	this.destroy = function(){
-		this.isDestroyed = true
+		if(!Game.type=="Boss"){
+			this.isDestroyed = true;
+			updatingBackground = true;}
 	}
 	this.draw = function(context){
 		if(this.isDestroyed){
@@ -640,7 +346,7 @@ function Door(x,y,side,type,locked){
 					else this.bgimg = imageTool.doorLopen;
 					this.img = imageTool.TdoorL;}
 				else if(this.type =="Shop") {
-					if(this.locked) this.bgimg = imageTool.keyholeL;
+					if(this.locked) this.bgimg = imageTool.shopKeyholeL;
 					else this.bgimg = imageTool.doorLopen;
 					this.img = imageTool.doorL;}
 				else if(this.type =="Boss") this.img = imageTool.BdoorL;
@@ -676,7 +382,7 @@ function Door(x,y,side,type,locked){
 				else this.bgimg = imageTool.doorRopen;
 				this.img = imageTool.TdoorR;}
 			else if(this.type =="Shop") {
-					if(this.locked) this.bgimg = imageTool.keyholeR;
+					if(this.locked) this.bgimg = imageTool.shopKeyholeR;
 					else this.bgimg = imageTool.doorRopen;
 					this.img = imageTool.doorR;}
 			else if(this.type =="Boss")	this.img = imageTool.BdoorR;
@@ -712,7 +418,7 @@ function Door(x,y,side,type,locked){
 				else this.bgimg = imageTool.doorUopen;
 				this.img = imageTool.TdoorU;}
 			else if(this.type =="Shop") {
-					if(this.locked) this.bgimg = imageTool.keyholeU;
+					if(this.locked) this.bgimg = imageTool.shopKeyholeU;
 					else this.bgimg = imageTool.doorUopen;
 					this.img = imageTool.doorU;}
 			else if(this.type =="Boss")this.img = imageTool.BdoorU;
@@ -748,7 +454,7 @@ function Door(x,y,side,type,locked){
 				else this.bgimg = imageTool.doorDopen;
 				this.img = imageTool.TdoorD;}
 			else if(this.type =="Shop") {
-					if(this.locked) this.bgimg = imageTool.keyholeD;
+					if(this.locked) this.bgimg = imageTool.shopKeyholeD;
 					else this.bgimg = imageTool.doorDopen;
 					this.img = imageTool.doorD;}
 			else if(this.type =="Boss")	this.img = imageTool.BdoorD;
@@ -795,6 +501,7 @@ function Block(x,y){
 				this.canDrop =false;}}
 		this.isDestroyed = true;
 		this.isColliding = false;
+		updatingBackground = true;
 	}
 	this.draw = function(context){
 	if(this.rand == 1) this.type = "xblock";
@@ -825,6 +532,7 @@ function Poop(x,y){
 	this.destroy = function(){
 		this.isDestroyed = true;
 		this.state =5;
+		updatingBackground = true;
 	}
 	this.draw = function(context){
 		if(hitBox){context.drawImage(imageTool.hitBox, this.x, this.y, this.width, this.height);}
@@ -834,8 +542,8 @@ function Poop(x,y){
 		else if(this.state < 3.25) context.drawImage(imageTool.poop4, this.x-16, this.y-3, 78, 78);
 		else { context.drawImage(imageTool.poop5, this.x-16, this.y-2, 78, 78);
 			if(this.canAnim){
-				sounds.bullet.currentTime = 0;
-				sounds.bullet.play();
+				/*sounds.bullet.currentTime = 0;
+				sounds.bullet.play();*/
 				if(!this.isDestroyed)createItem(this.x,this.y,"poop");
 				tempAnimations.push(new Animation(7,this.x,this.y,200,200,45,imageTool.poopAnim,-58,-90,1));
 				this.canAnim = false;}
@@ -858,6 +566,7 @@ function Tnt(x,y){
 	this.destroy = function(){
 		this.isDestroyed = true;
 		this.state =4;
+		updatingBackground = true;
 	}
 	this.draw = function(context){
 		if(hitBox){context.drawImage(imageTool.hitBox, this.x, this.y, this.width, this.height);}
@@ -900,7 +609,7 @@ function Glue(x,y){
 	}
 	this.draw = function(context){
 		if(hitBox)context.drawImage(imageTool.hitBox, this.x, this.y, this.width, this.height);
-		if(!this.isDestroyed)context.drawImage(imageTool.glue, x-15, y-13, 96, 96);}
+		if(!this.isDestroyed) context.drawImage(imageTool.glue, x-15, y-13, 96, 96);}
 }
 
 function Fireplace(x,y){
@@ -949,8 +658,8 @@ function Fireplace(x,y){
 		else {
 			this.img = imageTool.fireoff;
 			if(this.canLoot){
-				sounds.bullet.currentTime = 0;
-				sounds.bullet.play();
+				/*sounds.bullet.currentTime = 0;
+				sounds.bullet.play();*/
 				if(!this.isDestroyed)createItem(this.x,this.y,"fire");
 				this.canLoot = false;}
 				
@@ -1118,7 +827,7 @@ function Explosion(x,y){
 	this.frame = 0;
 	this.alive = true;
 	this.currentTimer= Date.now();
-	this.timer = 100;
+	this.timer = 80;
 	this.canAnim = true;
 	this.update = function(){
 		if(this.frame < this.timer){
@@ -1130,6 +839,7 @@ function Explosion(x,y){
 			this.checkCollide(Game.Towers);
 			this.checkCollide(Game.Bosses);
 			this.checkCollide(Player);
+			updatingBackground = true;
 		}
 		if(Date.now() - this.currentTimer > this.timer){
 			this.alive = false;
@@ -1138,7 +848,7 @@ function Explosion(x,y){
 	this.draw = function(context){
 		if(hitBox)context.drawImage(imageTool.hitBox, this.x, this.y, this.width, this.height);
 		if(this.canAnim){
-			tempAnimations.push(new Animation(19,this.x,this.y-15,200,150,10,imageTool.explosion,0,0,1));
+			tempAnimations.push(new Animation(19,this.x,this.y-15,200,150,16,imageTool.explosion,0,0,1));
 			Game.sprites.push(new Sprite(imageTool.explosionmark,this.x+10,this.y+50, 188, 100));
 			this.canAnim = false;}
 	}
@@ -1178,26 +888,34 @@ function shopItem(x,y){
 	this.isCreated = false;
 	this.alive = true;
 	this.create = function(){
-		var rand = getRand(2,1); //Choix entre pickup et item
-		//Items
-		if(rand ==1 && Game.shopPool.length >0){
-			rand = getRand(Game.shopPool.length,0);
-			this.name = Game.shopPool[rand];
-			Game.shopPool.splice(rand,1);
-			if(this.name == "The Compass"){this.price = 15; this.priceImg = imageTool.price15; this.img = imageTool.thecompass;}
-			else if(this.name == "Treasure Map"){this.price = 15; this.priceImg = imageTool.price15; this.img = imageTool.treasuremap;}
+		if(!this.isCreated){
+			var rand = getRand(2,1); //Choix entre pickup et item
+			//Items
+			if(rand <2 && Game.currentShopPool.length >0){
+				console.log('currentShopPool.length ' + Game.currentShopPool.length);
+				var rand = getRand(Game.currentShopPool.length,0);
+				console.log('Tentative de création dun item');
+				this.name = Game.currentShopPool[rand];
+				console.log('nom: ' +this.name);
+				Game.currentShopPool.splice(rand,1);
+				if(this.name == "The Compass"){this.price = 15; this.priceImg = imageTool.price15; this.img = imageTool.thecompass;}
+				else if(this.name == "Treasure Map"){this.price = 15; this.priceImg = imageTool.price15; this.img = imageTool.treasuremap;
+				}
+			}
+			//PickUps
+			else{
+				var rand = getRand(Game.currentPickupPool.length,0);
+				this.name = Game.currentPickupPool[rand];
+				Game.currentPickupPool.splice(rand,1);
+				if(this.name == "Heart"){this.price = 3; this.priceImg = imageTool.price3; this.img = imageTool.health;}
+				if(this.name == "Soul Heart"){this.price = 5; this.priceImg = imageTool.price5; this.img = imageTool.armor;}
+				if(this.name == "Half Heart") {this.price = 3; this.priceImg = imageTool.price5; this.img = imageTool.halfhealth;}
+				if(this.name == "Bomb"){this.price = 5; this.priceImg = imageTool.price5; this.img = imageTool.bomb;}
+				if(this.name == "Key"){this.price = 5; this.priceImg = imageTool.price5; this.img = imageTool.key;}
+			}
+			this.isCreated = true;
+			console.log('4 item ' + this.name + ' created');
 		}
-		//PickUps
-		else{
-			rand = getRand(Game.pickupPool.length,0);
-			this.name = Game.pickupPool[rand];
-			Game.pickupPool.splice(rand,1);
-			if(this.name == "Heart"){this.price = 3; this.priceImg = imageTool.price3; this.img = imageTool.health;}
-			else if(this.name == "Soul Heart"){this.price = 5; this.priceImg = imageTool.price5; this.img = imageTool.armor;}
-			else if(this.name == "Bomb"){this.price = 5; this.priceImg = imageTool.price5; this.img = imageTool.bomb;}
-			else if(this.name == "Key"){this.price = 5; this.priceImg = imageTool.price5; this.img = imageTool.key;}
-		}
-		this.isCreated = true;
 	}
 	this.buy = function(){
 		Player.gold -= this.price;
@@ -1208,26 +926,33 @@ function shopItem(x,y){
 		if(Player.gold >= this.price){
 			if(this.name == "Heart"){
 				if(Player.hp <12){
-					if(Player.maxhp - Player.hp == 0.5){Player.hp += 0.5;this.buy();}
-					else if(Player.maxhp - Player.hp >= 1){ Player.hp++;this.buy();}}}
-			else if(this.name == "Soul Heart"){Player.soul++;this.buy();}
-			else if(this.name == "Bomb"){if(Player.bombs < 99){Player.bombs++;this.buy();}}
-			else if(this.name == "Key"){if(Player.keys < 99){Player.keys++;this.buy();}}
+					if(Player.maxhp - Player.hp == 0.5){Player.hp += 0.5;}
+					else if(Player.maxhp - Player.hp >= 1){ Player.hp++;}
+					this.buy();}}
+			if(this.name == "Half Heart"){
+				if(Player.hp <12){
+					if(Player.maxhp - Player.hp >= 0.5){Player.hp += 0.5;}
+					this.buy();}}
+			if(this.name == "Soul Heart"){Player.soul++;this.buy();}
+			if(this.name == "Bomb"){if(Player.bombs < 99){Player.bombs++;this.buy();}}
+			if(this.name == "Key"){if(Player.keys < 99){Player.keys++;this.buy();}}
 			//Items
-			else if(this.name == "The Compass"){
+			if(this.name == "The Compass"){
 				Player.TheCompass = true;
+				this.buy();
 				var a = shopPool.indexOf("The Compass");
 				shopPool.splice(a,1);
-				this.buy();}
-			else if(this.name == "Treasure Map"){
+				}
+			if(this.name == "Treasure Map"){
 				Player.TreasureMap = true;
+				this.buy();
 				var a = shopPool.indexOf("Treasure Map");
 				shopPool.splice(a,1);
-				this.buy();}
+				}
 		}
 	}
 	this.draw = function(context){
-		if(!this.isCreated)this.create();
+		this.create();
 		if(hitBox)context.drawImage(imageTool.hitBox, this.x, this.y, this.width, this.height);
 		context.save();
 		context.globalAlpha = 0.15;
@@ -1260,7 +985,7 @@ function TrapDoor(x,y){
 		
 		if(hitBox)context.drawImage(imageTool.hitBox, this.x, this.y, this.width, this.height);
 		
-		if(this.canBeUsed){
+		if(floorCount<=1 && this.canBeUsed){
 			context.drawImage(imageTool.trapdoor,this.x-7,this.y,64,64);}
 	}
 }
@@ -1381,6 +1106,23 @@ function Chest(x,y){
 	}
 }
 
+//Shopkeeper GREED
+function Shopkeeper(img,x,y,width,height){
+	this.x = x;
+	this.y = y+65;
+	this.type = "Shopkeeper";
+	this.width = width;
+	this.height = height;
+	this.img = img;
+	this.isColliding=true;
+	this.use = function(){}
+	this.update = function(){}
+	this.draw = function(context){
+		if(hitBox)context.drawImage(imageTool.hitBox, this.x, this.y, this.width, this.height);
+		context.drawImage(this.img,this.x-6,this.y-300,75,325);
+	}
+}
+
 function Sprite(img,x,y,width,height){
 	this.x = x;
 	this.y = y;
@@ -1403,17 +1145,20 @@ function Blood(x,y,tary,bossroom){
 	this.width = 40;
 	this.height = 30;
 	this.rand = getRand(3,1);
-	this.dir = getRand(5,1);
+	this.dir = getRand(4,1);
 	this.update = function(){
 		if(!bossroom){
-		if(this.y < this.tary) {
-			this.y += this.speed;
-			switch(this.dir){
-				case 1: this.x++;break;
-				case 2: this.x--;break;
-				case 3: this.x-=2;break;
-				case 4: this.x+=2; break;
-				default: ;}}}
+			if(this.y < this.tary) {
+				updatingBackground = true;
+				this.y += this.speed;
+				switch(this.dir){
+					case 1: this.x++;break;
+					case 2: this.x--;break;
+					case 3: this.x-=2;break;
+					case 4: this.x+=2; break;
+				}
+			}
+		}
 	}
 	this.draw = function(context){
 	if(bossroom){
@@ -1445,6 +1190,362 @@ function bulletImpact(obj,x,y,ox,oy){
 	
 }
 
+
+//
+//
+// Niveau (Objet principal)
+function Room(type,map,locy,locx){
+	this.type = type;
+	this.locy = locy; //Position Y dans l'array d'étage
+	this.locx = locx; // Position X dans l'array d'étage
+	this.grid = [];
+	this.currentPickupPool = [];
+	this.currentShopPool = [];
+	this.shop = [];
+	this.Minions = []; //Monstres errants
+	this.Towers = []; //Monstres fixes
+	this.enemyBullets = [];
+	this.collideMaps = []; //Objets infranchissables par le joueur et par les projectiles
+	this.wallMaps = []; //Murs invisibles
+	this.traps = []; // Pièges
+	this.holeMaps = []; //Objets franchissables par les projectiles et certains Monstres, mais pas par le joueur
+	this.freeCells = []; //Espace libre, franchissable par tout
+	this.Items = []; // Drops, gold, boosts, hp, tout objets
+	this.Doors = []; // Permet de transitionner entre les salles
+	this.Bombs = [];
+	this.Explosions = [];
+	this.Bosses = []; 
+	this.overSprites = []; //Image fixes flottantes
+	this.sprites = []; //Images fixes, sang, taches, etc
+	this.enemies = 0; //Total d'ennemies présents
+	this.combatMode = 1; //Mode de combat
+	this.lootx = 0; //Positionx du loot de room
+	this.looty = 0; //Positiony du loot de room
+	this.canSpawnLoot = false; // Détermine si la room peut donner du loot ou pas
+	this.exists = true; //Propriété pour filtrer l'array des salles existantes et des emplacements vides
+	this.isVisited = false; //Minimap, la salle a été visité
+	this.isCurrent = false; //Minimap, la salle actuelle
+	this.isVisible = false; //Minimap, la salle est visible (adjacente à une salle visitée, ou le joueur possède une carte)
+	this.iconVisible = false;  //Minimap, l'icone de la salle est visible (adjacente à une salle visitée, ou le joueur possède une boussole)
+	this.map = map; //Tileset
+	this.shopCreate = function(){
+		if(this.type=="Shop"){
+			this.currentPickupPool = ["Key","Bomb","Heart","Soul Heart","Half Heart"];
+			this.currentShopPool = shopPool;
+			
+			console.log('this.currentPickupPool.length = ' + this.currentPickupPool.length);
+			console.log('this.currentShopPool.length = ' + this.currentShopPool.length);
+			
+			this.shop = [];
+			
+			for(var i=0,y=0; i< this.map.length; i++,y+=64){
+				for(var j=0,x=0; j< this.map[i].length; j++,x+=64){
+					if(this.map[i][j] == "Sh") this.shop.push(new shopItem(x,y));
+				}
+			}
+			//for(var p = 0; p< this.shop.length; p++){
+			//	this.shop[p].create();}
+		}
+	}
+	this.create= function(){	
+		for(var i=0,y=0; i< this.map.length; i++,y+=64){
+			this.grid[i] = new Array(this.map[i].length);
+			for(var j=0,x=0; j< this.map[i].length; j++,x+=64){
+			var locked =false;
+				this.grid[i][j]=0;
+				if(this.map[i][j] == "Pl") {this.freeCells.push(new freeCell(x,y));Player.x=x;	Player.y=y;
+				if(floorCount ==1)this.sprites.push(new Sprite(imageTool.tutorial,130,100, 700, 238));}
+				//PORTES
+				else if(this.map[i][j] == "+L") {
+					if(this.locx > 0){
+						if(currentFloor[this.locy][this.locx-1].exists){
+							if((currentFloor[this.locy][this.locx-1].type=="Treasure" && floorCount > 1) || currentFloor[this.locy][this.locx-1].type=="Shop") locked = true;
+							else locked = false;
+							this.Doors.push(new Door(x,y,"left",currentFloor[this.locy][this.locx-1].type,locked));}
+						else this.wallMaps.push(new Wall(x,y));}
+					else this.wallMaps.push(new Wall(x,y));}
+					
+					
+				else if(this.map[i][j] == "+R") {
+					if(this.locx < currentFloor[this.locy].length-1){
+						if(currentFloor[this.locy][this.locx+1].exists){
+							if((currentFloor[this.locy][this.locx+1].type=="Treasure" && floorCount > 1) || currentFloor[this.locy][this.locx+1].type=="Shop") locked = true;
+							else locked = false;
+							this.Doors.push(new Door(x,y,"right",currentFloor[this.locy][this.locx+1].type,locked));}
+						else this.wallMaps.push(new Wall(x,y));}
+					else this.wallMaps.push(new Wall(x,y));	}
+					
+					
+				else if(this.map[i][j] == "+U") {
+					if(this.locy > 0){
+						if(currentFloor[this.locy-1][this.locx].exists){
+							if((currentFloor[this.locy-1][this.locx].type=="Treasure" && floorCount > 1) || currentFloor[this.locy-1][this.locx].type=="Shop") locked = true;
+							else locked = false;
+							this.Doors.push(new Door(x,y,"up",currentFloor[this.locy-1][this.locx].type,locked));}
+						else this.wallMaps.push(new Wall(x,y));}
+					else this.wallMaps.push(new Wall(x,y));	}
+					
+					
+				else if(this.map[i][j] == "+D") {
+					if(this.locy < currentFloor.length-1){
+						if(currentFloor[this.locy+1][this.locx].exists){
+							if((currentFloor[this.locy+1][this.locx].type=="Treasure" && floorCount > 1) || currentFloor[this.locy+1][this.locx].type=="Shop") locked = true;
+							else locked = false;
+							this.Doors.push(new Door(x,y,"down",currentFloor[this.locy+1][this.locx].type,locked));}
+						else this.wallMaps.push(new Wall(x,y));}
+					else this.wallMaps.push(new Wall(x,y));	}
+				//Obstacles
+				else if(this.map[i][j] == "  ") {	this.freeCells.push(new freeCell(x,y)); this.grid[i][j]=1;}
+				else if(this.map[i][j] == "Tg") {	this.traps.push(new Glue(x,y)); this.grid[i][j]=1;}
+				else if(this.map[i][j] == "!!") {	this.wallMaps.push(new Wall(x,y));this.grid[i][j]=0;}
+				else if(this.map[i][j] == "Bl") {	this.collideMaps.push(new Block(x,y));this.grid[i][j]=0;}
+				else if(this.map[i][j] == "Oo") {	this.collideMaps.push(new Poop(x,y));this.grid[i][j]=0;}
+				else if(this.map[i][j] == "Tn") {	this.collideMaps.push(new Tnt(x,y));this.grid[i][j]=0;}
+				else if(this.map[i][j] == "Tf") {	this.collideMaps.push(new Fireplace(x,y)); this.grid[i][j]=0;}
+				else if(this.map[i][j] == "Ho") {	this.holeMaps.push(new Hole(x,y));this.grid[i][j]=0;}
+				//Ennemis
+				else if(this.map[i][j] == "Sp") {	this.Minions.push(new Spider(x+15,y+25,1.5,"spider",true)); this.grid[i][j]=1;}
+				else if(this.map[i][j] == "Sb") {	this.Minions.push(new Spider(x+15,y+25,3.25,"buttspider",true)); this.grid[i][j]=1;}
+				else if(this.map[i][j] == "Zo") {	this.Minions.push(new Zombie(x+10,y+20,3.25)); this.grid[i][j]=1;}
+				else if(this.map[i][j] == "Cl") {	this.Minions.push(new Clotty(i,j,x+10,y+20,5.5)); this.grid[i][j]=1;}
+				else if(this.map[i][j] == "Ma") {	this.Minions.push(new Maggot(i,j,x+10,y+20,3.25)); this.grid[i][j]=1;}
+				else if(this.map[i][j] == "Fl") {	this.Minions.push(new Fly(x,y,1.25,"Black",true)); this.grid[i][j]=1;}
+				else if(this.map[i][j] == "Af") {	this.Minions.push(new Fly(x,y,1.25,"Attack",true)); this.grid[i][j]=1;}
+				else if(this.map[i][j] == "Pf") {	this.Minions.push(new Fly(x,y,2.5,"Pooter",true)); this.grid[i][j]=1;}
+				else if(this.map[i][j] == "To") {	this.Towers.push(new Tower(x,y,4.25,true)); this.grid[i][j]=1;}
+				//Bosses
+				else if(this.map[i][j] == "X1") {	this.Bosses.push(new Duke(x,y,70));this.sprites.push(new Blood(0,0,0,true)); this.grid[i][j]=1;}
+				else if(this.map[i][j] == "X2") {	this.Bosses.push(new Project(422,230,140));this.sprites.push(new Blood(0,0,0,true)); this.grid[i][j]=1;}
+				else if(this.map[i][j] == "ZZ") {	this.Items.push(new TrapDoor(x,y));this.grid[i][j]=1;}
+				//Shopkeeper
+				else if(this.map[i][j] == "Sk") {	
+					var skimg = "shopkeeper"+getRand(9,1);
+					this.overSprites.push(new Shopkeeper(imageTool[skimg],x,y,60,20)); this.grid[i][j]=1;}
+				//Items
+				else if(this.map[i][j] == "CC") {	this.Items.push(new Chest(x,y));this.grid[i][j]=1;}
+				else if(this.map[i][j] == "XY") {	this.lootx = x+10; this.looty = y+10;this.canSpawnLoot=true; this.grid[i][j]=1;}
+				else if(this.map[i][j] == "00") {	loot("Health",x+10,y+10,this);this.grid[i][j]=1;}
+				else if(this.map[i][j] == "01") {	loot("Money",x+10,y+10,this);this.grid[i][j]=1;}
+				else if(this.map[i][j] == "02") {	this.Items.push(new Item(x+16,y+16,"Bomb"));this.grid[i][j]=1;}
+				else if(this.map[i][j] == "03") {	this.Items.push(new Item(x+16,y+16,"Key"));this.grid[i][j]=1;}
+				else if(this.map[i][j] == "04") {	this.Items.push(new Item(x+16,y+16,"Number One"));this.grid[i][j]=1;}
+				else if(this.map[i][j] == "05") {	this.Items.push(new Item(x+16,y+16,"Wiggle Worm"));this.grid[i][j]=1;}
+				else if(this.map[i][j] == "06") {	this.Items.push(new Item(x+16,y+16,"The Halo"));this.grid[i][j]=1;}
+				else if(this.map[i][j] == "07") {	this.Items.push(new Item(x+16,y+16,"Pyro"));this.grid[i][j]=1;}
+				else if(this.map[i][j] == "00") {	this.Items.push(new Item(x+16,y+16,"Health"));this.grid[i][j]=1;}
+			}
+		}
+	}
+	this.update = function(){
+		for(var k=0; k<this.sprites.length;k++){
+			this.sprites[k].update();			}	
+	for(var k=0; k<this.overSprites.length;k++){
+			this.overSprites[k].update();			}			
+		for(var u=0;u<this.Items.length;u++){
+			this.Items[u].update();
+			if( !this.Items[u].alive ) this.Items.splice(u,1);}		
+			
+		for(var u=0;u<this.Bombs.length;u++){
+			this.Bombs[u].update();
+			if( !this.Bombs[u].alive ) this.Bombs.splice(u,1);}	
+			
+		for(var u=0;u<this.Explosions.length;u++){
+			this.Explosions[u].update();
+			if( !this.Explosions[u].alive ) this.Explosions.splice(u,1);}		
+			
+		for(var xb=0;xb<this.Bosses.length;xb++){
+			this.Bosses[xb].update();
+			if( !this.Bosses[xb].alive ){ this.Bosses.splice(xb,1);gameStats.kill++;}}			
+		for(var i=0;i<this.Minions.length;i++){
+			this.Minions[i].update();
+			if( !this.Minions[i].alive ){ this.Minions.splice(i,1);gameStats.kill++;}}				
+		for(var t=0;t<this.Towers.length;t++){
+			this.Towers[t].update();
+			if( !this.Towers[t].alive ){this.Towers.splice(t,1);gameStats.kill++;}}	
+		for(var j=0;j<playerBullets.length;j++){
+			playerBullets[j].update();
+			if( !playerBullets[j].alive ){
+				bulletImpact("player",playerBullets[j].x,playerBullets[j].y,-50,-50);
+				playerBullets.splice(j,1);}}			
+		for(var b=0;b<playerBulletsBack.length;b++){
+			playerBulletsBack[b].update();
+			if( !playerBulletsBack[b].alive ){
+				bulletImpact("player",playerBulletsBack[b].x,playerBulletsBack[b].y,-50,-50);
+				playerBulletsBack.splice(b,1);}}			
+		for(var tb=0;tb<this.enemyBullets.length;tb++){
+			this.enemyBullets[tb].update();}
+		for(var tb=0;tb<this.collideMaps.length;tb++){
+			if(this.collideMaps[tb].type == "Chest")this.collideMaps[tb].update();}
+			
+		this.enemies = this.Minions.length + this.Towers.length + this.Bosses.length;
+		if(this.enemies <=0){
+			if(this.canSpawnLoot){
+				createItem(this.lootx,this.looty,this.type,false);
+				this.canSpawnLoot = false;}
+			this.combatMode = 0;}
+		else if(this.Bosses.length !=0) this.combatMode = 2;
+		else this.combatMode = 1;
+	}
+	this.draw = function(){
+		//Definition contexte canvas
+		var canvas = getEl("canvas");
+		var context = canvas.getContext('2d');
+		var uicanvas = getEl("uicanvas");
+		var uicontext = uicanvas.getContext('2d');
+		context.clearRect(0,0,uicanvas.width,canvas.height);
+		uicontext.clearRect(0,0,uicanvas.width,canvas.height);
+		if(hitBox){context.globalAlpha = 0.5;}
+		else context.globalAlpha = 1;
+		
+		//Éléments décor
+		if(updatingBackground){
+			updatingBackground = false;
+			
+			var bgcanvas = getEl("bgcanvas");
+			var bgcontext = bgcanvas.getContext('2d');
+			bgcontext.clearRect(0,0,bgcanvas.width,canvas.height);
+			
+			Background.draw(bgcontext);
+			for(var k=0;k<this.sprites.length;k++){this.sprites[k].draw(bgcontext);}
+			for(var d=0;d<this.Doors.length;d++){this.Doors[d].draw(bgcontext);}
+			for(var c=0;c<this.collideMaps.length;c++){
+				if(this.collideMaps[c].type!="fireplace" && this.collideMaps[c].type!="hellfireplace")this.collideMaps[c].draw(bgcontext);}
+			for(var h=0;h<this.holeMaps.length;h++){this.holeMaps[h].draw(bgcontext);}
+		}
+		for(var c=0;c<this.collideMaps.length;c++){
+			if(this.collideMaps[c].type=="fireplace" || this.collideMaps[c].type=="hellfireplace")this.collideMaps[c].draw(context);}
+		
+		
+		//Items et traps
+		for(var t=0;t<this.traps.length;t++){this.traps[t].draw(context);}
+		for(var u=0;u<this.Items.length;u++){this.Items[u].draw(context);}	
+		for(var s=0;s<this.shop.length;s++){
+			this.shop[s].draw(context);
+			if(!this.shop[s].alive)this.shop.splice(s,1);}	
+		
+		//GAME OVER
+		if(gameOver){
+			context.save();
+			if(gameOverOpac < 0.8) gameOverOpac +=0.03;
+			context.globalAlpha = gameOverOpac;
+			context.drawImage(imageTool.blackScreen, 0, 0, canvas.width, canvas.height);
+			context.drawImage(imageTool.deathlight, Player.x-60, Player.y-430,150, 500);
+			context.restore();
+		}
+		
+		//Monstres et joueur
+		Player.drawBody(context);
+		
+		if(!gameOver){
+			for(var i=0;i<this.Minions.length;i++){
+				if(this.Minions[i].type !="Eye")this.Minions[i].draw(context);}
+			for(var t=0;t<this.Towers.length;t++){this.Towers[t].draw(context);}
+			for(var b=0;b<playerBulletsBack.length;b++){playerBulletsBack[b].draw(context);}
+			for(var u=0;u<this.Bombs.length;u++){this.Bombs[u].draw(context);}}
+			
+		Player.drawHead(context);
+		
+		if(!gameOver){
+			for(var xb=0;xb<this.Bosses.length;xb++){this.Bosses[xb].draw(context);}
+			for(var u=0;u<this.Explosions.length;u++){this.Explosions[u].draw(context);}	
+			for(var tb=0;tb<this.enemyBullets.length;tb++){this.enemyBullets[tb].draw(context);}
+			//Minions par dessus joueurs et boss
+			for(var i=0;i<this.Minions.length;i++){
+				if(this.Minions[i].type =="Eye")this.Minions[i].draw(context);}
+			for(var j=0;j<playerBullets.length;j++){playerBullets[j].draw(context);}
+			//Animations (sang, explosion etc)
+			for(var s=0; s<tempAnimations.length;s++) tempAnimations[s].drawOnce(context);}		
+			
+		//Sprites flottants 
+		for(var s=0; s<this.overSprites.length;s++) this.overSprites[s].draw(context);		
+		
+		//Game Over Screen
+		if(gameOver){
+			if(Date.now() - gameOverTime > 1000){
+			context.drawImage(imageTool.gameover, 260,40,450, 500);
+			context.save();
+			context.font = "14pt danielbk";
+			context.fillStyle = 'black';
+			context.rotate(6*Math.PI/180);
+			context.globalAlpha = 0.65;
+			context.fillText(gameStats.rooms-1,504,162);
+			context.fillText(gameStats.kill,409,203);
+			context.fillText(gameStats.bullet,456,242);
+			var hitpercent = (gameStats.hit / gameStats.bullet)*100;
+			if(isNaN(hitpercent)) hitpercent =0;
+			context.fillText(hitpercent.toFixed(),406,281);
+			context.restore();
+
+			}
+		}
+		//Écran de pause
+		Player.drawUI(context,uicontext);
+		
+		//Debug
+		if(hitBox){
+			context.font = "12pt Arial";
+			context.fillStyle = 'white';
+			//context.fillText("BOSS: "+this.Bosses.length,5,15);
+			//context.fillText("MINIONS: "+this.Minions.length,5,35);
+			context.fillText("MODE: "+this.combatMode,5,55);
+			//context.fillText("BOSS: "+this.Bosses[0].swarm,5,75);
+			
+			/*context.fillText("X: "+Game.Minions[0].posx,5,75);
+			context.fillText("Y: "+Game.Minions[0].posy,5,95);
+			context.fillText("Target X: "+Game.Minions[0].rx,5,115);
+			context.fillText("Target Y: "+Game.Minions[0].ry,5,135);
+			context.fillText("Arrived: "+Game.Minions[0].isArrived,5,155);*/
+		}
+		
+		//Minimap
+		var top = 10;
+		var left = 10;
+		for(var y=0; y < currentFloor.length; y++){
+			for(var x=0; x < currentFloor[y].length; x++){
+				if(currentFloor[y][x].isCurrent && currentFloor[y][x].type != "Secret" ){ uicontext.drawImage(imageTool.current,(x*42)+left,(y*17)+top, 44, 21);}
+				else if(currentFloor[y][x].exists && currentFloor[y][x].isVisited && currentFloor[y][x].type != "Secret" ){ uicontext.drawImage(imageTool.visited,(x*42)+left,(y*17)+top, 44, 21);}
+				else if(currentFloor[y][x].exists && currentFloor[y][x].isVisible && currentFloor[y][x].type != "Secret" ){ uicontext.drawImage(imageTool.unvisited,(x*42)+left,(y*17)+top, 44, 21);}
+			}
+		}
+		for(var y=0; y < currentFloor.length; y++){
+			for(var x=0; x < currentFloor[y].length; x++){			
+				if(currentFloor[y][x].exists && currentFloor[y][x].iconVisible && currentFloor[y][x].type =="Boss"){ uicontext.drawImage(imageTool.boss,(x*42)+left,(y*17)+top-8, 44, 32);}
+				else if(currentFloor[y][x].exists && currentFloor[y][x].iconVisible && currentFloor[y][x].type =="Treasure"){ uicontext.drawImage(imageTool.treasure,(x*42)+left,(y*17)+top-8, 44, 32);}
+				else if(currentFloor[y][x].exists && currentFloor[y][x].iconVisible && currentFloor[y][x].type =="Shop"){ uicontext.drawImage(imageTool.shop,(x*42)+left+10,(y*17)+top-4, 26, 28);}else if(currentFloor[y][x].exists && (currentFloor[y][x].isVisible || currentFloor[y][x].isVisible) && currentFloor[y][x].type == "Secret" ){ uicontext.drawImage(imageTool.secret,(x*42)+left,(y*17)+top-4, 44, 26);}
+			}
+		}
+		
+		//Pause
+		if(isPaused){
+			context.save();
+			context.globalAlpha = 0.7;
+			context.drawImage(imageTool.blackScreen, 0, 0, canvas.width, canvas.height);
+			context.restore();
+			context.drawImage(imageTool.pauseScreen, 0, 0, canvas.width, canvas.height);
+		}
+	
+	
+	}
+	this.reset = function(){
+		for(var i=0;i<this.Minions.length;i++){this.Minions[i].reset();}
+		for(var t=0;t<this.Towers.length;t++){this.Towers[t].reset();}
+		for(var xb=0;xb<this.Bosses.length;xb++){this.Bosses[xb].reset();}
+		this.enemyBullets = [];
+		this.Bombs = [];
+		playerBullets = [];
+		playerBulletsBack= [];
+	}	
+	this.clear = function(){
+		for(var i = 0; i<  this.enemyBullets.length; i++){
+		if (!this.enemyBullets[i].alive){
+			bulletImpact("enemy",this.enemyBullets[i].x,this.enemyBullets[i].y,-50,-50);
+			this.enemyBullets.splice(i,1);}}
+	}
+}
+// Fin Niveau
+//
+//
+
 var gameStats = {
 	bullet:0,
 	hit:0,
@@ -1454,4 +1555,5 @@ var gameStats = {
 
 function getRand(nbPos,nbDep){ return Math.floor(Math.random()*nbPos + nbDep);}
 function getEl(id){ return document.getElementById(id);}
+function toRad(angle) { return angle * (Math.PI / 180);}
 console.log('game.js loaded');

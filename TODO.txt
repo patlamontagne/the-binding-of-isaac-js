@@ -1,4 +1,3 @@
-Pousser les bombes avec projectiles
 player bump on damage
 hitbox ronde
 Fonction getvector pour simplifier l'utilisation de vecteurs
@@ -21,8 +20,6 @@ Chub (boss)
 Gurdy et Gurdy JR
 Larry JR
 
-Locked doors
-Chests
 Special rooms (sacrifice, demon,angel,arena)
 Assigner certains monstres pour certains étages
 Plus de tileset
@@ -33,3 +30,7 @@ Détonateur, Yummy Heart, Book of shadows
 
 
 
+BUGS ET AJUSTEMENTS
+Shop autres étages qui bug
+Double loot qui bug
+Mettre un timer et peut-être une collision sur la trapdoor

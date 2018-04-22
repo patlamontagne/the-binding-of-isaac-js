@@ -913,7 +913,6 @@ function Clotty(posy,posx,x,y,hp){
 	
 }
 
-
 //objet Maggot
 function Maggot(posy,posx,x,y,hp){
 	this.height = 36;
@@ -1449,7 +1448,7 @@ function Duke(x,y,hp){
 				bleed(6,this.x,this.y-20,this.y+40,this.height,this.width,-80,-80,1.2);
 				Game.Minions.push(new Fly(this.x+8,this.y+8,2.5,"Pooter",true));
 				sounds.enemyDeath.currentTime = 0;sounds.enemyDeath.play();
-				createItem(this.x+this.width/2,this.y+this.height/2,"boss");
+				createItem(this.x+this.width/2,this.y+this.height/2,"boss",true);
 				this.alive = false;}}
 	}
 	this.checkDamage = function(){ //calcul d'invulnérabilité temporaire
@@ -1506,6 +1505,510 @@ function Duke(x,y,hp){
 			}
 		}	
 	}
+}
+
+function Project(x,y,hp){
+	this.x = x;
+	this.y = y;
+	this.sx = x;
+	this.sy = y;
+	this.height = 108;
+	this.width = 108;
+	this.speed = 4;
+	this.accel = 0;
+	this.isMoving = false;
+	this.fireRate = 1200;
+	this.attackSpeed = 4;
+	this.range = 2000;
+	this.maxHp = hp;
+	this.hp = this.maxHp;
+	this.dmg = 0.5;
+	this.alive = true;
+	this.canGetDamage = true;
+	this.isHit = false;
+	this.canSpawn = true;
+	this.phase = 1;
+	this.killTimer = Date.now();
+	this.killCount = 0;
+	this.pattern = 1;
+	this.patternTimer = 6000;
+	this.patternChange = Date.now();
+	this.angle = 150;
+	this.armslength=30;
+	this.dirx = 0;
+	this.diry = 0;
+	this.angNow = Date.now();
+	this.lastAng = Date.now();
+	this.lastEye = Date.now();
+	this.lastDamaged = Date.now();
+	this.arm1 = [];
+	this.arm1.destroyed = false;
+	this.arm2 = [];
+	this.arm1.destroyed = false;
+	//METHODS
+	this.reset = function (){
+		this.x = this.sx;
+		this.y = this.sy;
+		this.hp = this.maxHp;
+		this.isHit = false;
+		this.isSleeping = this.wasSleeping;
+		this.isHit = false;
+		this.hitCount = 0;
+		this.isBerserk = false;
+	}
+	this.update = function(){
+			this.checkDamage();
+			//Calcul state damage
+			if( Date.now() - this.lastDamaged < 120){
+				this.isHit = true;}
+				else this.isHit = false;
+			
+			this.armslength = this.arm1.length + this.arm2.length;
+			if (this.hp <= 0){
+				this.phase = 3;
+				console.log('Phase 3');}
+			else if(this.armslength ==0){
+				this.phase = 2;
+				console.log('Phase 2');}
+			else this.phase = 1;
+			
+			//Phase 1: Bras
+			if(this.phase ==1){
+				if(Date.now() - this.patternChange > this.patternTimer){
+					if(this.pattern ==1) this.pattern =2;
+					else this.pattern =1;
+					this.patternChange = Date.now();
+					console.log('Pattern '+this.pattern);
+				}
+			}
+			//Phase 2: Projectiles
+			else if(this.phase ==2){
+				if(Date.now() - this.patternChange > this.patternTimer/3){
+					this.attack();
+					
+					this.patternChange = Date.now();
+					console.log('Pattern '+this.pattern);
+				}
+				this.move();
+			}
+			//Phase 3: mort des yeux suivit du corps
+			else if(this.phase==3 && Date.now() - this.killTimer > 220){
+				var gmlength = Game.Minions.length; //Nombre de yeux
+				if(gmlength > 0){
+					Game.Minions[gmlength-1].kill();}
+				else { //Si plus d'yeux
+					this.killCount++;
+						bleed(6,this.x+getRand(150,-50),this.y+getRand(150,-50),this.y+60,this.height,this.width,-80,-80,1.2);
+						sounds.enemyDeath.currentTime = 0;sounds.enemyDeath.play();
+					if(this.killCount >=15){
+					tempAnimations.push(new Animation(19,this.x-40,this.y-20,200,150,16,imageTool.explosion,0,0,1));
+					createItem(this.x+this.width/2,this.y+this.height/2,"boss",true);
+					this.alive = false;}} 
+				this.killTimer = Date.now();
+			}
+			if(this.phase==3){
+				this.x += getRand(5,-2);
+				this.y += getRand(5,-2);
+			}
+			
+			if(this.canSpawn){
+				this.canSpawn = false;
+				var distance = 80;
+				var armlength = 14;
+				var angle = 5;
+				var offset = 23;
+				//ARM1
+				for(var o = 0; o <= armlength; o++){
+					if(o <= 2)this.arm1.push(new this.Limb(40,40,120,distance+(o*offset),3,o));
+					else this.arm1.push(new this.Limb(40,40,120,distance+(o*offset),2,o));
+				}
+				//ARM2
+				for(var o = 0; o <= armlength; o++){
+					if(o <= 2)this.arm2.push(new this.Limb(40,40,300,distance+(o*offset),3,o));
+					else this.arm2.push(new this.Limb(40,40,300,distance+(o*offset),2,o));
+				}
+				this.lastEye = Date.now();
+			}
+			
+			
+			//EYE
+			if(Game.Bosses[0].phase != 3 && Date.now() - this.lastEye > (20000)/Game.Bosses[0].phase){
+				Game.Minions.push(new this.Eye(this.x+this.width/2-26, this.y+this.height/2+18));
+				this.lastEye = Date.now();
+				console.log('new Eye');
+			}
+
+			//ARM1
+			for(var a = 0; a< this.arm1.length; a++){
+				if(!this.arm1[a].alive){
+					this.arm1.splice(a,1);
+					
+					if(this.arm1.length==0 && !this.arm1.destroyed){
+						this.arm1.destroyed = true;
+						this.hp -= this.maxHp/4;
+						this.isHit = true;
+						this.lastDamaged = Date.now();
+					}
+				}
+				else {
+					this.arm1[a].position = a;
+					this.arm1[a].update();
+				}
+			}
+				
+			//ARM2
+			for(var c = 0; c< this.arm2.length; c++){
+				if(!this.arm2[c].alive){
+					//Morceau mort
+					this.arm2.splice(c,1);
+					//Bras mort
+					if(this.arm2.length==0 && !this.arm2.destroyed){
+						this.arm2.destroyed = true;
+						this.hp -= this.maxHp/4;
+						this.isHit = true;
+						this.lastDamaged = Date.now();
+					}
+				}
+				else {
+					this.arm2[c].position = c;
+					this.arm2[c].update();
+				}
+			}
+	}
+	this.move = function(){
+		//MOUVEMENT P2
+			if(Date.now() - this.lastAng > getRand(600,1200)){
+				this.lastAng = Date.now();
+				this.dirx = (Player.x) - (this.x + this.width/2);
+				this.diry = (Player.y) - (this.y + this.height/2);
+				var hyp = Math.sqrt(this.dirx*this.dirx + this.diry*this.diry);
+				this.dirx = this.dirx/hyp;
+				this.diry = this.diry/hyp;
+			}
+			if(!this.isHit && (Date.now() - this.lastAng < 1000)) this.isMoving = true;
+			else this.isMoving = false;
+							
+			if(this.isMoving){	if(this.accel < this.speed) this.accel += 0.1;}
+			else if(this.isHit){
+				if(this.accel > 0) this.accel -= this.accel/20;}
+			else if(!this.isMoving){if(this.accel > 0) this.accel -= this.accel/20;}
+		
+				this.x += this.dirx*this.accel;
+				this.y += this.diry*this.accel;
+					
+	}
+	this.draw = function(context){  //Affichage
+		if(hitBox)context.drawImage(imageTool.hitBox, this.x, this.y, this.width, this.height);
+		//Si le minion est vivant
+		if(this.alive){
+			//OMBRE
+			context.save();
+			context.globalAlpha = 0.25;
+			context.drawImage(imageTool.shadow, this.x-10, this.y-10, this.width+20, this.height+40);
+			context.restore();
+			
+			//BRAS
+			//1
+			for(var a = 0; a< this.arm1.length; a++){
+				this.arm1[this.arm1.length-1-a].draw(context);
+			}
+			//2
+			for(var a = 0; a< this.arm2.length; a++){
+				this.arm2[this.arm2.length-1-a].draw(context);
+			}
+			//BODY
+			context.drawImage(imageTool.project, this.x-32, this.y-22, this.width+52, this.height+42);			
+			//HP BAR
+			var percentLeft = (this.hp / this.maxHp)*100;
+			context.drawImage(imageTool.bossBg,280,0,410,43);
+				if(this.isHit) context.drawImage(imageTool.bossHpHit,316,10,(367/100)*percentLeft,27);
+				else context.drawImage(imageTool.bossHp,316,10,(367/100)*percentLeft,27);
+			context.drawImage(imageTool.bossBar,280,0,410,43);
+		}
+	}
+	this.clear = function(){	//Supprimer
+		this.x = 0;
+		this.y = 0;
+		this.speed = 0;
+		this.alive = false;
+	}
+	this.attack = function(){
+		this.dirx = (Player.x) - (this.x - this.width/2);
+		this.diry = (Player.y) - (this.y - this.height/2);
+		var hyp = Math.sqrt(this.dirx*this.dirx + this.diry*this.diry);
+		this.dirx = this.dirx/hyp;
+		this.diry = this.diry/hyp;
+		
+		for(var i=0; i<6; i++){
+			var speedsize = getRand(3,2);
+			Game.enemyBullets.push(new enemyBullet(speedsize,this.range,this.x+50,this.y+15,  this.dirx+(getRand(3,-1))/4  ,  this.diry+(getRand(3,-1))/4  ,0.5,40-(speedsize*4)));}
+	}
+	this.getDamage = function(dmg){
+		if(this.alive && this.hp > 0){
+			if(!this.isHit && this.phase == 1)this.hp -= dmg/20;
+			else if(!this.isHit  && this.phase == 2)this.hp -= dmg;
+			this.lastDamaged = Date.now();
+		}
+	}
+	this.checkDamage = function(){ //calcul d'invulnérabilité temporaire
+		if( Date.now() - this.lastDamaged < 80){this.isHit = true;}
+		else this.isHit = false;
+	}
+	//
+	//Limb
+	this.Limb = function(width,height,angle,radius,state,position){
+		this.x=0;
+		this.y=0;
+		this.width = width;
+		this.height = height;
+		this.position = position;
+		this.damage = 1;
+		this.state = state;
+		this.maxhp = this.state*3;
+		this.hp = this.maxhp;
+		this.angle = angle;
+		this.speed = 0;
+		this.tarspeed =0;
+		this.radius = radius;
+		this.tarradius = 80+(this.position*23);
+		this.variation = 0;
+		this.tarvariation = this.position*5;
+		this.lastDamaged = 0;
+		this.canGetDamage = true;
+		this.isHit = false;
+		this.alive = true;
+		this.update = function(){
+			//Vitesse selon pattern (direction) et nombre de "morceaux" de bras
+			if(Game.Bosses[0].pattern ==1)this.tarspeed = 4 - Game.Bosses[0].armslength/8;
+			else if(Game.Bosses[0].pattern ==2)this.tarspeed = -4 + Game.Bosses[0].armslength/8;
+			
+			//Calcul de vitesse
+			if(this.speed != this.tarspeed ) this.speed -= (this.speed - this.tarspeed)/100;
+			
+			//Switch de position
+			this.tarradius = 80+(this.position*23);
+			this.tarvariation = this.position*(this.tarspeed*2.5);
+			
+			//Calcul de la courbure du bras
+			if(this.variation != this.tarvariation ) this.variation -= (this.variation - this.tarvariation)/200;
+			if(this.radius != this.tarradius) this.radius -= (this.radius - this.tarradius)/10;
+			
+			//Rotation
+			if(this.angle > 0) this.angle-= this.speed;
+			else this.angle =360;
+			
+			//Calcul state damage
+			if( Date.now() - this.lastDamaged < 120){
+				this.isHit = true;}
+				else this.isHit = false;
+			
+			//Calcul d'étape des parties du bras. Si un morceau de "niveau 3" est brisée, une mouche spawn
+			if (this.hp <=3) this.state = 1;
+			else if (this.hp <=6){
+				if(this.state ==3){
+					Game.Minions.push(new Fly(this.x+getRand(20,1),this.y+getRand(20,1),2,"Attack",true,false));}
+				this.state = 2;}
+
+			this.x = ((Game.Bosses[0].x + Game.Bosses[0].width/2)  + (Math.sin(toRad(this.angle+this.variation))*this.radius) -this.width/2);
+			this.y = ((Game.Bosses[0].y + Game.Bosses[0].height/2) + (Math.cos(toRad(this.angle+this.variation))*this.radius) -this.height/2);
+				
+			// Player collision
+				if(this.y < Player.y + Player.height &&
+					this.y + this.height > Player.y &&
+					this.x + this.width  > Player.x && 
+					this.x < Player.x + Player.width ){
+						Player.getDamage(this.damage);}
+						
+			this.checkCollide(playerBullets);
+			this.checkCollide(playerBulletsBack);
+			this.checkCollide(Game.Explosions);
+		}
+		this.draw = function(context){
+			context.save();
+			context.globalAlpha = 0.15;
+			context.drawImage(imageTool.shadow, this.x+7, this.y+24, this.width-15, this.height-15);
+			context.restore();
+				
+			if(this.state ==1){
+				this.width = 30;
+				this.height = 30;
+				if(hitBox)context.drawImage(imageTool.hitBox, this.x, this.y, this.width, this.height);
+				if(!this.isHit)context.drawImage(imageTool.projectLimb1,this.x-6,this.y-6,this.width*1.3,this.height*1.3);
+			}
+			
+			else if(this.state ==2){
+				this.width = 45;
+				this.height = 45;
+				if(hitBox)context.drawImage(imageTool.hitBox, this.x, this.y, this.width, this.height);
+				if(!this.isHit)context.drawImage(imageTool.projectLimb2,this.x-4,this.y-15,this.width*1.3,this.height*1.4);}
+			
+			else if(this.state ==3){
+				this.width = 60;
+				this.height = 60;
+				if(hitBox)context.drawImage(imageTool.hitBox, this.x, this.y, this.width, this.height);
+				if(!this.isHit)context.drawImage(imageTool.projectLimb3,this.x-14,this.y-14,this.width*1.3,this.height*1.3);
+			}
+		}
+		this.getDamage = function(dmg){
+			if(this.alive && this.hp > 0){
+				if(!this.isHit)this.hp -= dmg;
+				this.lastDamaged = Date.now();
+				if(this.hp <= 0){
+					bleed(6,this.x,this.y-20,this.y+40,this.height,this.width,-80,-80,1.2);
+					sounds.enemyDeath.currentTime = 0;sounds.enemyDeath.play();
+					this.alive = false;}}
+		}
+		this.checkCollide =  function(obj){ //calcul de collision hitbox ronde
+			for(var i=0;i<obj.length;i++){
+				var diffx = (this.x + this.width/2) - (obj[i].x + obj[i].width/2);
+				var diffy = (this.y + this.height/2) - (obj[i].y + obj[i].height/2);
+				var hyp = Math.sqrt(diffx*diffx + diffy*diffy);
+				
+				if(hyp <= (this.width/2 + obj[i].width/2) ){
+					
+					if(obj == Game.Explosions){this.getDamage(Player.bombDmg/3)}
+					else{
+						this.getDamage(obj[i].dmg);
+						obj[i].clear();}
+				}
+			}
+		}
+	}
+	//FIN Limb
+	//
+	// EYE
+	this.Eye = function(x,y){
+		this.type = "Eye";
+		this.x = x;
+		this.y = y;
+		this.width = 26;
+		this.height = 26
+		this.dirx = 0;
+		this.diry = 0;
+		this.speed = 1;
+		this.accel = 0;
+		this.dmg = 0.5;
+		this.alive= true;
+		this.isHit = false;
+		this.isMoving = false;
+		this.rand = getRand(2000,250);
+		this.lastAng = Date.now();
+		this.lastDamaged = Date.now();
+		this.update = function(){
+		
+			if( Date.now() - this.lastDamaged < 300){
+				this.isHit = true;}
+			else this.isHit = false;
+			
+			//Vecteur joueur
+			if(Date.now() - this.lastAng > getRand(1300,1000)/Game.Bosses[0].phase){
+				this.lastAng = Date.now();
+				this.dirx = (Player.x) - (this.x - this.width/2);
+				this.diry = (Player.y) - (this.y - this.height/2);
+				var hyp = Math.sqrt(this.dirx*this.dirx + this.diry*this.diry);
+					
+				if(hyp <= 380 && Game.Bosses[0].phase ==1){
+					this.dirx = this.dirx/hyp;
+					this.diry = this.diry/hyp;}
+				else{
+					var angle = getRand(360,0);
+					this.diry = Math.sin(toRad(angle));
+					this.dirx = Math.cos(toRad(angle));}
+			}
+					
+					
+			if(!this.isHit && (Date.now() - this.lastAng < 700)) this.isMoving = true;
+			else this.isMoving = false;
+							
+			if(this.isMoving){	if(this.accel < this.speed) this.accel += 0.1;}
+			else if(this.isHit){
+				if(this.accel > 0) this.accel -= this.accel/20;}
+			else if(!this.isMoving){if(this.accel > 0) this.accel -= this.accel/20;}
+		
+			this.move();
+		}
+		this.move= function(){
+			
+		// Mode "bump" (a été touché)
+		if(this.isHit){
+			this.dirx = (Player.x- Player.width/2) - (this.x - this.width/2);
+			this.diry = (Player.y- Player.height/2) - (this.y - this.height/2);
+			var hyp = Math.sqrt(this.dirx*this.dirx + this.diry*this.diry);
+			this.dirx = this.dirx/hyp;
+			this.diry = this.diry/hyp;
+			
+			this.x -= this.dirx*(this.accel+Player.attackSpeed/2);
+			if(this.dirx < 0){
+				this.checkCollide(Game.wallMaps,"right");
+				this.checkCollide(Game.Doors,"right");
+				}
+			else if(this.dirx > 0){
+				this.checkCollide(Game.wallMaps,"left");
+				this.checkCollide(Game.Doors,"left");
+				}
+			this.y -= this.diry*(this.accel+Player.attackSpeed/2);
+			if(this.diry < 0){ 
+				this.checkCollide(Game.wallMaps,"down");
+				this.checkCollide(Game.Doors,"down");
+				}
+			else if(this.diry >0){ 
+				this.checkCollide(Game.wallMaps,"up");
+				this.checkCollide(Game.Doors,"up");
+				}
+			}
+		else{
+			this.x += this.dirx*this.accel;
+			if(this.dirx > 0){ 
+				this.checkCollide(Game.wallMaps,"right");
+				this.checkCollide(Game.Doors,"right");
+				}
+			else if(this.dirx < 0){ 
+				this.checkCollide(Game.wallMaps,"left");
+				this.checkCollide(Game.Doors,"left");
+				}
+				
+			this.y += this.diry*this.accel;
+			if(this.diry > 0){ 
+				this.checkCollide(Game.wallMaps,"down");
+				this.checkCollide(Game.Doors,"down");
+				}
+			else if(this.diry <0){ 
+				this.checkCollide(Game.wallMaps,"up");
+				this.checkCollide(Game.Doors,"up");
+				}}
+	}
+		this.kill = function(){
+			bleed(2,this.x,this.y-10,this.y+20,this.height,this.width,-50,-50,2/3);
+			this.alive = false;
+		}
+		this.getDamage = function(dmg){
+			if(dmg >= 10) this.kill();
+			this.lastDamaged = Date.now();
+		}
+		this.draw = function(context){
+			context.save();
+			context.globalAlpha = 0.15;
+			context.drawImage(imageTool.shadow, this.x+3, this.y+34, this.width-6, this.height-6);
+			context.restore();
+			if(hitBox)context.drawImage(imageTool.hitBox, this.x, this.y, this.width, this.height);
+			context.drawImage(imageTool.projectEye,this.x-2,this.y-2,this.width+4,this.height+4);		
+		}
+		this.checkCollide = function(obj,pos){
+		for(var i=0;i<obj.length;i++){
+			if(this.y < obj[i].y + obj[i].height &&
+			this.y + this.height > obj[i].y &&
+			this.x + this.width  > obj[i].x && 
+			this.x < obj[i].x + obj[i].width ){
+				if(obj[i].isColliding){
+					if(pos == "up"){this.y = obj[i].y+obj[i].height;return true;}
+					else if(pos == "down"){this.y = obj[i].y-this.height; return true;}
+					else if(pos == "left"){this.x = obj[i].x+obj[i].width;return true;}
+					else if(pos == "right"){this.x = obj[i].x-this.width;return true;}}}}}
+		
+	
+	}
+	//FIN EYE
+	//
 }
 
 
