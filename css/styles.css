@@ -1,0 +1,16 @@
+html{font:1em Arial;background:#111;}
+*{padding:0px;margin:0px;}
+@font-face{font-family:'wendy';src:url("font/8bit.ttf");}
+@font-face{font-family:'danielbk';src:url("font/danielbk.ttf");}
+#game{position:relative;max-width:1024px;height:614px;margin:0 auto;line-height:0px;text-align:center;}
+canvas{margin:auto;width:1024px;height:614px;position:absolute;top:0px;left:0px;}
+#canvas{color:#fff;}
+#uicanvas{}
+#bgcanvas{}
+#editorlink{margin:30px auto 0;text-align:center;}
+#editorlink ul{margin:30px auto;list-style-type:none;text-align:center;color:#aaa;}
+#editorlink > a{background:#aaa;font-weight:bold;text-decoration:none;color:#151515;padding:8px;margin:8px;}
+#editorlink > a.active{background:#fff;}
+#editorlink > a:hover{background:#cbeba5;font-weight:bold;text-decoration:none;color:#151515;padding:8px;}
+#editorlink ul a{color:#aaf;font-weight:bold;text-decoration:none;}
+#editorlink ul a:hover{text-decoration:underline;}
