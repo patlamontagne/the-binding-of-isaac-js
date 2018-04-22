@@ -1,4 +1,4 @@
-html { background: #222;	font: 1em Arial; }
+html { background: #151515;	font: 1em Arial; }
 * {	padding: 0px; margin: 0px; }
 @font-face {
     font-family: 'wendy';
@@ -24,5 +24,6 @@ html { background: #222;	font: 1em Arial; }
 	font: bold 1.1em Verdana;
 	position: relative;
 	left: 12px;}
-canvas { border: solid 3px #000;cursor: crosshair; background: #ccc; margin: auto;}
-#uicanvas{border-bottom: solid 0px #fff;}
+canvas { border-left: solid 6px #000;border-right: solid 6px #000;cursor: crosshair; background: #272727; margin: auto;}
+#canvas { border-bottom: solid 6px #000;}
+#uicanvas{border-bottom: solid 0px #323131;}
