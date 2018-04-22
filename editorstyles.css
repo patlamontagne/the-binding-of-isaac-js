@@ -28,7 +28,7 @@ canvas {}
 	background: url(img/bg.png) no-repeat center center;}
 
 #creator #editor .cell{	border: solid 1px #aaa; width: 62px; height: 62px; cursor: pointer; display: inline-block;}
-#creator #editor .cell:hover{border: solid 3px #cbeba5; width: 58px; height: 58px;}
+#creator #editor .cell:hover{border: solid 3px #00c4d3; width: 58px; height: 58px;}
 #creator #editor .wall{	border: solid 1px #aaa; width: 62px; height: 62px; display: inline-block;}
 /*SELECTEUR*/
 #selector{
@@ -46,7 +46,7 @@ canvas {}
 	height: 62px;
 	cursor: pointer;
 	display: inline-block;}
-#selector .selection:hover{background-color: #cbeba5;}
+#selector .selection:hover{background-color: #00c4d3;}
 	
 /*OPTIONS*/
 #options{
@@ -98,14 +98,24 @@ h1{
 }
 #editorlink ul{
 	margin: 30px auto;
+	width: 800px;
 	list-style-type : none;
-	text-align: center;
+	text-align: left;
 	color: #aaa;
 }
+#editorlink ul li {
+	margin: 5px 0;
+}
+#editorlink ul li.ul-title {
+	margin: 15px 0;
+}
+#editorlink ul span {
+	color: #00c4d3;
+}
 #editorlink > a{background: #aaa;font-weight: bold;text-decoration: none; color:#151515;padding: 8px;}
-#editorlink > a:hover{background: #cbeba5;font-weight: bold;text-decoration: none; color:#151515;padding: 8px;}
-#editorlink ul a{color: #aaf;font-weight: bold;text-decoration: none;}
+#editorlink > a:hover{background: #00c4d3;font-weight: bold;text-decoration: none; color:#151515;padding: 8px;}
+#editorlink ul a{color: #00c4d3;font-weight: bold;}
 #editorlink ul a:hover{text-decoration: underline;}
-#testbtn{background: #cbeba5;}
+#testbtn{background: #00c4d3;}
 #savebtn,#readbtn{background: #ccc;}
 #resetbtn,#clearbtn{background: #888;}

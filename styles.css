@@ -29,6 +29,6 @@ canvas { border-left: solid 6px #000;border-right: solid 6px #000; margin: auto;
 }
 
 #editorlink > a{background: #aaa;font-weight: bold;text-decoration: none; color:#151515;padding: 8px;}
-#editorlink > a:hover{background: #cbeba5;font-weight: bold;text-decoration: none; color:#151515;padding: 8px;}
-#editorlink ul a{color: #aaf;font-weight: bold;text-decoration: none;}
+#editorlink > a:hover{background: #00c4d3;font-weight: bold;text-decoration: none; color:#151515;padding: 8px;}
+#editorlink ul a{color: #00c4d3;font-weight: bold;}
 #editorlink ul a:hover{text-decoration: underline;}

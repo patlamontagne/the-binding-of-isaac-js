@@ -61,12 +61,12 @@ function initEditor(){
 				selection.setAttribute("onClick", "javascript:choose("+s+");");
 				selector.appendChild(selection); // HTML recoit l'élément
 		}
-		alert("                        Bienvenue dans l'outil créateur de salle !\n\n\n"+
+		/*alert("                        Bienvenue dans l'outil créateur de salle !\n\n\n"+
 			"COMMANDES : \n - Clic GAUCHE sur la liste pour choisir l'élément \n - Clic GAUCHE sur la grille pour poser l'élément \n - Clic DROIT sur la grille pour effacer la case \n\n\n"+
 			"BOUTONS : \n - Appuyez sur TEST pour visualiser et essayer votre création \n - Appuyez sur EDIT pour revenir dans l'outil créateur \n - Appuyez sur RESET pour réinitialiser la grille \n\n\n"+
 			"EXPORTER : \n - SAVE télécharge votre création sous forme de fichier texte \n - La zone de texte de droite détermine le nom du fichier \n\n\n"+
-			"IMPORTER : \n - Copiez-collez le code d'une salle dans la zone de texte de gauche \n et appuyez sur READ pour importer le code dans l'éditeur \n - Appuyez sur CLEAR pour vider la zone de texte \n\n\n"+
-			"- Envoyez le code de vos salles sur CESTMOIPAT@GMAIL.COM \n et elles seront intégrées au jeu !");
+			"IMPORTER : \n - Copiez-collez le CODE COMPLET d'une sauvegarde dans la zone de texte de gauche \n et appuyez sur READ pour importer le code dans l'éditeur \n - Appuyez sur CLEAR pour vider la zone de texte");
+	*/
 	//print();
 }
 
