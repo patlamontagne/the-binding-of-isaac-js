@@ -15,3 +15,15 @@ canvas { border-left: solid 6px #000;border-right: solid 6px #000;cursor: crossh
 #canvas { border-bottom: solid 6px #000;color:#fff;}
 #uicanvas{border-bottom: solid 0px #323131;}
 #bgcanvas{border-bottom: solid 0px #323131;position: absolute; top: 140px; z-index: -10;}
+
+#editorlink{
+	margin: 10px auto;
+	text-align: center;
+}
+#editorlink ul{
+	margin: 30px auto;
+	list-style-type : none;
+	text-align: center;
+	color: #aaa;
+}
+a{color: #aaf;font-weight: bold;text-decoration: none;}

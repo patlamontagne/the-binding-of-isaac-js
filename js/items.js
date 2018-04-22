@@ -9,9 +9,9 @@ function itemCollision(obj){
 
 //items
 var treasurePool = ["Boom!","<3","Speed Ball","Magic Mushroom","Mom's Lipstick","The Halo","Max's Head","Number One","Tooth Picks","Wiggle Worm"];
-var bossPool = ["The Belt","Wire Coat Hanger","MEAT!","Breakfast","Dessert","Dinner","Lunch","Jesus Juice"];
+var bossPool = ["The Sad Onion","Rotten Meat","Wooden Spoon","The Belt","Wire Coat Hanger","MEAT!","Breakfast","Dessert","Dinner","Lunch","Jesus Juice","Mom's Underwear","Mom's Heels"];
 var secretPool = ["Pyro","Raw Liver","Mini Mushroom","Bucket of Lard"];
-var chestPool = ["The Sad Onion","Rotten Meat","Wooden Spoon","The Belt","Mom's Underwear","Mom's Heels"];
+var chestPool = ["The Belt"];
 var shopPool = ["The Compass","Treasure Map"];
 var pickupPool = ["Key","Bomb","Heart","Soul Heart","Half Heart"];
 

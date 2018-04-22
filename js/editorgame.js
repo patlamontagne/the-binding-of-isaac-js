@@ -33,8 +33,9 @@ var possibleRooms;
             null ;
 // loop animation			
 var recursiveAnim = function() {
-    mainloop();
-	animFrame( recursiveAnim );
+    if(Testing) {
+		mainloop();
+		animFrame( recursiveAnim )};
 };
 
 //Initialisation
@@ -65,7 +66,7 @@ function loading(state){
 
 // Loop du jeu
 function mainloop(){	
-	//if(keyQ)toggleHitbox();
+	if(keyQ)toggleHitbox();
 	if(Date.now() - lastChange < 350){
 		isChanging = true;}
 	else isChanging = false;	
@@ -77,7 +78,6 @@ function mainloop(){
 			Player.update();}
 		if( Date.now() - lastChange > 701 && Date.now() - lastChange < 750 ){
 			updatingBackground = true;}
-		showAdjacentRooms();
 		if(keyW || keyS){Animations[0].update(Player.x,Player.y);}
 		if(keyD){Animations[1].update(Player.x,Player.y);}
 		if(keyA){Animations[2].update(Player.x,Player.y);}
@@ -95,79 +95,14 @@ function mainloop(){
 
 function generateFloor(){
 	floorCount++;
-	var rand = getRand(firstFloor.length,0);
-	//alert(rand);
-	floorStructure = firstFloor[rand];
-	firstFloor.splice(rand,1);
-	possibleRooms = eval("rooms"+floorCount);
-	currentFloor = new Array(floorStructure.length);
-	//Peuple les rooms
-	for(var y=0; y < floorStructure.length; y++){
-		currentFloor[y] = new Array(floorStructure[y].length);
-		for(var x=0; x < floorStructure[y].length; x++){
-			currentFloor[y][x]= new Nothing(); //Initialiser toutes les rooms, même celles qui n'existent pas
-			//BASIC ROOMS
-			if(floorStructure[y][x] == "0"){ //Si room de base présente dans la structure
-				var randRoom = getRand(possibleRooms.length,0); //Choisir une room random parmis celle disponibles
-				currentFloor[y][x] = new Room("Room",possibleRooms[randRoom],y,x); //L'assigner à l'étage
-				possibleRooms.splice(randRoom,1);
-				} //Enleve la room des rooms disponibles
-				
-		//BOSS
-		if(floorStructure[y][x] == "B"){ 
-			currentFloor[y][x] = new Room("Boss",bossRooms[floorCount-1],y,x);}//Assigner la Boss room
-				
-			
-		}
-	}
-	//SPECIAL
-	var ry = getRand(floorStructure.length,0);
-	var	rx = getRand(floorStructure[ry].length,0);
-	//TREASURE
-	while (floorStructure[ry][rx] !="1"){
-		ry = getRand(floorStructure.length,0);
-		rx = getRand(floorStructure[ry].length,0);}
-	floorStructure[ry][rx] ="2"
-	currentFloor[ry][rx] = new Room("Treasure",treasureRooms[0],ry,rx); //Assigner la Treasure room
-	//SHOP
-	while (floorStructure[ry][rx] !="1"){
-		ry = getRand(floorStructure.length,0);
-		rx = getRand(floorStructure[ry].length,0);}
-	var randShop = getRand(shopRooms.length,0)
-	currentFloor[ry][rx] = new Room("Shop",shopRooms[randShop],ry,rx); //Assigner la Treasure room
-	
-	//SECRET
-	while (floorStructure[ry][rx] !="S"){
-		ry = getRand(floorStructure.length,0);
-		rx = getRand(floorStructure[ry].length,0);}
-	var randSecret = getRand(secretRooms.length,0)
-	currentFloor[ry][rx] = new Room("Secret",secretRooms[randSecret],ry,rx); //Assigner la Treasure room
-	secretRooms.splice(randSecret,1);
-			
-	//Salle de départ	
-	for(var y=0; y < floorStructure.length; y++){
-		for(var x=0; x < floorStructure[y].length; x++){
-			while (floorStructure[ry][rx] !="0"){
-				ry = getRand(floorStructure.length,0);
-				rx = getRand(floorStructure[ry].length,0);}
-			currentFloor[ry][rx] = new Room("Room",startingRoom[0],ry,rx); //Assigner la starting room
-			Game = currentFloor[ry][rx];
-			currentFloor[ry][rx].isVisited = true;
-			currentFloor[ry][rx].isCurrent = true;
-		}
-	}
-	//Créer le niveau
-	for(var i=0; i<currentFloor.length;i++){
-		for(var j=0; j<currentFloor[i].length;j++){
-			//alert("i = "+i+"... j = "+j);
-			if(currentFloor[i][j].exists){
-				currentFloor[i][j].create();
-				currentFloor[i][j].shopCreate();}
-		}
-	}
-	
+	Game =  new Room("Room",grid,0,0)
+	Game.isVisited = true;
+	Game.isCurrent = true;
+	Game.create();
+	Player.x = 460;
+	Player.y = 470;
 }
-
+				
 function playerAnimations(){//(maxframe,x,y,width,height,updatetime,spritesheet,offsetx,offsety)
 	Animations = [];
 	Animations[0] = new Animation(7,Player.x,Player.y,100,80,55,imageTool.bodyAnim,-7,13,1);
@@ -177,10 +112,7 @@ function playerAnimations(){//(maxframe,x,y,width,height,updatetime,spritesheet,
 
 // Pause
 function gameIsPaused(){
-	if(keyPause && (Date.now() - lastPaused > 200)){
-		if(isPaused) isPaused = false;
-		else isPaused = true;
-	lastPaused = Date.now();}
+	isPaused = false;
 	return isPaused;
 }
 
@@ -212,57 +144,6 @@ var Background = {
 //Vide
 function Nothing(){
 	this.exists = false;
-}
-
-function changeRoom(side){
-	lastChange = Date.now();
-	Game.isCurrent = false;
-	Game.reset();
-	for(var d = 0; d< Game.Doors.length; d++){
-		Game.Doors[d].isDestroyed = false;
-	}
-		if(side == "left"){
-			Game = currentFloor[Game.locy][Game.locx-1];
-			Player.x  = canvas.width - 100;}
-			
-		else if(side == "right"){
-			Game = currentFloor[Game.locy][Game.locx+1];
-			Player.x = 74;}
-		
-		else if(side == "up"){
-			Game = currentFloor[Game.locy-1][Game.locx];
-			Player.y = canvas.height-120;}
-		
-		else if(side == "down"){
-			Game = currentFloor[Game.locy+1][Game.locx];
-			Player.y = 74;}
-	
-	if(!Game.isVisited){Game.isVisited= true;gameStats.rooms++;}
-	Game.isCurrent = true;
-	updatingBackground = true;
-}
-
-function changeFloor(){
-	lastChange = Date.now();
-	Game.isCurrent = false;
-	Game.reset();
-	generateFloor();
-	updatingBackground = true;
-}
-
-function showAdjacentRooms(){ //Découvrir les pièces adjacentes
-	if(Game.locx > 0 && currentFloor[Game.locy][Game.locx-1].exists && currentFloor[Game.locy][Game.locx-1].type != "Secret"){
-		currentFloor[Game.locy][Game.locx-1].isVisible=true;
-		currentFloor[Game.locy][Game.locx-1].iconVisible=true;}
-	if(Game.locx < currentFloor[Game.locy].length-1 && currentFloor[Game.locy][Game.locx+1].exists && currentFloor[Game.locy][Game.locx+1].type != "Secret"){
-		currentFloor[Game.locy][Game.locx+1].isVisible=true;
-		currentFloor[Game.locy][Game.locx+1].iconVisible=true;}
-	if(Game.locy > 0 && currentFloor[Game.locy-1][Game.locx].exists && currentFloor[Game.locy-1][Game.locx].type != "Secret"){
-		currentFloor[Game.locy-1][Game.locx].isVisible=true;
-		currentFloor[Game.locy-1][Game.locx].iconVisible=true;}
-	if(Game.locy < currentFloor.length-1 && currentFloor[Game.locy+1][Game.locx].exists && currentFloor[Game.locy+1][Game.locx].type != "Secret"){
-		currentFloor[Game.locy+1][Game.locx].isVisible=true;
-		currentFloor[Game.locy+1][Game.locx].iconVisible=true;}
 }
 
 function showMap(item){
@@ -976,7 +857,7 @@ function TrapDoor(x,y){
 	this.use = function(){
 		if(Game.combatMode ==0) this.canBeUsed = true;
 		else this.canBeUsed = false;
-		if(floorCount>2) this.canBeUsed = false;
+		if(floorCount>1) this.canBeUsed = false;
 		
 		if(this.canBeUsed){
 			this.canBeUsed = false;
@@ -987,7 +868,7 @@ function TrapDoor(x,y){
 		
 		if(hitBox)context.drawImage(imageTool.hitBox, this.x, this.y, this.width, this.height);
 		
-		if(floorCount<=2 && this.canBeUsed){
+		if(floorCount<=1 && this.canBeUsed){
 			context.drawImage(imageTool.trapdoor,this.x-7,this.y,64,64);}
 	}
 }
@@ -1257,49 +1138,14 @@ function Room(type,map,locy,locx){
 				this.grid[i][j]=0;
 				if(this.map[i][j] == "Pl") {this.freeCells.push(new freeCell(x,y));Player.x=x;	Player.y=y;
 				if(floorCount ==1)this.sprites.push(new Sprite(imageTool.tutorial,130,100, 700, 238));}
-				//PORTES
-				else if(this.map[i][j] == "+L") {
-					if(this.locx > 0){
-						if(currentFloor[this.locy][this.locx-1].exists){
-							if((currentFloor[this.locy][this.locx-1].type=="Treasure" && floorCount > 1) || currentFloor[this.locy][this.locx-1].type=="Shop") locked = true;
-							else locked = false;
-							this.Doors.push(new Door(x,y,"left",currentFloor[this.locy][this.locx-1].type,locked));}
-						else this.wallMaps.push(new Wall(x,y));}
-					else this.wallMaps.push(new Wall(x,y));}
-					
-					
-				else if(this.map[i][j] == "+R") {
-					if(this.locx < currentFloor[this.locy].length-1){
-						if(currentFloor[this.locy][this.locx+1].exists){
-							if((currentFloor[this.locy][this.locx+1].type=="Treasure" && floorCount > 1) || currentFloor[this.locy][this.locx+1].type=="Shop") locked = true;
-							else locked = false;
-							this.Doors.push(new Door(x,y,"right",currentFloor[this.locy][this.locx+1].type,locked));}
-						else this.wallMaps.push(new Wall(x,y));}
-					else this.wallMaps.push(new Wall(x,y));	}
-					
-					
-				else if(this.map[i][j] == "+U") {
-					if(this.locy > 0){
-						if(currentFloor[this.locy-1][this.locx].exists){
-							if((currentFloor[this.locy-1][this.locx].type=="Treasure" && floorCount > 1) || currentFloor[this.locy-1][this.locx].type=="Shop") locked = true;
-							else locked = false;
-							this.Doors.push(new Door(x,y,"up",currentFloor[this.locy-1][this.locx].type,locked));}
-						else this.wallMaps.push(new Wall(x,y));}
-					else this.wallMaps.push(new Wall(x,y));	}
-					
-					
-				else if(this.map[i][j] == "+D") {
-					if(this.locy < currentFloor.length-1){
-						if(currentFloor[this.locy+1][this.locx].exists){
-							if((currentFloor[this.locy+1][this.locx].type=="Treasure" && floorCount > 1) || currentFloor[this.locy+1][this.locx].type=="Shop") locked = true;
-							else locked = false;
-							this.Doors.push(new Door(x,y,"down",currentFloor[this.locy+1][this.locx].type,locked));}
-						else this.wallMaps.push(new Wall(x,y));}
-					else this.wallMaps.push(new Wall(x,y));	}
 				//Obstacles
 				else if(this.map[i][j] == "  ") {	this.freeCells.push(new freeCell(x,y)); this.grid[i][j]=1;}
 				else if(this.map[i][j] == "Tg") {	this.traps.push(new Glue(x,y)); this.grid[i][j]=1;}
 				else if(this.map[i][j] == "!!") {	this.wallMaps.push(new Wall(x,y));this.grid[i][j]=0;}
+				else if(this.map[i][j] == "+U") {	this.wallMaps.push(new Wall(x,y));this.grid[i][j]=0;}
+				else if(this.map[i][j] == "+D") {	this.wallMaps.push(new Wall(x,y));this.grid[i][j]=0;}
+				else if(this.map[i][j] == "+L") {	this.wallMaps.push(new Wall(x,y));this.grid[i][j]=0;}
+				else if(this.map[i][j] == "+R") {	this.wallMaps.push(new Wall(x,y));this.grid[i][j]=0;}
 				else if(this.map[i][j] == "Bl") {	this.collideMaps.push(new Block(x,y));this.grid[i][j]=0;}
 				else if(this.map[i][j] == "Oo") {	this.collideMaps.push(new Poop(x,y));this.grid[i][j]=0;}
 				else if(this.map[i][j] == "Tn") {	this.collideMaps.push(new Tnt(x,y));this.grid[i][j]=0;}
@@ -1309,15 +1155,15 @@ function Room(type,map,locy,locx){
 						this.map[i][j] =="HI" || this.map[i][j] =="HJ" || this.map[i][j] =="HK" || this.map[i][j] =="HL" ||
 						this.map[i][j] =="HM" || this.map[i][j] =="HN" || this.map[i][j] =="HO" || this.map[i][j] =="HP"){	this.holeMaps.push(new Hole(x,y,this.map[i][j]));this.grid[i][j]=0;}
 				//Ennemis
-				else if(this.map[i][j] == "Sp") {	this.Minions.push(new Spider(x+15,y+25,1+floorCount/2,"spider",true)); this.grid[i][j]=1;}
-				else if(this.map[i][j] == "Sb") {	this.Minions.push(new Spider(x+15,y+25,3+floorCount/2,"buttspider",true)); this.grid[i][j]=1;}
-				else if(this.map[i][j] == "Zo") {	this.Minions.push(new Zombie(x+10,y+20,3+floorCount/2)); this.grid[i][j]=1;}
-				else if(this.map[i][j] == "Cl") {	this.Minions.push(new Clotty(i,j,x+10,y+20,5+floorCount/2)); this.grid[i][j]=1;}
-				else if(this.map[i][j] == "Ma") {	this.Minions.push(new Maggot(i,j,x+10,y+20,3+floorCount/2)); this.grid[i][j]=1;}
-				else if(this.map[i][j] == "Fl") {	this.Minions.push(new Fly(x,y,1+floorCount/2,"Black",true)); this.grid[i][j]=1;}
-				else if(this.map[i][j] == "Af") {	this.Minions.push(new Fly(x,y,1+floorCount/2,"Attack",true)); this.grid[i][j]=1;}
-				else if(this.map[i][j] == "Pf") {	this.Minions.push(new Fly(x,y,2+floorCount/2,"Pooter",true)); this.grid[i][j]=1;}
-				else if(this.map[i][j] == "To") {	this.Towers.push(new Tower(x,y,4+floorCount/2,true)); this.grid[i][j]=1;}
+				else if(this.map[i][j] == "Sp") {	this.Minions.push(new Spider(x+15,y+25,1.5,"spider",true)); this.grid[i][j]=1;}
+				else if(this.map[i][j] == "Sb") {	this.Minions.push(new Spider(x+15,y+25,3.25,"buttspider",true)); this.grid[i][j]=1;}
+				else if(this.map[i][j] == "Zo") {	this.Minions.push(new Zombie(x+10,y+20,3.25)); this.grid[i][j]=1;}
+				else if(this.map[i][j] == "Cl") {	this.Minions.push(new Clotty(i,j,x+10,y+20,5.5)); this.grid[i][j]=1;}
+				else if(this.map[i][j] == "Ma") {	this.Minions.push(new Maggot(i,j,x+10,y+20,3.25)); this.grid[i][j]=1;}
+				else if(this.map[i][j] == "Fl") {	this.Minions.push(new Fly(x,y,1.25,"Black",true)); this.grid[i][j]=1;}
+				else if(this.map[i][j] == "Af") {	this.Minions.push(new Fly(x,y,1.25,"Attack",true)); this.grid[i][j]=1;}
+				else if(this.map[i][j] == "Pf") {	this.Minions.push(new Fly(x,y,2.5,"Pooter",true)); this.grid[i][j]=1;}
+				else if(this.map[i][j] == "To") {	this.Towers.push(new Tower(x,y,4.25,true)); this.grid[i][j]=1;}
 				//Bosses
 				else if(this.map[i][j] == "X1") {	this.Bosses.push(new Duke(x,y,70));this.sprites.push(new Blood(0,0,0,true)); this.grid[i][j]=1;}
 				else if(this.map[i][j] == "X2") {	this.Bosses.push(new Project(422,230,180));this.sprites.push(new Blood(0,0,0,true)); this.grid[i][j]=1;}
@@ -1465,22 +1311,7 @@ function Room(type,map,locy,locx){
 		
 		//Game Over Screen
 		if(gameOver){
-			if(Date.now() - gameOverTime > 1000){
-			context.drawImage(imageTool.gameover, 260,40,670, 500);
-			context.save();
-			context.font = "14pt danielbk";
-			context.fillStyle = 'black';
-			context.rotate(6*Math.PI/180);
-			context.globalAlpha = 0.65;
-			context.fillText(gameStats.rooms-1,504,162);
-			context.fillText(gameStats.kill,409,203);
-			context.fillText(gameStats.bullet,456,242);
-			var hitpercent = (gameStats.hit / gameStats.bullet)*100;
-			if(isNaN(hitpercent)) hitpercent =0;
-			context.fillText(hitpercent.toFixed(),406,281);
-			context.restore();
-
-			}
+			launchTester();
 		}
 		//Écran de pause
 		Player.drawUI(context,uicontext);
@@ -1489,38 +1320,18 @@ function Room(type,map,locy,locx){
 		if(hitBox){
 			context.font = "12pt Arial";
 			context.fillStyle = 'white';
+			context.fillText("X: "+Player.x.toFixed(1),5,15);
+			context.fillText("Y: "+Player.y.toFixed(1),5,35);
 			//context.fillText("BOSS: "+this.Bosses.length,5,15);
 			//context.fillText("MINIONS: "+this.Minions.length,5,35);
-			context.fillText("MODE: "+this.combatMode,5,55);
+			/*context.fillText("MODE: "+this.combatMode,5,55);
 			context.fillText("Phase: "+this.Bosses[0].phase,5,75);
 			context.fillText("X: "+this.Bosses[0].dirx.toFixed(2),5,95);
 			context.fillText("Y: "+this.Bosses[0].diry.toFixed(2),5,115);
-			context.fillText("Tail: "+this.Bosses[0].tail.length,5,135);
-			for(var i = 0; i < this.Bosses[0].tail.length; i++){
-				context.fillText("Tail["+i+"]: HYP :"	+this.Bosses[0].tail[i].hyp.toFixed(2)  + " - POS : " +this.Bosses[0].tail[i].position + " - LEADER : " +this.Bosses[0].tail[i].leaderpos
-											,5,195+(i*20));
-			}
+			context.fillText("Tail: "+this.Bosses[0].tail.length,5,135);*/
+			
 			
 		}
-		
-		//Minimap
-		var top = 10;
-		var left = 10;
-		for(var y=0; y < currentFloor.length; y++){
-			for(var x=0; x < currentFloor[y].length; x++){
-				if(currentFloor[y][x].isCurrent && currentFloor[y][x].type != "Secret" ){ uicontext.drawImage(imageTool.current,(x*42)+left,(y*17)+top, 44, 21);}
-				else if(currentFloor[y][x].exists && currentFloor[y][x].isVisited && currentFloor[y][x].type != "Secret" ){ uicontext.drawImage(imageTool.visited,(x*42)+left,(y*17)+top, 44, 21);}
-				else if(currentFloor[y][x].exists && currentFloor[y][x].isVisible && currentFloor[y][x].type != "Secret" ){ uicontext.drawImage(imageTool.unvisited,(x*42)+left,(y*17)+top, 44, 21);}
-			}
-		}
-		for(var y=0; y < currentFloor.length; y++){
-			for(var x=0; x < currentFloor[y].length; x++){			
-				if(currentFloor[y][x].exists && currentFloor[y][x].iconVisible && currentFloor[y][x].type =="Boss"){ uicontext.drawImage(imageTool.boss,(x*42)+left,(y*17)+top-8, 44, 32);}
-				else if(currentFloor[y][x].exists && currentFloor[y][x].iconVisible && currentFloor[y][x].type =="Treasure"){ uicontext.drawImage(imageTool.treasure,(x*42)+left,(y*17)+top-8, 44, 32);}
-				else if(currentFloor[y][x].exists && currentFloor[y][x].iconVisible && currentFloor[y][x].type =="Shop"){ uicontext.drawImage(imageTool.shop,(x*42)+left+10,(y*17)+top-4, 26, 28);}else if(currentFloor[y][x].exists && (currentFloor[y][x].isVisible || currentFloor[y][x].isVisible) && currentFloor[y][x].type == "Secret" ){ uicontext.drawImage(imageTool.secret,(x*42)+left,(y*17)+top-4, 44, 26);}
-			}
-		}
-		
 		//Pause
 		if(isPaused){
 			context.save();

@@ -15,7 +15,7 @@ var Player = {
 	bombDmg :15, bombMult :1, 
 	hp : 3,	maxhp: 3, //HP : Vie restante, MAXHP : Vie totale
 	soul : 0, //"Armure"
-	gold : 5, keys : 0, bombs : 1, //Pickups
+	gold : 5, keys : 1, bombs : 1, //Pickups
 	bombPosed : Date.now(), 
 	head: imageTool.playerDown, 
 	orientation :"down", //Orientation de la tête
@@ -29,6 +29,7 @@ var Player = {
 	canGetDamage: true, 
 	isBumped: false, 
 	isSlowed: Date.now(),
+	uiUpdated: Date.now(),
 	lastDamaged : Date.now(), damagedNow : Date.now(), lastFire : Date.now(), eyeSwitch : 1,
 	isNumberOne: false, isToothPicks: false, isWiggle: false, Halo: false, TreasureMap:false, TheCompass: false,
 	update: function(){
@@ -174,7 +175,6 @@ var Player = {
 		if(this.y <= 32){changeRoom("up");} // Salle haut
 		if(this.y >= canvas.height -(32+this.height/2)){changeRoom("down");} //Salle bas
 	},
-	
 	drawBody : function(context){
 	
 		if(hitBox)context.drawImage(imageTool.hitBox, this.x, this.y, this.width, this.height);
@@ -264,76 +264,77 @@ var Player = {
 	},
 	drawUI : function(context,uicontext){
 		//Interface
-		uicontext.drawImage(imageTool.ui,0,0,960,120);
-		
-		//LifeBar
-		var half = this.hp%1;
-		var halfarmor = this.soul%1;
-		var intHp = this.hp - half;
-		var intArmor = this.soul - halfarmor;
-		var diffHp = this.maxhp - (this.hp+half);
-		var ox = 695;
-		var oy = 24;
-		var width = 38;
-		var height = 30;
-		var pool = 0;
-		var row = 0;
-		var col = 0;
-		for(var h = 0; h < intHp; h++){
-			if(pool > 29) {row = 5*height; col = 30*width;}
-			else if(pool > 23) {row = 4*height; col = 24*width;}
-			else if(pool > 17) {row = 3*height; col = 18*width;}
-			else if(pool > 11) {row = 2*height; col = 12*width;}
-			else if(pool > 5) {row = 1*height; col = 6*width;}
-			uicontext.drawImage(imageTool.hp,(pool*width)+ox-col,oy+row,width,height); pool++;}
-		if(half !=0){
-			if(pool > 29) {row = 5*height; col = 30*width;}
-			else if(pool > 23) {row = 4*height; col = 24*width;}
-			else if(pool > 17) {row = 3*height; col = 18*width;}
-			else if(pool > 11) {row = 2*height; col = 12*width;}
-			else if(pool > 5) {row = 1*height; col = 6*width;}
-			uicontext.drawImage(imageTool.halfHp,(pool*width)+ox-col,oy+row,width,height); pool++;}
-		for(var d = 0; d < diffHp; d++){
-			if(pool > 29) {row = 5*height; col = 30*width;}
-			else if(pool > 23) {row = 4*height; col = 24*width;}
-			else if(pool > 17) {row = 3*height; col = 18*width;}
-			else if(pool > 11) {row = 2*height; col = 12*width;}
-			else if(pool > 5) {row = 1*height; col = 6*width;}
-			uicontext.drawImage(imageTool.emptyHp,(pool*width)+ox-col,oy+row,width,height); pool++;}
-		for(var a = 0; a < intArmor; a++){
-			if(pool > 29) {row = 5*height; col = 30*width;}
-			else if(pool > 23) {row = 4*height; col = 24*width;}
-			else if(pool > 17) {row = 3*height; col = 18*width;}
-			else if(pool > 11) {row = 2*height; col = 12*width;}
-			else if(pool > 5) {row = 1*height; col = 6*width;}
-			uicontext.drawImage(imageTool.ap,(pool*width)+ox-col,oy+row,width,height); pool++;}
-		if(halfarmor !=0){
-			if(pool > 29) {row = 5*height; col = 30*width;}
-			else if(pool > 23) {row = 4*height; col = 24*width;}
-			else if(pool > 17) {row = 3*height; col = 18*width;}
-			else if(pool > 11) {row = 2*height; col = 12*width;}
-			else if(pool > 5) {row = 1*height; col = 6*width;}
-			uicontext.drawImage(imageTool.halfAp,(pool*width)+ox-col,oy+row,width,height); pool++;}
-		
-		// Gold, Keys, Bombs
-		uicontext.font = "24pt wendy";
-		uicontext.fillStyle = 'white';
-		var zgold ="";
-		var zbomb = "";
-		var zkey = "";
-		if(this.gold < 10) zgold = "0";
-		if(this.bombs < 10) zbomb = "0";
-		if(this.keys < 10) zkey = "0";
-		uicontext.fillText(zgold+this.gold,422,36);
-		uicontext.fillText(zbomb+this.bombs,422,68.5);
-		uicontext.fillText(zkey+this.keys,422,101);
-		
-		// Fps Counter
-		uicontext.font = "15pt wendy";
-		uicontext.fillStyle = 'white';
-		var fpsOut = (1000/frameTime).toFixed() + " FPS";
-		uicontext.fillText(fpsOut, uicanvas.width-50,18);
-		
+		if(Date.now() - this.uiUpdated > 200){ // Draw à toutes les x millisecondes
+			uicontext.clearRect(0,0,uicanvas.width,canvas.height);
+			uicontext.drawImage(imageTool.ui,0,0,960,120);
+			//LifeBar
+			var half = this.hp%1;
+			var halfarmor = this.soul%1;
+			var intHp = this.hp - half;
+			var intArmor = this.soul - halfarmor;
+			var diffHp = this.maxhp - (this.hp+half);
+			var ox = 695;
+			var oy = 24;
+			var width = 38;
+			var height = 30;
+			var pool = 0;
+			var row = 0;
+			var col = 0;
+			for(var h = 0; h < intHp; h++){
+				if(pool > 29) {row = 5*height; col = 30*width;}
+				else if(pool > 23) {row = 4*height; col = 24*width;}
+				else if(pool > 17) {row = 3*height; col = 18*width;}
+				else if(pool > 11) {row = 2*height; col = 12*width;}
+				else if(pool > 5) {row = 1*height; col = 6*width;}
+				uicontext.drawImage(imageTool.fullhp,(pool*width)+ox-col,oy+row,width,height); pool++;}
+			if(half !=0){
+				if(pool > 29) {row = 5*height; col = 30*width;}
+				else if(pool > 23) {row = 4*height; col = 24*width;}
+				else if(pool > 17) {row = 3*height; col = 18*width;}
+				else if(pool > 11) {row = 2*height; col = 12*width;}
+				else if(pool > 5) {row = 1*height; col = 6*width;}
+				uicontext.drawImage(imageTool.halfHp,(pool*width)+ox-col,oy+row,width,height); pool++;}
+			for(var d = 0; d < diffHp; d++){
+				if(pool > 29) {row = 5*height; col = 30*width;}
+				else if(pool > 23) {row = 4*height; col = 24*width;}
+				else if(pool > 17) {row = 3*height; col = 18*width;}
+				else if(pool > 11) {row = 2*height; col = 12*width;}
+				else if(pool > 5) {row = 1*height; col = 6*width;}
+				uicontext.drawImage(imageTool.emptyHp,(pool*width)+ox-col,oy+row,width,height); pool++;}
+			for(var a = 0; a < intArmor; a++){
+				if(pool > 29) {row = 5*height; col = 30*width;}
+				else if(pool > 23) {row = 4*height; col = 24*width;}
+				else if(pool > 17) {row = 3*height; col = 18*width;}
+				else if(pool > 11) {row = 2*height; col = 12*width;}
+				else if(pool > 5) {row = 1*height; col = 6*width;}
+				uicontext.drawImage(imageTool.ap,(pool*width)+ox-col,oy+row,width,height); pool++;}
+			if(halfarmor !=0){
+				if(pool > 29) {row = 5*height; col = 30*width;}
+				else if(pool > 23) {row = 4*height; col = 24*width;}
+				else if(pool > 17) {row = 3*height; col = 18*width;}
+				else if(pool > 11) {row = 2*height; col = 12*width;}
+				else if(pool > 5) {row = 1*height; col = 6*width;}
+				uicontext.drawImage(imageTool.halfAp,(pool*width)+ox-col,oy+row,width,height); pool++;}
+			// Gold, Keys, Bombs
+			uicontext.font = "24pt wendy";
+			uicontext.fillStyle = 'white';
+			var zgold ="";
+			var zbomb = "";
+			var zkey = "";
+			if(this.gold < 10) zgold = "0";
+			if(this.bombs < 10) zbomb = "0";
+			if(this.keys < 10) zkey = "0";
+			uicontext.fillText(zgold+this.gold,422,36);
+			uicontext.fillText(zbomb+this.bombs,422,68.5);
+			uicontext.fillText(zkey+this.keys,422,101);
+			// Fps Counter
+			uicontext.font = "15pt wendy";
+			uicontext.fillStyle = 'white';
+			var fpsOut = (1000/frameTime).toFixed() + " FPS";
+			uicontext.fillText(fpsOut, uicanvas.width-50,18);
+			
+			this.uiUpdated = Date.now();
+		}
 	},
 	playLoot : function(item){
 			this.itemHolding = item;
@@ -359,7 +360,6 @@ var Player = {
 					this.lastDamaged = Date.now(); }}
 		}
 	},
-	
 	checkCollide : function(obj,pos){ //calcul de collision
 		for(var i=0;i<obj.length;i++){
 			if(this.y < obj[i].y + obj[i].height &&

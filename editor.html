@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="fr"><head>
+	<title>ROOM EDITOR</title>
+	<meta charset="UTF-8">
+	<link href="editorstyles.css" rel="stylesheet">
+	<script src="js/FileSaver.js"></script>
+	<script src="js/editor.js"></script>
+	<script src="js/editorgame.js"></script>
+	<script src="js/editorsprites.js"></script>
+	<script src="js/items.js"></script>
+	<script src="js/player.js"></script>
+	<script src="js/enemy.js"></script>
+	<script src="js/keybind.js"></script>
+</head><body onload="initEditor()" >
+<div id="main">
+		<div id="game">
+			<canvas id="uicanvas" width="960" height="120" oncontextmenu="return false;"></canvas>
+			<canvas id="bgcanvas" width="960" height="576" oncontextmenu="return false;"></canvas>
+			<canvas id="canvas" width="960" height="576" oncontextmenu="return false;">Ce navigateur ne supporte pas HTML5 et Canvas, vous devez posséder la dernière version.</canvas>
+		</div>
+		<div id="creator">
+		<div id="selector"  oncontextmenu="return false;"></div>
+		<div id="editor" oncontextmenu="return false;"></div>
+		<div class="nofloat"></div>
+		</div>
+		<div id="options">
+			
+			<div id="codeinput">
+				<input type="text" id="txtinputgrid" value=" " size="3"></input>
+				<input id="readbtn" type="submit" value="Read" onclick="readCode()"></input>
+				<input id="clearbtn" type="submit" value="Clear" onclick="clearTxt()"></input>
+				<label>IMPORTER </label>
+			</div>
+			
+			<div id="save">
+				<label>EXPORTER </label>
+				<input id="savebtn" type="submit" value="Save" onclick="save()"></input>
+				<input type="text" id="txtfilename" value="room" size="3"></input>.txt
+			</div>
+			<div id="test">
+				<input id="testbtn" type="submit" value="Test" onclick="launchTester()"></input>
+				<div id="active" oncontextmenu="return false;"></div>
+				<input id="resetbtn" type="submit" value="Reset" onclick="erase()"></input>
+			</div>
+		
+		</div>
+		<h1>Room Creator v1</h1><div class="nofloat"></div>
+</div>
+			
+	<div id="editorlink">
+	<ul>
+	<li><a href="index.html">Jouer au jeu</a></li>
+	<li>&nbsp;</li>
+	<li>Crédits :</li>
+	<li>Concept et images originales par Edmund McMillen</li>
+	<li>Programmé et assemblé par Patrick Lamontagne</li>
+	<li>Testé par Dominik Brisson et Claudine Bourget</li>
+	<li>&nbsp;</li>
+	<li>Projet personnel HTML5 entièrement basé sur <a href="http://bindingofisaac.com/" TARGET='_blank' >The Binding Of Isaac</a></li>
+	<li> <a href="http://store.steampowered.com/app/113200/" TARGET='_blank' >Acheter le jeu sur Steam</a></li>
+	</ul>
+	</div>
+</body>
+</html>

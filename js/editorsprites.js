@@ -6,6 +6,7 @@ var sounds = new function(){
 	this.enemyDeath = new Audio("sound/enemydeath.wav");
 	this.playerDmg = new Audio("sound/playerdmg.wav");
 };
+
 //Object d'images
 var imageTool = new function() {
 	this.loading = new Image();
@@ -234,18 +235,26 @@ var imageTool = new function() {
 	this.price5  = new Image();
 	this.price15  = new Image();
 	
-	//DÃ‰TAILS
+	//DÉTAILS
 	
 	this.toothpicksfront = new Image();
 	this.toothpicksside = new Image();
-	//PrÃ©chargement
-	numImages = 221;
+	//Préchargement
+	numImages = 223;
 	numLoaded = 0;
 	
 	function imageLoaded() {
 		numLoaded++;
-		if (numLoaded === numImages) {gameInit(); loading(false);}
-		else loading(true); }
+		console.log(numLoaded);
+		if (numLoaded === numImages) {
+			getEl("editor").style.visibility = "visible";
+			getEl("selector").style.visibility = "visible";
+			getEl("options").style.visibility = "visible";
+			testisReady = true;
+			loading(false);}
+		else {
+			loading(true);}
+	}
 		
 	this.loading.onload = function() {imageLoaded();}
 	
@@ -473,7 +482,7 @@ var imageTool = new function() {
 	this.price5.onload = function() {imageLoaded();}
 	this.price15.onload = function() {imageLoaded();}
 	
-	//DÃ‰TAILS
+	//DÉTAILS
 	
 	this.toothpicksfront.onload = function() {imageLoaded();}
 	this.toothpicksside.onload = function() {imageLoaded();}
@@ -704,7 +713,7 @@ var imageTool = new function() {
 	this.price5.src = "img/price5.png";
 	this.price15.src = "img/price15.png";
 	
-	//DÃ‰TAILS
+	//DÉTAILS
 	
 	this.toothpicksfront.src = "img/toothpicksfront.png";
 	this.toothpicksside.src = "img/toothpicksside.png";
