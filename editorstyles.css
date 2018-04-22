@@ -2,7 +2,7 @@ html { background: #151515;	font: 1em Arial; color: #222; }
 * {	padding: 0px; margin: 0px; }
 div.nofloat{clear:both;}
 
-@font-face { font-family: 'wendy'; src: url("font/wendy.ttf");}
+@font-face { font-family: 'wendy'; src: url("font/8bit.ttf");}
 @font-face { font-family: 'danielbk'; src: url("font/danielbk.ttf");}
 #main{width: 960px; text-align: left;	margin: 30px auto;}
 
@@ -10,7 +10,7 @@ div.nofloat{clear:both;}
 
 /*TESTEUR */
 #game {position: absolute;margin-top: 6px;}
-canvas {cursor: crosshair;}
+canvas {}
 #canvas {position: absolute; left: 0px; top: 120px;}
 #uicanvas{}
 #bgcanvas{position: relative;z-index: -10;}
@@ -102,8 +102,10 @@ h1{
 	text-align: center;
 	color: #aaa;
 }
-a{color: #aaf;font-weight: bold;text-decoration: none;}
-
+#editorlink > a{background: #aaa;font-weight: bold;text-decoration: none; color:#151515;padding: 8px;}
+#editorlink > a:hover{background: #cbeba5;font-weight: bold;text-decoration: none; color:#151515;padding: 8px;}
+#editorlink ul a{color: #aaf;font-weight: bold;text-decoration: none;}
+#editorlink ul a:hover{text-decoration: underline;}
 #testbtn{background: #cbeba5;}
 #savebtn,#readbtn{background: #ccc;}
 #resetbtn,#clearbtn{background: #888;}

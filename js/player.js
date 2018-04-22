@@ -22,7 +22,10 @@ var Player = {
 	blink : 0, //Clignotement quand damagé
 	isShooting: false, //Animation de tir
 	isLooting: false, //Animation de loot
-	itemHolding : "", //Le nom de l'item qui est looté
+	textShowing: false, //Description d'item
+	itemHolding : "", //L'item qui est looté
+	itemHoldingName : "", //Le nom de l'item qui est looté
+	itemHoldingDesc : "", //La description de l'item qui est looté
 	lootTimer : 0, //Timer de l'animation
 	currentMoving : "", //Direction selon WASD
 	alive: true, 
@@ -31,7 +34,10 @@ var Player = {
 	isSlowed: Date.now(),
 	uiUpdated: Date.now(),
 	lastDamaged : Date.now(), damagedNow : Date.now(), lastFire : Date.now(), eyeSwitch : 1,
-	isNumberOne: false, isToothPicks: false, isWiggle: false, Halo: false, TreasureMap:false, TheCompass: false,
+	isNumberOne: false, isToothPicks: false, isWiggle: false, Halo: false, smallRock: false, wireCoatHanger: false,
+	isSpeedBall: false, jesusJuice: false, lipstick: false, innerEye: false, Growth: false, lessThanThree: false,
+	skeletonKey: false, belt: false,
+	TreasureMap:false, TheCompass: false,
 	update: function(){
 		//Gestion de vie
 		if(this.hp <= 0 && this.soul ==0) this.alive = false; //Si plus d'HP, le joueur n'est plus vivant
@@ -54,11 +60,15 @@ var Player = {
 		
 		//State de Ralentissement (spider web, glue shots)
 		if(Date.now() - this.isSlowed < 300){ 
-			this.accelx = this.accelx*3/4;this.accely = this.accely*3/4;}
+			this.accelx = this.accelx*2/3;this.accely = this.accely*2/3;}
 			
 		//State pour l'animation de loot
 		if(Date.now() - this.lootTimer > 600){
 			this.isLooting = false;}
+		if(this.isLooting) this.textShowing = true;
+		if(Date.now() - this.lootTimer > 3000){
+			this.textShowing = false;}
+			
 			
 		//State pour l'animation de tir
 		if( Date.now() - this.lastFire < this.fireRate/2){
@@ -89,6 +99,8 @@ var Player = {
 			if(this.fireRate < 100) this.fireRate = 100; //Firerate cap
 		this.attackSpeed = 8 * this.bulletSpeedBoost; //bonus max de 3
 			if(this.attackSpeed > 11) this.attackSpeed = 11; //Bulletspeed cap
+			
+		//this.attackSpeed = 1.5; //DEBUG
 		
 		//Vitesse diagonale fix	
 		if((keyW || keyS) && (keyA || keyD)) this.speed = this.speed*2/3; 
@@ -205,6 +217,15 @@ var Player = {
 			else context.drawImage(imageTool.bodyIdle,this.x-2, this.y+12, 40, 40);
 			context.restore();	}
 			else context.drawImage(imageTool.bodyIdle,this.x-2, this.y+12, 40, 40);
+			
+			if(this.lessThanThree){
+				if(keyA)Animations[4].update(Player.x+3,Player.y+10);
+				else if(keyD)Animations[4].update(Player.x+9,Player.y+10);
+				else Animations[4].update(Player.x+6,Player.y+10);
+				Animations[4].draw(context);}
+			else if(this.belt){
+				context.drawImage(imageTool.belt,this.x+3, this.y+32, 28, 17);
+			}
 	},
 	drawHead : function(context){
 		if(!this.isLooting){
@@ -215,40 +236,164 @@ var Player = {
 					context.save();
 					context.globalAlpha = 0;}
 				this.blink++;}
-				
-			//Joueur Normal
-			//Tete
-			context.drawImage(this.head, this.x-14, this.y-22, 64, 55); 
+
 			//Direction attaque
 				if(!gameOver){
 					if(keyLeft){this.orientation = "left"; this.playerFire();}
 					else if(keyUp){this.orientation = "up"; this.playerFire();}
 					else if(keyRight){this.orientation = "right"; this.playerFire();}
-					else if(keyDown){this.orientation = "down"; this.playerFire();}}
+					else if(keyDown){this.orientation = "down"; this.playerFire();}
+				}
+			
+			if((keyUp || keyDown || keyLeft || keyRight) && this.isNumberOne && !this.innerEye) this.isShooting = true;
+					
+			//SMALLROCK		
+			if(this.smallRock && this.orientation == "left"){
+				if(this.isShooting) context.drawImage(imageTool.smallrockback, this.x-14, this.y-22, 62, 55);
+				else context.drawImage(imageTool.smallrockback, this.x-14, this.y-25, 62, 55);
+			}
+			else if(this.smallRock && this.orientation == "up"){
+				if(this.isShooting) context.drawImage(imageTool.smallrockright, this.x-14, this.y-22, 62, 55);
+				else context.drawImage(imageTool.smallrockright, this.x-14, this.y-25, 62, 55);}
+			
+			//Tete
+			context.drawImage(this.head, this.x-14, this.y-22, 64, 55); 
+			
 			//De face
 			if(this.orientation == "down"){
-				if(this.isShooting) this.head = imageTool.playerDownS;
-				else this.head = imageTool.playerDown;
+				if(this.innerEye){
+					if(this.isShooting) this.head = imageTool.innerfronts;
+					else this.head = imageTool.innerfront;}
+				else if(this.isNumberOne){
+					if(this.isShooting) this.head = imageTool.nofronts;
+					else this.head = imageTool.nofront;}
+				else if(this.isSpeedBall){
+					if(this.isShooting) this.head = imageTool.speedfronts;
+					else this.head = imageTool.speedfront;}
+				else{
+					if(this.isShooting) this.head = imageTool.playerDownS;
+					else this.head = imageTool.playerDown;}
+				//GROWTH HORMONES
+				if(this.Growth){
+					if(this.isShooting) context.drawImage(imageTool.ghormonesfront, this.x-14, this.y-20, 62, 55);
+					else context.drawImage(imageTool.ghormonesfront, this.x-14, this.y-26, 62, 60); }
+				//JESUS JUICE
+				if(this.jesusJuice && !this.isNumberOne){
+					if(this.isShooting) context.drawImage(imageTool.jesusjuicefront, this.x-14, this.y-13, 62, 45);
+					else context.drawImage(imageTool.jesusjuicefront, this.x-14, this.y-22, 62, 55); }
+				//MOMS LIPSTICK
+				if(this.lipstick && !this.isNumberOne){
+					if(this.isShooting) context.drawImage(imageTool.lipstickfront, this.x-14, this.y-13, 62, 45);
+					else context.drawImage(imageTool.lipstickfront, this.x-14, this.y-22, 62, 55); }
+				//WIRE COAT HANGER
+				if(this.wireCoatHanger){
+					if(this.isShooting) context.drawImage(imageTool.wirefront, this.x-20, this.y-36, 70, 60);
+					else context.drawImage(imageTool.wirefront, this.x-20, this.y-41, 70, 60); }
+				//SMALLROCK
+				if(this.smallRock){
+					if(this.isShooting) context.drawImage(imageTool.smallrockfront, this.x-14, this.y-25, 62, 55);
+					else context.drawImage(imageTool.smallrockfront, this.x-14, this.y-29, 62, 55);}
 				//TOOTHPICKS
 				if(this.isToothPicks){
 					if(this.isShooting) context.drawImage(imageTool.toothpicksfront, this.x-16, this.y-12, 68, 42);
-					else context.drawImage(imageTool.toothpicksfront, this.x-14, this.y-22, 64, 55); }}
+					else context.drawImage(imageTool.toothpicksfront, this.x-14, this.y-22, 64, 55); }
+				if(this.skeletonKey){
+					if(this.isShooting) context.drawImage(imageTool.skeyfront, this.x+10, this.y-9, 16, 14);
+					else context.drawImage(imageTool.skeyfront, this.x+10, this.y-16, 16, 16); 
+				}
+			}
+			
 			//De dos
 			else if(this.orientation == "up"){
 				if(this.isShooting) this.head = imageTool.playerUpS;
-				else this.head = imageTool.playerUp;}
+				else this.head = imageTool.playerUp;
+				//GROWTH HORMONES
+				if(this.Growth){
+					if(this.isShooting) context.drawImage(imageTool.ghormonesback, this.x-14, this.y-22, 62, 55);
+					else context.drawImage(imageTool.ghormonesback, this.x-14, this.y-28, 62, 60); 	}
+				//WIRE COAT HANGER
+				if(this.wireCoatHanger){
+					if(this.isShooting) context.drawImage(imageTool.wireback, this.x-16, this.y-36, 70, 60);
+					else context.drawImage(imageTool.wireback, this.x-16, this.y-41, 70, 60); }
+				if(this.isSpeedBall){
+					if(this.isShooting) context.drawImage(imageTool.speedballback, this.x-16, this.y-24, 70, 60);
+					else context.drawImage(imageTool.speedballback, this.x-16, this.y-27, 70, 60); }
+			}
+			
 			//Gauche	
 			else if(this.orientation == "left"){
-				if(this.isShooting) this.head = imageTool.playerLeftS;
-				else this.head = imageTool.playerLeft;
+				if(this.innerEye){
+					if(this.isShooting) this.head = imageTool.innerlefts;
+					else this.head = imageTool.innerleft;}
+				else if(this.isNumberOne){
+					if(this.isShooting) this.head = imageTool.nolefts;
+					else this.head = imageTool.noleft;}
+				else if(this.isSpeedBall){
+					if(this.isShooting) this.head = imageTool.speedlefts;
+					else this.head = imageTool.speedleft;}
+				else{
+					if(this.isShooting) this.head = imageTool.playerLeftS;
+					else this.head = imageTool.playerLeft;}
+					
+				//GROWTH HORMONES
+				if(this.Growth){
+					if(this.isShooting) context.drawImage(imageTool.ghormonesleft, this.x-14, this.y-22, 62, 55);
+					else context.drawImage(imageTool.ghormonesleft, this.x-14, this.y-28, 62, 60); }
+				//JESUS JUICE
+				if(this.jesusJuice && !this.isNumberOne){
+					if(this.isShooting) context.drawImage(imageTool.jesusjuiceleft, this.x-14, this.y-13, 62, 45);
+					else context.drawImage(imageTool.jesusjuiceleft, this.x-14, this.y-22, 62, 55); }
+				//MOMS LIPSTICK
+				if(this.lipstick && !this.isNumberOne){
+					if(this.isShooting) context.drawImage(imageTool.lipstickleft, this.x-16, this.y-13, 62, 45);
+					else context.drawImage(imageTool.lipstickleft, this.x-16, this.y-22, 62, 55); }
+				//WIRE COAT HANGER
+				if(this.wireCoatHanger){
+					if(this.isShooting) context.drawImage(imageTool.wireleft, this.x-17, this.y-36, 70, 60);
+					else context.drawImage(imageTool.wireleft, this.x-17, this.y-41, 70, 60); }
 				//TOOTHPICKS
 				if(this.isToothPicks){
 					if(this.isShooting) context.drawImage(imageTool.toothpicksside, this.x-2, this.y-12, 30, 45); 
-					else context.drawImage(imageTool.toothpicksside, this.x-2, this.y-20, 25, 55); }}
+					else context.drawImage(imageTool.toothpicksside, this.x-2, this.y-20, 25, 55); }
+			}
+			
+			
+			
 			//Droite
 			else if(this.orientation == "right"){
-				if(this.isShooting) this.head = imageTool.playerRightS;
-				else this.head = imageTool.playerRight;
+				if(this.innerEye){
+					if(this.isShooting) this.head = imageTool.innerrights;
+					else this.head = imageTool.innerright;}
+				else if(this.isNumberOne){
+					if(this.isShooting) this.head = imageTool.norights;
+					else this.head = imageTool.noright;}
+				else if(this.isSpeedBall){
+					if(this.isShooting) this.head = imageTool.speedrights;
+					else this.head = imageTool.speedright;}
+				else{
+					if(this.isShooting) this.head = imageTool.playerRightS;
+					else this.head = imageTool.playerRight;}
+					
+				//GROWTH HORMONES
+				if(this.Growth){
+					if(this.isShooting) context.drawImage(imageTool.ghormonesright, this.x-14, this.y-22, 62, 55);
+					else context.drawImage(imageTool.ghormonesright, this.x-14, this.y-28, 62, 60); }
+				//JESUS JUICE
+				if(this.jesusJuice && !this.isNumberOne){
+					if(this.isShooting) context.drawImage(imageTool.jesusjuiceright, this.x-10, this.y-13, 62, 45);
+					else context.drawImage(imageTool.jesusjuiceright, this.x-10, this.y-22, 62, 55); }
+				//MOMSLIPSTICK
+				if(this.lipstick && !this.isNumberOne){
+					if(this.isShooting) context.drawImage(imageTool.lipstickright, this.x-10, this.y-13, 62, 45);
+					else context.drawImage(imageTool.lipstickright, this.x-10, this.y-22, 62, 55); }
+				//WIRE COAT HANGER
+				if(this.wireCoatHanger){
+					if(this.isShooting) context.drawImage(imageTool.wireright, this.x-16, this.y-36, 70, 60);
+					else context.drawImage(imageTool.wireright, this.x-16, this.y-41, 70, 60); }
+				//SMALLROCK
+				if(this.smallRock){
+					if(this.isShooting) context.drawImage(imageTool.smallrockright, this.x-10, this.y-21, 62, 55);
+					else context.drawImage(imageTool.smallrockright, this.x-10, this.y-24, 62, 55);}
 				//TOOTHPICKS
 				if(this.isToothPicks){
 					if(this.isShooting) context.drawImage(imageTool.toothpicksside, this.x+12, this.y-12, 30, 45); 
@@ -258,7 +403,9 @@ var Player = {
 			if( Date.now() - this.lastFire > 700) this.orientation = "down";
 			
 			//Détail fixe
-			if (this.Halo) context.drawImage(imageTool.thehalo, this.x-21, this.y-77, 80, 80);//Objet flottant #2
+			if (this.Halo){
+				if(this.isShooting) context.drawImage(imageTool.thehalo, this.x-21, this.y-77, 80, 80);
+				else context.drawImage(imageTool.thehalo, this.x-21, this.y-80, 80, 80);}//Objet flottant #2
 						context.restore();	
 		}				
 	},
@@ -316,7 +463,7 @@ var Player = {
 				else if(pool > 5) {row = 1*height; col = 6*width;}
 				uicontext.drawImage(imageTool.halfAp,(pool*width)+ox-col,oy+row,width,height); pool++;}
 			// Gold, Keys, Bombs
-			uicontext.font = "24pt wendy";
+			uicontext.font = "14pt wendy";
 			uicontext.fillStyle = 'white';
 			var zgold ="";
 			var zbomb = "";
@@ -328,16 +475,47 @@ var Player = {
 			uicontext.fillText(zbomb+this.bombs,422,68.5);
 			uicontext.fillText(zkey+this.keys,422,101);
 			// Fps Counter
-			uicontext.font = "15pt wendy";
+			/*uicontext.font = "15pt wendy";
 			uicontext.fillStyle = 'white';
 			var fpsOut = (1000/frameTime).toFixed() + " FPS";
-			uicontext.fillText(fpsOut, uicanvas.width-50,18);
+			uicontext.fillText(fpsOut, uicanvas.width-50,18);*/
 			
+			if(!editorMode){
+			//Minimap
+			var top = 7;
+			var left = 10;
+			for(var y=0; y < currentFloor.length; y++){
+				for(var x=0; x < currentFloor[y].length; x++){
+					if(currentFloor[y][x].isCurrent && currentFloor[y][x].type != "Secret" ){ uicontext.drawImage(imageTool.current,(x*42)+left,(y*17)+top, 44, 21);}
+					else if(currentFloor[y][x].exists && currentFloor[y][x].isVisited && currentFloor[y][x].type != "Secret" ){ uicontext.drawImage(imageTool.visited,(x*42)+left,(y*17)+top, 44, 21);}
+					else if(currentFloor[y][x].exists && currentFloor[y][x].isVisible && currentFloor[y][x].type != "Secret" ){ uicontext.drawImage(imageTool.unvisited,(x*42)+left,(y*17)+top, 44, 21);}
+				}
+			}
+			for(var y=0; y < currentFloor.length; y++){
+				for(var x=0; x < currentFloor[y].length; x++){			
+					if(currentFloor[y][x].exists && currentFloor[y][x].iconVisible && currentFloor[y][x].type =="Boss"){ uicontext.drawImage(imageTool.boss,(x*42)+left,(y*17)+top-8, 44, 32);}
+					else if(currentFloor[y][x].exists && currentFloor[y][x].iconVisible && currentFloor[y][x].type =="Treasure"){ uicontext.drawImage(imageTool.treasure,(x*42)+left,(y*17)+top-8, 44, 32);}
+					else if(currentFloor[y][x].exists && currentFloor[y][x].iconVisible && currentFloor[y][x].type =="Shop"){ uicontext.drawImage(imageTool.shop,(x*42)+left+10,(y*17)+top-4, 26, 28);}else if(currentFloor[y][x].exists && currentFloor[y][x].iconVisible && currentFloor[y][x].type =="Sacrifice"){ uicontext.drawImage(imageTool.sacrifice,(x*42)+left+10,(y*17)+top-4, 26, 28);}
+					else if(currentFloor[y][x].exists && currentFloor[y][x].iconVisible && currentFloor[y][x].type =="Cursed"){ uicontext.drawImage(imageTool.cursed,(x*42)+left+10,(y*17)+top-4, 26, 28);}
+					else if(currentFloor[y][x].exists && (currentFloor[y][x].isVisible || currentFloor[y][x].isVisible) && currentFloor[y][x].type == "Secret" ){ uicontext.drawImage(imageTool.secret,(x*42)+left,(y*17)+top-4, 44, 26);}
+					
+					if(currentFloor[y][x].exists && currentFloor[y][x].chestPresent){ uicontext.drawImage(imageTool.minichest,(x*42)+left+16,(y*17)+top+3, 14, 14);}
+					if(currentFloor[y][x].exists && currentFloor[y][x].hpPresent){ uicontext.drawImage(imageTool.minihp,(x*42)+left+16,(y*17)+top+3, 14, 14);}
+					if(currentFloor[y][x].exists && currentFloor[y][x].coinPresent){ uicontext.drawImage(imageTool.minicoin,(x*42)+left+16,(y*17)+top+3, 14, 14);}
+					if(currentFloor[y][x].exists && currentFloor[y][x].keyPresent){ uicontext.drawImage(imageTool.minikey,(x*42)+left+5,(y*17)+top+3, 14, 14);}
+					if(currentFloor[y][x].exists && currentFloor[y][x].bombPresent){ uicontext.drawImage(imageTool.minibomb,(x*42)+left+26,(y*17)+top+3, 14, 14);}
+				}
+			}
+			}
+			
+			//TIMER
 			this.uiUpdated = Date.now();
 		}
 	},
 	playLoot : function(item){
-			this.itemHolding = item;
+			this.itemHolding = item.img
+			this.itemHoldingName = item.type;
+			this.itemHoldingDesc = item.desc;
 			this.isLooting = true;
 			this.lootTimer = Date.now();
 	},
@@ -349,7 +527,7 @@ var Player = {
 			if(dmg > 0){ 
 				
 				this.damagedNow = Date.now(); //Moment ou le dégat est pris
-				if( this.damagedNow - this.lastDamaged > 700){ //Si le dernier dégat date d'une seconde
+				if( this.damagedNow - this.lastDamaged > 1000){ //Si le dernier dégat date d'une seconde
 					if(this.soul > 0){this.soul -= 0.5;} //retirer l'armure (soul hearts)
 					else {this.hp -= dmg;}//retirer les points de vie
 					//GAMEOVER
@@ -357,7 +535,8 @@ var Player = {
 						this.alive=false;
 						gameOverTime = Date.now();}
 					//else { sounds.playerDmg.currentTime = 0;sounds.playerDmg.play();}
-					this.lastDamaged = Date.now(); }}
+					this.lastDamaged = Date.now(); }
+			}
 		}
 	},
 	checkCollide : function(obj,pos){ //calcul de collision
@@ -395,42 +574,104 @@ var Player = {
 		var gapSwitch = 6;
 		var numberOneY = 0; 
 		
-		
+		if(Date.now() - this.lastFire > this.fireRate){
 			
-		//Si le joueur tire dans la direction qu'il avance, la vitesse et la portée des projectiles est décuplée
-		if(this.orientation == this.currentMoving){
-			var brange = this.range*(1.2);
-			var bspeed = this.attackSpeed+this.speed/2;	}
-		//Sinon par défault
-		else {var brange = this.range; var bspeed = this.attackSpeed;}
-
-		if( Date.now() - this.lastFire > this.fireRate){
-			gameStats.bullet++;
+			//Si le joueur tire dans la direction qu'il avance, la vitesse et la portée des projectiles est décuplée
+			if(this.orientation == this.currentMoving){
+				var brange = this.range*(1.2);
+				var bspeed = this.attackSpeed+this.speed/2;	}
+			//Sinon par défault
+			else {var brange = this.range; var bspeed = this.attackSpeed;}
+				gameStats.bullet++;
 			if(this.isNumberOne){	gapSwitch = 4;	numberOneY = 25; }
-			
+			if(this.innerEye) this.eyeSwitch =0;
+					
 			switch(this.orientation){
 			case "left":	bulx = this.x-12;
 							buly = this.y -6 +numberOneY+(gapSwitch* this.eyeSwitch);
-							if( this.eyeSwitch ==-1) playerBulletsBack.push(new Bullet(this.orientation,bspeed,brange,bulx,buly,this.accelx,this.accely,this.damage));
-							else  playerBullets.push(new Bullet(this.orientation,bspeed,brange,bulx,buly,this.accelx,this.accely,this.damage));
+							
+							if(this.innerEye){
+								if(this.isWiggle){
+									playerBulletsBack.push(new Bullet(this.orientation,bspeed,brange,bulx+5,buly+6,this.accelx,this.accely,this.damage,-1));
+									playerBullets.push(new Bullet(this.orientation,bspeed,brange,bulx-12,buly-2,this.accelx,this.accely,this.damage,0));
+									playerBullets.push(new Bullet(this.orientation,bspeed,brange,bulx,buly+14,this.accelx,this.accely,this.damage,1));
+								}
+								else{
+									playerBulletsBack.push(new Bullet(this.orientation,bspeed,brange,bulx+5,buly-10,this.accelx,this.accely,this.damage,-1));
+									playerBullets.push(new Bullet(this.orientation,bspeed,brange,bulx,buly,this.accelx,this.accely,this.damage,1));
+									playerBullets.push(new Bullet(this.orientation,bspeed,brange,bulx-12,buly-5,this.accelx,this.accely,this.damage,0));}
+							}
+							else {
+								if( this.eyeSwitch ==-1) playerBulletsBack.push(new Bullet(this.orientation,bspeed,brange,bulx,buly,this.accelx,this.accely,this.damage));
+								else  playerBullets.push(new Bullet(this.orientation,bspeed,brange,bulx,buly,this.accelx,this.accely,this.damage));}
 							break;
-			case "up":		bulx = this.x +4+(gapSwitch* this.eyeSwitch);
-							buly = this.y -22+numberOneY;
-							playerBulletsBack.push(new Bullet(this.orientation,bspeed,brange,bulx,buly,this.accelx,this.accely,this.damage));
-							break;
+							
+							////////////	
+							
 			case "right": 	bulx = this.x +23;
 							buly = this.y -6+numberOneY+(gapSwitch* this.eyeSwitch);
-							if( this.eyeSwitch ==-1) playerBulletsBack.push(new Bullet(this.orientation,bspeed,brange,bulx,buly,this.accelx,this.accely,this.damage));
-							else  playerBullets.push(new Bullet(this.orientation,bspeed,brange,bulx,buly,this.accelx,this.accely,this.damage));
+							
+							if(this.innerEye){
+								if(this.isWiggle){
+									playerBulletsBack.push(new Bullet(this.orientation,bspeed,brange,bulx-5,buly+6,this.accelx,this.accely,this.damage,-1));
+									playerBullets.push(new Bullet(this.orientation,bspeed,brange,bulx+12,buly-2,this.accelx,this.accely,this.damage,0));
+									playerBullets.push(new Bullet(this.orientation,bspeed,brange,bulx,buly+14,this.accelx,this.accely,this.damage,1));
+								
+								}
+								else{
+									playerBulletsBack.push(new Bullet(this.orientation,bspeed,brange,bulx-5,buly-10,this.accelx,this.accely,this.damage,-1));
+									playerBullets.push(new Bullet(this.orientation,bspeed,brange,bulx,buly,this.accelx,this.accely,this.damage,1));
+									playerBullets.push(new Bullet(this.orientation,bspeed,brange,bulx+12,buly-5,this.accelx,this.accely,this.damage,0));}
+							}
+							else {
+								if( this.eyeSwitch ==-1) playerBulletsBack.push(new Bullet(this.orientation,bspeed,brange,bulx,buly,this.accelx,this.accely,this.damage));
+								else  playerBullets.push(new Bullet(this.orientation,bspeed,brange,bulx,buly,this.accelx,this.accely,this.damage));}
 							break;
+							
+							////////////	
+							
+			case "up":		bulx = this.x +4+(gapSwitch* this.eyeSwitch);
+							buly = this.y -22+numberOneY;
+							
+							if(this.innerEye){
+								bulx+=6;
+								if(this.isWiggle){
+									playerBulletsBack.push(new Bullet(this.orientation,bspeed,brange,bulx-6,buly,this.accelx,this.accely,this.damage,-1));
+									playerBulletsBack.push(new Bullet(this.orientation,bspeed,brange,bulx-2,buly,this.accelx,this.accely,this.damage,1));
+									playerBulletsBack.push(new Bullet(this.orientation,bspeed,brange,bulx-8,buly-12,this.accelx,this.accely,this.damage,0));
+								}
+								else{
+									playerBulletsBack.push(new Bullet(this.orientation,bspeed,brange,bulx-18,buly,this.accelx,this.accely,this.damage,-1));
+									playerBulletsBack.push(new Bullet(this.orientation,bspeed,brange,bulx+6,buly,this.accelx,this.accely,this.damage,1));
+									playerBulletsBack.push(new Bullet(this.orientation,bspeed,brange,bulx-6,buly-12,this.accelx,this.accely,this.damage,0));}
+							}
+							else playerBulletsBack.push(new Bullet(this.orientation,bspeed,brange,bulx,buly,this.accelx,this.accely,this.damage));
+							break;
+							
+							////////////	
+							
 			case "down": 	bulx = this.x +4+(gapSwitch* this.eyeSwitch);
 							buly = this.y +3+numberOneY;
-							playerBullets.push(new Bullet(this.orientation,bspeed,brange,bulx,buly,this.accelx,this.accely,this.damage));
+							
+							if(this.innerEye){
+								bulx+=6;
+								if(this.isWiggle){
+									playerBullets.push(new Bullet(this.orientation,bspeed,brange,bulx-6,buly,this.accelx,this.accely,this.damage,-1));
+									playerBullets.push(new Bullet(this.orientation,bspeed,brange,bulx-2,buly,this.accelx,this.accely,this.damage,1));
+									playerBullets.push(new Bullet(this.orientation,bspeed,brange,bulx-8,buly+12,this.accelx,this.accely,this.damage,0));
+								}
+								else{
+									playerBullets.push(new Bullet(this.orientation,bspeed,brange,bulx-18,buly,this.accelx,this.accely,this.damage,-1));
+									playerBullets.push(new Bullet(this.orientation,bspeed,brange,bulx+6,buly,this.accelx,this.accely,this.damage,1));
+									playerBullets.push(new Bullet(this.orientation,bspeed,brange,bulx-6,buly+12,this.accelx,this.accely,this.damage,0));}
+							}
+							else playerBullets.push(new Bullet(this.orientation,bspeed,brange,bulx,buly,this.accelx,this.accely,this.damage));
 							break;
 			}
 			//Quel oeil tire
-		if( this.eyeSwitch ==1)  this.eyeSwitch = -1;
-			else  this.eyeSwitch =1;
+			if(!this.innerEye){
+				if( this.eyeSwitch ==1)  this.eyeSwitch = -1;
+				else this.eyeSwitch =1;}
 			this.lastFire = Date.now();
 			this.isShooting = false;
 		}
@@ -438,7 +679,7 @@ var Player = {
 };
 
 //projectile
-function Bullet(side,speed,range,bulx,buly,accelx,accely,dmg){
+function Bullet(side,speed,range,bulx,buly,accelx,accely,dmg,type){
 	this.side = side;
 	this.range = range;
 	this.inix = bulx;
@@ -471,8 +712,9 @@ function Bullet(side,speed,range,bulx,buly,accelx,accely,dmg){
 			bulletCollision(playerBullets, Game.Doors);			
 			
 			if(this.side == "up"){
-				if(Player.isWiggle){
-					if(this.angle < 90) this.angle+=0.25;
+				//WIGGLE SANS TRIPLE SHOT
+				if(Player.isWiggle && !Player.innerEye){
+					if(this.angle < 90) this.angle+=0.2;
 					else this.angle =0;
 					this.dirx = Math.cos(this.angle)/2;
 					this.diry = (Player.y - Player.height/2) - ((Player.y - Player.width/2)-this.range);
@@ -481,8 +723,33 @@ function Bullet(side,speed,range,bulx,buly,accelx,accely,dmg){
 					this.diry = this.diry/hyp;
 					if(this.y > this.targety){ this.x -= this.dirx*this.speed; this.y -= this.diry*this.speed;}
 					else this.alive = false;}
+					
+				//WIGGLE AVEC TRIPLE SHOT
+				else if(Player.isWiggle && Player.innerEye){
+					if(type !=0){
+						if(type ==-1) {
+							if(this.angle < 90) this.angle+=0.15;
+							else this.angle =0;}
+						if(type ==1) {
+							if(this.angle > 0) this.angle-=0.15;
+							else this.angle =90;}
+						this.dirx = Math.cos(this.angle)/2;}
+					else this.dirx = 0;
+					
+					this.diry = (Player.y - Player.height/2) - ((Player.y - Player.width/2)-this.range);
+					this.targety = this.iniy - this.range;
+					var hyp = Math.sqrt(this.dirx*this.dirx + this.diry*this.diry);
+					this.diry = this.diry/hyp;
+					if(this.y > this.targety){ this.x -= this.dirx*this.speed; this.y -= this.diry*this.speed;}
+					else this.alive = false;
+				
+				}
+				//NORMAL
 				else{
-					this.dirx = (Player.x - Player.width/2) - ((Player.x - Player.width/2) + accelx*50);
+					//TRIPLE SHOT
+					if (Player.innerEye) this.dirx = (Player.x - Player.width/2) - ((Player.x - Player.width/2) + accelx*50 +type*30);
+					else this.dirx = (Player.x - Player.width/2) - ((Player.x - Player.width/2) + accelx*50);
+					
 					this.diry = (Player.y - Player.height/2) - ((Player.y - Player.width/2)-this.range);
 					this.targety = this.iniy - this.range;
 					var hyp = Math.sqrt(this.dirx*this.dirx + this.diry*this.diry);
@@ -491,10 +758,11 @@ function Bullet(side,speed,range,bulx,buly,accelx,accely,dmg){
 					if(this.y > this.targety){ this.x -= this.dirx*this.speed; this.y -= this.diry*this.speed;}
 					else this.alive = false;}
 			}
-				
+					
 			else if(this.side == "down"){
-				if(Player.isWiggle){
-					if(this.angle < 90) this.angle+=0.25;
+				//WIGGLE SANS TRIPLE SHOT
+				if(Player.isWiggle && !Player.innerEye){
+					if(this.angle < 90) this.angle+=0.2;
 					else this.angle =0;
 					this.dirx = Math.cos(this.angle)/2;
 					this.diry = (Player.y - Player.height/2) - ((Player.y - Player.width/2)+this.range);
@@ -503,8 +771,32 @@ function Bullet(side,speed,range,bulx,buly,accelx,accely,dmg){
 					this.diry = this.diry/hyp;
 					if(this.y < this.targety){ this.x -= this.dirx*this.speed; this.y -= this.diry*this.speed;}
 					else this.alive = false;}
+					
+				//WIGGLE AVEC TRIPLE SHOT
+				else if(Player.isWiggle && Player.innerEye){
+					if(type !=0){
+						if(type ==-1) {
+							if(this.angle < 90) this.angle+=0.15;
+							else this.angle =0;}
+						if(type ==1) {
+							if(this.angle > 0) this.angle-=0.15;
+							else this.angle =90;}
+						this.dirx = Math.cos(this.angle)/2;}
+					else this.dirx = 0;
+					
+					this.diry = (Player.y - Player.height/2) - ((Player.y - Player.width/2)+this.range);
+					this.targety = this.iniy + this.range;
+					var hyp = Math.sqrt(this.dirx*this.dirx + this.diry*this.diry);
+					this.diry = this.diry/hyp;
+					if(this.y < this.targety){ this.x -= this.dirx*this.speed; this.y -= this.diry*this.speed;}
+					else this.alive = false;}
+				
+				//NORMAL
 				else{
-					this.dirx = (Player.x - Player.width/2) - ((Player.x - Player.width/2) + accelx*50);
+					//TRIPLE SHOT
+					if (Player.innerEye) this.dirx = (Player.x - Player.width/2) - ((Player.x - Player.width/2) + accelx*50 +type*30);
+					else this.dirx = (Player.x - Player.width/2) - ((Player.x - Player.width/2) + accelx*50);
+					
 					this.diry = (Player.y - Player.height/2) - ((Player.y - Player.width/2)+this.range);
 					this.targety = this.iniy + this.range;			
 					var hyp = Math.sqrt(this.dirx*this.dirx + this.diry*this.diry);
@@ -515,8 +807,9 @@ function Bullet(side,speed,range,bulx,buly,accelx,accely,dmg){
 			}
 				
 			else if(this.side == "right"){
-				if(Player.isWiggle){
-					if(this.angle < 90) this.angle+=0.25;
+				//WIGGLE SANS TRIPLE SHOT
+				if(Player.isWiggle && !Player.innerEye){
+					if(this.angle < 90) this.angle+=0.2;
 					else this.angle =0;
 					this.diry = Math.sin(this.angle)*1/3;
 				
@@ -527,9 +820,34 @@ function Bullet(side,speed,range,bulx,buly,accelx,accely,dmg){
 					
 					if(this.x < this.targetx){this.x -= this.dirx*this.speed;this.y -= this.diry*this.speed;}
 					else this.alive = false;}
+					
+				//WIGGLE AVEC TRIPLE SHOT
+				else if(Player.isWiggle && Player.innerEye){
+					if(type !=0){
+						if(type ==-1) {
+							if(this.angle < 90) this.angle+=0.15;
+							else this.angle =0;}
+						if(type ==1) {
+							if(this.angle > 90) this.angle-=0.15;
+							else this.angle =180;}
+						this.diry = Math.sin(this.angle)/2;}
+					else this.diry = 0;
+				
+					this.dirx = (Player.x - Player.width/2) - ((Player.x - Player.width/2) +this.range);
+					this.targetx = this.inix + this.range;
+					var hyp = Math.sqrt(this.dirx*this.dirx + this.diry*this.diry);
+					this.dirx = this.dirx/hyp;
+					
+					if(this.x < this.targetx){this.x -= this.dirx*this.speed;this.y -= this.diry*this.speed;}
+					else this.alive = false;}
+				
+				//NORMAL
 				else{
 					this.dirx = (Player.x - Player.width/2) - ((Player.x - Player.width/2) +this.range);
-					this.diry = (Player.y - Player.height/2) - ((Player.y - Player.width/2)+ accely*50);	
+					//TRIPLE SHOT
+					if (Player.innerEye) this.diry = (Player.y - Player.height/2) - ((Player.y - Player.width/2)+ accely*50 + type*30);		
+					else this.diry = (Player.y - Player.height/2) - ((Player.y - Player.width/2)+ accely*50);
+					
 					this.targetx = this.inix + this.range;					
 					var hyp = Math.sqrt(this.dirx*this.dirx + this.diry*this.diry);
 					this.dirx = this.dirx/hyp;
@@ -540,8 +858,9 @@ function Bullet(side,speed,range,bulx,buly,accelx,accely,dmg){
 			}
 				
 			else if(this.side == "left"){
-				if(Player.isWiggle){
-					if(this.angle < 90) this.angle+=0.25;
+				//WIGGLE SANS TRIPLE SHOT
+				if(Player.isWiggle && !Player.innerEye){
+					if(this.angle < 90) this.angle+=0.2;
 					else this.angle =0;
 					this.diry = Math.sin(this.angle)*1/3;
 				
@@ -552,17 +871,40 @@ function Bullet(side,speed,range,bulx,buly,accelx,accely,dmg){
 					
 					if(this.x > this.targetx){this.x -= this.dirx*this.speed;this.y -= this.diry*this.speed;}
 					else this.alive = false;}
+				
+				//WIGGLE AVEC TRIPLE SHOT
+				else if(Player.isWiggle && Player.innerEye){
+					if(type !=0){
+						if(type ==-1) {
+							if(this.angle < 90) this.angle+=0.15;
+							else this.angle =0;}
+						if(type ==1) {
+							if(this.angle > 90) this.angle-=0.15;
+							else this.angle =180;}
+						this.diry = Math.sin(this.angle)/2;}
+					else this.diry = 0;
+				
+					this.dirx = (Player.x - Player.width/2) - ((Player.x - Player.width/2) -this.range);
+					this.targetx = this.inix - this.range;		
+					var hyp = Math.sqrt(this.dirx*this.dirx + this.diry*this.diry);
+					this.dirx = this.dirx/hyp;
+					
+					if(this.x > this.targetx){this.x -= this.dirx*this.speed;this.y -= this.diry*this.speed;}
+					else this.alive = false;}
+					
+				//NORMAL
 				else{
 					this.dirx = (Player.x - Player.width/2) - ((Player.x - Player.width/2) -this.range);
-					this.diry = (Player.y - Player.height/2) - ((Player.y - Player.width/2)+ accely*50);		
+					//TRIPLE SHOT
+					if (Player.innerEye) this.diry = (Player.y - Player.height/2) - ((Player.y - Player.width/2)+ accely*50 + type*30);		
+					else this.diry = (Player.y - Player.height/2) - ((Player.y - Player.width/2)+ accely*50);	
+					
 					this.targetx = this.inix - this.range;							
 					var hyp = Math.sqrt(this.dirx*this.dirx + this.diry*this.diry);
 					this.dirx = this.dirx/hyp;
 					this.diry = this.diry/hyp;
 					if(this.x > this.targetx){this.x -= this.dirx*this.speed;this.y -= this.diry*this.speed;}
 					else this.alive = false;}
-				
-				
 			}
 		}	
 	}
@@ -599,9 +941,9 @@ function detectCollision(obj){
 				if(obj == Game.Minions || obj == Game.Towers || obj == Game.Bosses){
 					if(Player.canGetDamage) Player.getDamage(obj[i].dmg, obj[i].x, obj[i].y);}
 			    else if(obj[i].type =="fireplace"  ||  obj[i].type =="hellfireplace"){
-					if(!obj[i].isDestroyed && obj[i].isColliding) Player.getDamage(obj[i].dmg);
+					if(!obj[i].isDestroyed && obj[i].isColliding) obj[i].use(Player);
 				}
-				else if(obj == Game.traps && !obj[i].isDestroyed) Player.isSlowed = Date.now(); }}
+				else if(obj == Game.traps && !obj[i].isDestroyed) obj[i].use(Player); }}
 }
 
 function holeCollision(obj){

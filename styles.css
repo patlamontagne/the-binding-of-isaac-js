@@ -2,18 +2,19 @@ html { background: #151515;	font: 1em Arial; }
 * {	padding: 0px; margin: 0px; }
 @font-face {
     font-family: 'wendy';
-    src: url("font/wendy.ttf");}
+    src: url("font/8bit.ttf");}
 @font-face {
     font-family: 'danielbk';
     src: url("font/danielbk.ttf");}
+
 #game {
 	width: 970px;
 	margin: 20px auto;
 	line-height:0px;
 	text-align: center;}
-canvas { border-left: solid 6px #000;border-right: solid 6px #000;cursor: crosshair; margin: auto;}
+canvas { border-left: solid 6px #000;border-right: solid 6px #000; margin: auto;}
 #canvas { border-bottom: solid 6px #000;color:#fff;}
-#uicanvas{border-bottom: solid 0px #323131;}
+#uicanvas{border-bottom: solid 0px #323131; background: #000;}
 #bgcanvas{border-bottom: solid 0px #323131;position: absolute; top: 140px; z-index: -10;}
 
 #editorlink{
@@ -26,4 +27,8 @@ canvas { border-left: solid 6px #000;border-right: solid 6px #000;cursor: crossh
 	text-align: center;
 	color: #aaa;
 }
-a{color: #aaf;font-weight: bold;text-decoration: none;}
+
+#editorlink > a{background: #aaa;font-weight: bold;text-decoration: none; color:#151515;padding: 8px;}
+#editorlink > a:hover{background: #cbeba5;font-weight: bold;text-decoration: none; color:#151515;padding: 8px;}
+#editorlink ul a{color: #aaf;font-weight: bold;text-decoration: none;}
+#editorlink ul a:hover{text-decoration: underline;}

@@ -1,3 +1,4 @@
+var editorMode = false;
 //Object de sons
 var sounds = new function(){
 	this.impact = new Audio("sound/impact.wav");
@@ -9,6 +10,10 @@ var sounds = new function(){
 //Object d'images
 var imageTool = new function() {
 	this.loading = new Image();
+	this.xmark = new Image();
+	this.ui = new Image();
+	this.uibar = new Image();
+	this.uinote = new Image();
 	//Minimap
 	this.visited = new Image();
 	this.unvisited = new Image();
@@ -17,7 +22,28 @@ var imageTool = new function() {
 	this.shop = new Image();
 	this.treasure = new Image();
 	this.secret = new Image();
+	this.sacrifice = new Image();
+	this.cursed = new Image();
+	this.minihp = new Image();
+	this.minicoin = new Image();
+	this.minichest = new Image();
+	this.minibomb = new Image();
+	this.minikey = new Image();
+	//Floors
+	this.bg1 = new Image();
+	this.bg2 = new Image();
+	this.bg3 = new Image();
+	this.overlayboss = new Image();
+	this.overlay1 = new Image();
+	this.overlay2 = new Image();
+	this.bgsecret = new Image();
 	//Game
+	this.redchest  = new Image();
+	this.curseddoorL = new Image();
+	this.curseddoorU = new Image();
+	this.curseddoorR = new Image();
+	this.curseddoorD = new Image();
+	this.spikes = new Image();
 	this.keyholeU = new Image();
 	this.keyholeD = new Image();
 	this.keyholeL = new Image();
@@ -28,12 +54,6 @@ var imageTool = new function() {
 	this.shopKeyholeR = new Image();
 	this.spacer = new Image();
 	this.tutorial = new Image();
-	this.ui = new Image();
-	this.uibar = new Image();
-	this.background = new Image();
-	this.secretbackground = new Image();
-	this.bossroombackground = new Image();
-	this.secondfloor = new Image();
 	this.pauseScreen = new Image();
 	this.blackScreen = new Image();
 	this.fullhp = new Image();
@@ -57,15 +77,22 @@ var imageTool = new function() {
 	this.animNumberOne= new Image();
 	this.explosion = new Image();
 	this.explosionmark = new Image();
-	this.project = new Image();
 	this.projectEye = new Image();
+	this.project = new Image();
 	this.projectLimb1 = new Image();
 	this.projectLimb2 = new Image();
 	this.projectLimb3 = new Image();
+	this.projecthit = new Image();
+	this.projectLimb1hit = new Image();
+	this.projectLimb2hit = new Image();
+	this.projectLimb3hit = new Image();
 	this.duke = new Image();
 	this.dukehit = new Image();
 	this.dukeFlyAnim = new Image();
 	this.dukeSwarmAnim = new Image();
+	this.duke2 = new Image();
+	this.dukeFlyAnim2 = new Image();
+	this.dukeSwarmAnim2 = new Image();
 	this.fly = new Image();
 	this.fly1 = new Image();
 	this.flyAnim = new Image();
@@ -188,6 +215,10 @@ var imageTool = new function() {
 	this.HP = new Image();
 	//ITEMS
 	this.chest = new Image();
+	this.redchest = new Image();
+	this.chestopen = new Image();
+	this.redchestopen = new Image();
+	this.haloofflies = new Image();
 	this.trapdoor = new Image();
 	this.coin = new Image();
 	this.bomb = new Image();
@@ -230,25 +261,81 @@ var imageTool = new function() {
 	this.wiggleworm  = new Image();
 	this.thecompass  = new Image();
 	this.treasuremap  = new Image();
+	this.theinnereye  = new Image();
 	this.price3  = new Image();
 	this.price5  = new Image();
 	this.price15  = new Image();
 	
 	//DÉTAILS
-	
 	this.toothpicksfront = new Image();
 	this.toothpicksside = new Image();
+	this.smallrockback = new Image();
+	this.smallrockfront = new Image();
+	this.smallrockright = new Image();
+	this.speedballback = new Image();
+	this.wireback = new Image();
+	this.wirefront = new Image();
+	this.wireleft = new Image();
+	this.wireright = new Image();
+	this.jesusjuicefront = new Image();
+	this.jesusjuiceleft = new Image();
+	this.jesusjuiceright = new Image();
+	this.lipstickfront = new Image();
+	this.lipstickleft = new Image();
+	this.lipstickright = new Image();
+	this.innerfront = new Image();
+	this.innerfronts = new Image();
+	this.innerleft = new Image();
+	this.innerlefts = new Image();
+	this.innerright = new Image();
+	this.innerrights = new Image();
+	this.nofront = new Image();
+	this.nofronts = new Image();
+	this.noleft = new Image();
+	this.nolefts = new Image();
+	this.noright = new Image();
+	this.norights = new Image();
+	this.speedfront = new Image();
+	this.speedfronts = new Image();
+	this.speedleft = new Image();
+	this.speedlefts = new Image();
+	this.speedright = new Image();
+	this.speedrights = new Image();
+	this.ghormonesfront = new Image();
+	this.ghormonesback = new Image();
+	this.ghormonesleft = new Image();
+	this.ghormonesright = new Image();
+	this.heartanim = new Image();
+	this.skeyfront = new Image();
+	this.belt = new Image();
+	
 	//Préchargement
-	numImages = 221;
+	numImages = 290;
 	numLoaded = 0;
 	
 	function imageLoaded() {
 		numLoaded++;
-		if (numLoaded === numImages) {gameInit(); loading(false);}
-		else loading(true); }
-		
-	this.loading.onload = function() {imageLoaded();}
+		//console.log(numLoaded);
+		if(!editorMode && numLoaded === numImages) {
+				gameInit();
+				loading(false);
+		}
+		if (editorMode && numLoaded === numImages) {
+			getEl("editor").style.visibility = "visible";
+			getEl("selector").style.visibility = "visible";
+			getEl("options").style.visibility = "visible";
+			testisReady = true;
+			loading(false);
+		}
+		else loading(true);
 	
+	}
+	this.loading.onload = function() {imageLoaded();}
+	this.xmark.onload = function() {imageLoaded();}
+	this.ui.onload = function() {imageLoaded();}
+	this.uibar.onload = function() {imageLoaded();}
+	this.uinote.onload = function() {imageLoaded();}
+	//Minimap
 	this.visited.onload = function() {imageLoaded();}
 	this.unvisited.onload = function() {imageLoaded();}
 	this.current.onload = function() {imageLoaded();}
@@ -256,7 +343,27 @@ var imageTool = new function() {
 	this.shop.onload = function() {imageLoaded();}
 	this.treasure.onload = function() {imageLoaded();}
 	this.secret.onload = function() {imageLoaded();}
-	
+	this.sacrifice.onload = function() {imageLoaded();}
+	this.cursed.onload = function() {imageLoaded();}
+	this.minihp.onload = function() {imageLoaded();}
+	this.minicoin.onload = function() {imageLoaded();}
+	this.minichest.onload = function() {imageLoaded();}
+	this.minibomb.onload = function() {imageLoaded();}
+	this.minikey.onload = function() {imageLoaded();}
+	//Floors
+	this.bg1.onload = function() {imageLoaded();}
+	this.bg2.onload = function() {imageLoaded();}
+	this.bg3.onload = function() {imageLoaded();}
+	this.overlayboss.onload = function() {imageLoaded();}
+	this.overlay1.onload = function() {imageLoaded();}
+	this.overlay2.onload = function() {imageLoaded();}
+	this.bgsecret.onload = function() {imageLoaded();}
+	//Game
+	this.curseddoorL.onload = function() {imageLoaded();}
+	this.curseddoorU.onload = function() {imageLoaded();}
+	this.curseddoorR.onload = function() {imageLoaded();}
+	this.curseddoorD.onload = function() {imageLoaded();}
+	this.spikes.onload = function() {imageLoaded();}
 	this.keyholeU.onload = function() {imageLoaded();}
 	this.keyholeD.onload = function() {imageLoaded();}
 	this.keyholeL.onload = function() {imageLoaded();}
@@ -267,12 +374,6 @@ var imageTool = new function() {
 	this.shopKeyholeR.onload = function() {imageLoaded();}
 	this.spacer.onload = function() {imageLoaded();}
 	this.tutorial.onload = function() {imageLoaded();}
-	this.ui.onload = function() {imageLoaded();}
-	this.uibar.onload = function() {imageLoaded();}
-	this.secondfloor.onload = function() {imageLoaded();}
-	this.background.onload = function() {imageLoaded();}
-	this.secretbackground.onload = function() {imageLoaded();}
-	this.bossroombackground.onload = function() {imageLoaded();}
 	this.pauseScreen.onload = function() {imageLoaded();}
 	this.blackScreen.onload = function() {imageLoaded();}
 	this.fullhp.onload = function() {imageLoaded();}
@@ -301,10 +402,17 @@ var imageTool = new function() {
 	this.projectLimb1.onload = function() {imageLoaded();}
 	this.projectLimb2.onload = function() {imageLoaded();}
 	this.projectLimb3.onload = function() {imageLoaded();}
+	this.projecthit.onload = function() {imageLoaded();}
+	this.projectLimb1hit.onload = function() {imageLoaded();}
+	this.projectLimb2hit.onload = function() {imageLoaded();}
+	this.projectLimb3hit.onload = function() {imageLoaded();}
 	this.duke.onload = function() {imageLoaded();}
 	this.dukehit.onload = function() {imageLoaded();}
 	this.dukeFlyAnim.onload = function() {imageLoaded();}
 	this.dukeSwarmAnim.onload = function() {imageLoaded();}
+	this.duke2.onload = function() {imageLoaded();}
+	this.dukeFlyAnim2.onload = function() {imageLoaded();}
+	this.dukeSwarmAnim2.onload = function() {imageLoaded();}
 	this.fly.onload = function() {imageLoaded();}
 	this.fly1.onload = function() {imageLoaded();}
 	this.flyAnim.onload = function() {imageLoaded();}
@@ -427,6 +535,10 @@ var imageTool = new function() {
 	
 	//ITEMS
 	this.chest.onload = function() {imageLoaded();}
+	this.redchest.onload = function() {imageLoaded();}
+	this.chestopen.onload = function() {imageLoaded();}
+	this.redchestopen.onload = function() {imageLoaded();}
+	this.haloofflies.onload = function() {imageLoaded();}
 	this.trapdoor.onload = function() {imageLoaded();}
 	this.coin.onload = function() {imageLoaded();}
 	this.bomb.onload = function() {imageLoaded();}
@@ -469,6 +581,7 @@ var imageTool = new function() {
 	this.wiggleworm.onload = function() {imageLoaded();}
 	this.thecompass.onload = function() {imageLoaded();}
 	this.treasuremap.onload = function() {imageLoaded();}
+	this.theinnereye.onload = function() {imageLoaded();}
 	this.price3.onload = function() {imageLoaded();}
 	this.price5.onload = function() {imageLoaded();}
 	this.price15.onload = function() {imageLoaded();}
@@ -477,10 +590,53 @@ var imageTool = new function() {
 	
 	this.toothpicksfront.onload = function() {imageLoaded();}
 	this.toothpicksside.onload = function() {imageLoaded();}
+	this.smallrockback.onload = function() {imageLoaded();}
+	this.smallrockfront.onload = function() {imageLoaded();}
+	this.smallrockright.onload = function() {imageLoaded();}
+	this.speedballback.onload = function() {imageLoaded();}
+	this.wireback.onload = function() {imageLoaded();}
+	this.wirefront.onload = function() {imageLoaded();}
+	this.wireleft.onload = function() {imageLoaded();}
+	this.wireright.onload = function() {imageLoaded();}
+	this.jesusjuicefront.onload = function() {imageLoaded();}
+	this.jesusjuiceleft.onload = function() {imageLoaded();}
+	this.jesusjuiceright.onload = function() {imageLoaded();}
+	this.lipstickfront.onload = function() {imageLoaded();}
+	this.lipstickleft.onload = function() {imageLoaded();}
+	this.lipstickright.onload = function() {imageLoaded();}
+	this.innerfront.onload = function() {imageLoaded();}
+	this.innerfronts.onload = function() {imageLoaded();}
+	this.innerleft.onload = function() {imageLoaded();}
+	this.innerlefts.onload = function() {imageLoaded();}
+	this.innerright.onload = function() {imageLoaded();}
+	this.innerrights.onload = function() {imageLoaded();}
+	this.nofront.onload = function() {imageLoaded();}
+	this.nofronts.onload = function() {imageLoaded();}
+	this.noleft.onload = function() {imageLoaded();}
+	this.nolefts.onload = function() {imageLoaded();}
+	this.noright.onload = function() {imageLoaded();}
+	this.norights.onload = function() {imageLoaded();}
+	this.speedfront.onload = function() {imageLoaded();}
+	this.speedfronts.onload = function() {imageLoaded();}
+	this.speedleft.onload = function() {imageLoaded();}
+	this.speedlefts.onload = function() {imageLoaded();}
+	this.speedright.onload = function() {imageLoaded();}
+	this.speedrights.onload = function() {imageLoaded();}
+	this.ghormonesfront.onload = function() {imageLoaded();}
+	this.ghormonesback.onload = function() {imageLoaded();}
+	this.ghormonesleft.onload = function() {imageLoaded();}
+	this.ghormonesright.onload = function() {imageLoaded();}
+	this.heartanim.onload = function() {imageLoaded();}
+	this.skeyfront.onload = function() {imageLoaded();}
+	this.belt.onload = function() {imageLoaded();}
 	
 	//Sources
 	this.loading.src = "img/loading.png";
-	
+	this.xmark.src = "img/xmark.png";
+	this.ui.src = "img/ui.png";
+	this.uibar.src = "img/uibar.png";
+	this.uinote.src = "img/uinote.png";
+	//Minimap
 	this.visited.src = "img/minimap/visited.png";
 	this.unvisited.src = "img/minimap/unvisited.png";
 	this.current.src = "img/minimap/current.png";
@@ -488,7 +644,27 @@ var imageTool = new function() {
 	this.shop.src = "img/minimap/shop.png";
 	this.treasure.src = "img/minimap/treasure.png";
 	this.secret.src = "img/minimap/secret.png";
-	
+	this.sacrifice.src = "img/minimap/sacrifice.png";
+	this.cursed.src = "img/minimap/cursed.png";
+	this.minihp.src = "img/minimap/minihp.png";
+	this.minicoin.src = "img/minimap/minicoin.png";
+	this.minichest.src = "img/minimap/minichest.png";
+	this.minibomb.src = "img/minimap/minibomb.png";
+	this.minikey.src = "img/minimap/minikey.png";
+	//Floors
+	this.bg1.src = "img/bg.png";
+	this.bg2.src = "img/bgcave.png";
+	this.bg3.src = "img/bgnecropolis.png";
+	this.overlayboss.src = "img/bgboss.png";
+	this.overlay1.src = "img/bgovercellar.png";
+	this.overlay2.src = "img/bgovercave.png";
+	this.bgsecret.src = "img/bgsecret.png";
+	//Game
+	this.curseddoorL.src = "img/cursedroomleft.png";
+	this.curseddoorU.src = "img/cursedroomup.png";
+	this.curseddoorR.src = "img/cursedroomright.png";
+	this.curseddoorD.src = "img/cursedroomdown.png";
+	this.spikes.src = "img/spikes.png";
 	this.keyholeU.src = "img/keyholeup.png";
 	this.keyholeD.src = "img/keyholedown.png";
 	this.keyholeL.src = "img/keyholeleft.png";
@@ -499,12 +675,6 @@ var imageTool = new function() {
 	this.shopKeyholeR.src = "img/shopkeyholeright.png";
 	this.spacer.src = "img/0.png";
 	this.tutorial.src = "img/tutorial.png";
-	this.ui.src = "img/ui.png";
-	this.uibar.src = "img/uibar.png";
-	this.background.src = "img/bg.png";
-	this.secretbackground.src = "img/secretbg.png";
-	this.bossroombackground.src = "img/bossroombg.png";
-	this.secondfloor.src = "img/secondfloorbg.png";
 	this.pauseScreen.src = "img/pause.png";
 	this.blackScreen.src = "img/screen.png";
 	this.fullhp.src = "img/fullhp.png";
@@ -518,10 +688,17 @@ var imageTool = new function() {
 	this.projectLimb1.src = "img/projectlimb1.png";
 	this.projectLimb2.src = "img/projectlimb2.png";
 	this.projectLimb3.src = "img/projectlimb3.png";
+	this.projecthit.src = "img/projecthit.png";
+	this.projectLimb1hit.src = "img/projectlimb1hit.png";
+	this.projectLimb2hit.src = "img/projectlimb2hit.png";
+	this.projectLimb3hit.src = "img/projectlimb3hit.png";
 	this.duke.src = "img/duke.png";
 	this.dukehit.src = "img/dukehit.png";
 	this.dukeFlyAnim.src = "img/dukeflyanim.png";
 	this.dukeSwarmAnim.src = "img/dukeswarmanim.png";
+	this.duke2.src = "img/duke2.png";
+	this.dukeFlyAnim2.src = "img/dukeflyanim2.png";
+	this.dukeSwarmAnim2.src = "img/dukeswarmanim2.png";
 	this.fly.src = "img/fly.png";
 	this.fly1.src = "img/fly1.png";
 	this.flyAnim.src = "img/flyanim.png";
@@ -658,6 +835,10 @@ var imageTool = new function() {
 	this.HP.src = "img/HP.png";
 	//ITEMS
 	this.chest.src = "img/chest.png";
+	this.redchest.src = "img/redchest.png";
+	this.chestopen.src = "img/chestopen.png";
+	this.redchestopen.src = "img/redchestopen.png";
+	this.haloofflies.src = "img/items/haloofflies.png";
 	this.trapdoor.src = "img/items/trapdoor.png";
 	this.coin.src = "img/items/coin.png";
 	this.bomb.src = "img/items/bomb.png";
@@ -700,6 +881,7 @@ var imageTool = new function() {
 	this.wiggleworm.src = "img/items/wiggleworm.png";
 	this.thecompass.src = "img/items/thecompass.png";
 	this.treasuremap.src = "img/items/treasuremap.png";
+	this.theinnereye.src = "img/items/theinnereye.png";
 	this.price3.src = "img/price3.png";
 	this.price5.src = "img/price5.png";
 	this.price15.src = "img/price15.png";
@@ -708,6 +890,45 @@ var imageTool = new function() {
 	
 	this.toothpicksfront.src = "img/toothpicksfront.png";
 	this.toothpicksside.src = "img/toothpicksside.png";
+	this.smallrockback.src = "img/smallrockback.png";
+	this.smallrockfront.src = "img/smallrockfront.png";
+	this.smallrockright.src = "img/smallrockright.png";
+	this.speedballback.src = "img/speedballback.png";
+	this.wireback.src = "img/wireback.png";
+	this.wirefront.src = "img/wirefront.png";
+	this.wireleft.src = "img/wireleft.png";
+	this.wireright.src = "img/wireright.png";
+	this.jesusjuicefront.src = "img/jesusjuicefront.png";
+	this.jesusjuiceleft.src = "img/jesusjuiceleft.png";
+	this.jesusjuiceright.src = "img/jesusjuiceright.png";
+	this.lipstickfront.src = "img/lipstickfront.png";
+	this.lipstickleft.src = "img/lipstickleft.png";
+	this.lipstickright.src = "img/lipstickright.png";
+	this.innerfront.src = "img/innerfront.png";
+	this.innerfronts.src = "img/innerfront_s.png";
+	this.innerleft.src = "img/innerleft.png";
+	this.innerlefts.src = "img/innerleft_s.png";
+	this.innerright.src = "img/innerright.png";
+	this.innerrights.src = "img/innerright_s.png";
+	this.nofront.src = "img/nofront.png";
+	this.nofronts.src = "img/nofront_s.png";
+	this.noleft.src = "img/noleft.png";
+	this.nolefts.src = "img/noleft_s.png";
+	this.noright.src = "img/noright.png";
+	this.norights.src = "img/noright_s.png";
+	this.speedfront.src = "img/speedfront.png";
+	this.speedfronts.src = "img/speedfront_s.png";
+	this.speedleft.src = "img/speedleft.png";
+	this.speedlefts.src = "img/speedleft_s.png";
+	this.speedright.src = "img/speedright.png";
+	this.speedrights.src = "img/speedright_s.png";
+	this.ghormonesfront.src = "img/ghormonesfront.png";
+	this.ghormonesback.src = "img/ghormonesback.png";
+	this.ghormonesleft.src = "img/ghormonesleft.png";
+	this.ghormonesright.src = "img/ghormonesright.png";
+	this.heartanim.src = "img/heartanim.png";
+	this.skeyfront.src = "img/skeyfront.png";
+	this.belt.src = "img/belt.png";
 }
 function Animation(maxframe,x,y,width,height,updatetime,spritesheet,offsetx,offsety,scale){
 	this.frame= 0;

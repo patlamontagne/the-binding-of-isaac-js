@@ -23,7 +23,14 @@ var Game;
 var floorStructure;
 var currentFloor;
 var possibleRooms;
-	
+
+var newside ="";
+var transitionStage =2;
+var timeCounter =0;
+var roomChangeOpac=1;
+var isaaciconpos = 0;
+var loadinganim = "";
+
 // Compatibilité browser
  var animFrame = window.requestAnimationFrame ||
             window.webkitRequestAnimationFrame ||
@@ -55,27 +62,25 @@ function loading(state){
 		context.clearRect(0,0,canvas.width,canvas.height);
 		context.drawImage(imageTool.loading, 0, 0, canvas.width, canvas.height);
 		var percentLeft = (numLoaded / numImages)*100;
-		context.font = "20pt danielbk";
-		context.fillStyle = 'red';
-		context.fillRect(231,305,percentLeft*5,38);
-		context.fillStyle = 'black';
-		context.fillText(percentLeft.toFixed()+"%", 235,337);		}
+		context.fillStyle = '#c12613';
+		context.fillRect(0,canvas.height-20,percentLeft*9.6,20);
+		context.fillStyle = 'black';}
 	else if(!state){context.clearRect(0,0,canvas.width,canvas.height);}
 }
 
 // Loop du jeu
 function mainloop(){	
 	//if(keyQ)toggleHitbox();
-	if(Date.now() - lastChange < 350){
+	if(Date.now() - lastChange <= 500){
 		isChanging = true;}
 	else isChanging = false;	
-	if(!gameOver && !gameIsPaused() && !isChanging){
+	if(!gameOver && !gameIsPaused() ){
 	
-		if( Date.now() - lastChange > 700){
+		if( Date.now() - lastChange > 1000){
 			Game.update();
 			Game.clear();
 			Player.update();}
-		if( Date.now() - lastChange > 701 && Date.now() - lastChange < 750 ){
+		if( Date.now() - lastChange > 900 && Date.now() - lastChange < 1100 ){
 			updatingBackground = true;}
 		showAdjacentRooms();
 		if(keyW || keyS){Animations[0].update(Player.x,Player.y);}
@@ -87,6 +92,12 @@ function mainloop(){
 			if(tempAnimations[s].isOver)tempAnimations.splice(s,1);}
 		}
 		Game.draw();
+		
+		if(transitionStage !=0){
+			transition();
+			var uicanvas = getEl("uicanvas");
+			var uicontext = uicanvas.getContext('2d');
+			uicontext.drawImage(imageTool.blackScreen, 0, 0, uicanvas.width, uicanvas.height);}
 	//fps calcul
 	var thisFrameTime = (thisLoop=new Date) - lastLoop;
 	frameTime+= (thisFrameTime - frameTime) / filterStrength;
@@ -95,12 +106,12 @@ function mainloop(){
 
 function generateFloor(){
 	floorCount++;
-	var rand = getRand(firstFloor.length,0);
-	//alert(rand);
-	floorStructure = firstFloor[rand];
-	firstFloor.splice(rand,1);
+	var newfloor = eval("floor"+floorCount); 
+	var floorrand = getRand(newfloor.length,0);
+	floorStructure = newfloor[floorrand];
 	possibleRooms = eval("rooms"+floorCount);
 	currentFloor = new Array(floorStructure.length);
+	
 	//Peuple les rooms
 	for(var y=0; y < floorStructure.length; y++){
 		currentFloor[y] = new Array(floorStructure[y].length);
@@ -109,13 +120,13 @@ function generateFloor(){
 			//BASIC ROOMS
 			if(floorStructure[y][x] == "0"){ //Si room de base présente dans la structure
 				var randRoom = getRand(possibleRooms.length,0); //Choisir une room random parmis celle disponibles
-				currentFloor[y][x] = new Room("Room",possibleRooms[randRoom],y,x); //L'assigner à l'étage
+				currentFloor[y][x] = new Room("Room",possibleRooms[randRoom],y,x,floorrand+1); //L'assigner à l'étage
 				possibleRooms.splice(randRoom,1);
 				} //Enleve la room des rooms disponibles
 				
 		//BOSS
 		if(floorStructure[y][x] == "B"){ 
-			currentFloor[y][x] = new Room("Boss",bossRooms[floorCount-1],y,x);}//Assigner la Boss room
+			currentFloor[y][x] = new Room("Boss",bossRooms[floorCount-1],y,x,"Boss room");}//Assigner la Boss room
 				
 			
 		}
@@ -128,20 +139,41 @@ function generateFloor(){
 		ry = getRand(floorStructure.length,0);
 		rx = getRand(floorStructure[ry].length,0);}
 	floorStructure[ry][rx] ="2"
-	currentFloor[ry][rx] = new Room("Treasure",treasureRooms[0],ry,rx); //Assigner la Treasure room
+	currentFloor[ry][rx] = new Room("Treasure",treasureRooms[0],ry,rx,"Treasure room"); //Assigner la Treasure room
 	//SHOP
 	while (floorStructure[ry][rx] !="1"){
 		ry = getRand(floorStructure.length,0);
 		rx = getRand(floorStructure[ry].length,0);}
+	floorStructure[ry][rx] ="2"
 	var randShop = getRand(shopRooms.length,0)
-	currentFloor[ry][rx] = new Room("Shop",shopRooms[randShop],ry,rx); //Assigner la Treasure room
+	currentFloor[ry][rx] = new Room("Shop",shopRooms[randShop],ry,rx, "Shop room"); //Assigner la Shop room
+	
+	//SACRIFICE
+	var failCount = 0;
+	while (floorStructure[ry][rx] !="1" || failCount < 50){
+		failCount++;
+		ry = getRand(floorStructure.length,0);
+		rx = getRand(floorStructure[ry].length,0);}
+	floorStructure[ry][rx] ="2"
+	var sacriRand = getRand(2,1);
+	if(sacriRand ==2) currentFloor[ry][rx] = new Room("Sacrifice",sacrificeRooms[0],ry,rx, "Sacrifice room"); //Assigner la Sacrifice room
+	
+	//CURSED
+	var failCount = 0;
+	while (floorStructure[ry][rx] !="1" || failCount < 50){
+		failCount++;
+		ry = getRand(floorStructure.length,0);
+		rx = getRand(floorStructure[ry].length,0);}
+	floorStructure[ry][rx] ="2"
+	var randCursed = getRand(cursedRooms.length,0)
+	currentFloor[ry][rx] = new Room("Cursed",cursedRooms[randCursed],ry,rx,"Cursed room"); //Assigner la curse room
 	
 	//SECRET
 	while (floorStructure[ry][rx] !="S"){
 		ry = getRand(floorStructure.length,0);
 		rx = getRand(floorStructure[ry].length,0);}
 	var randSecret = getRand(secretRooms.length,0)
-	currentFloor[ry][rx] = new Room("Secret",secretRooms[randSecret],ry,rx); //Assigner la Treasure room
+	currentFloor[ry][rx] = new Room("Secret",secretRooms[randSecret],ry,rx,"Secret room"); //Assigner la Treasure room
 	secretRooms.splice(randSecret,1);
 			
 	//Salle de départ	
@@ -150,7 +182,7 @@ function generateFloor(){
 			while (floorStructure[ry][rx] !="0"){
 				ry = getRand(floorStructure.length,0);
 				rx = getRand(floorStructure[ry].length,0);}
-			currentFloor[ry][rx] = new Room("Room",startingRoom[0],ry,rx); //Assigner la starting room
+			currentFloor[ry][rx] = new Room("Room",startingRoom[0],ry,rx,floorrand+1); //Assigner la starting room
 			Game = currentFloor[ry][rx];
 			currentFloor[ry][rx].isVisited = true;
 			currentFloor[ry][rx].isCurrent = true;
@@ -166,14 +198,16 @@ function generateFloor(){
 		}
 	}
 	
+	loadinganim =  new Animation(7,280,356,100,80,75,imageTool.bodyAnim,-7,13,1);
 }
 
-function playerAnimations(){//(maxframe,x,y,width,height,updatetime,spritesheet,offsetx,offsety)
+function playerAnimations(){//(maxframe,x,y,width,height,updatetime,spritesheet,offsetx,offsety,scale)
 	Animations = [];
 	Animations[0] = new Animation(7,Player.x,Player.y,100,80,55,imageTool.bodyAnim,-7,13,1);
 	Animations[1] = new Animation(9,Player.x,Player.y,100,80,50,imageTool.bodyRight,-9,13,1);
 	Animations[2] = new Animation(9,Player.x,Player.y,100,80,50,imageTool.bodyLeft,-5,13,1);
-	Animations[3] = new Animation(6,Player.x,Player.y,140,140,70,imageTool.playerloot,-7,13,1);}
+	Animations[3] = new Animation(6,Player.x,Player.y,140,140,70,imageTool.playerloot,-7,13,1);
+	Animations[4] = new Animation(4,Player.x,Player.y,63,52,125,imageTool.heartanim,-7,13,1.1);}
 
 // Pause
 function gameIsPaused(){
@@ -199,13 +233,15 @@ function toggleHitbox(){
 var Background = {
 	x: 0, y: 0,	height: 576, width: 960,
 	draw : function(context){
-		if(Game.type == "Secret") context.drawImage(imageTool.secretbackground, this.x, this.y, this.width, this.height);
-		else if (Game.type == "Boss") context.drawImage(imageTool.bossroombackground, this.x, this.y, this.width, this.height);
-		else {
-			context.drawImage(imageTool.background, this.x, this.y, this.width, this.height);
-			if(floorCount ==2) context.drawImage(imageTool.secondfloor, this.x, this.y, this.width, this.height);
-
-		}
+		//BG
+		if(Game.type == "Secret" || Game.type == "Cursed") context.drawImage(imageTool.bgsecret, this.x, this.y, this.width, this.height);
+		else context.drawImage(imageTool["bg"+floorCount], this.x, this.y, this.width, this.height);
+		
+		//OVERLAY 
+		if (Game.type == "Boss" || Game.type == "Sacrifice"){
+			context.drawImage(imageTool.bloodRoom, this.x, this.y, this.width, this.height);
+			context.drawImage(imageTool.overlayboss, this.x, this.y, this.width, this.height);}
+		else if(Game.overlayRand == 3 && floorCount < 3 && Game.type =="Room") context.drawImage(imageTool["overlay"+floorCount], this.x, this.y, this.width, this.height);
 	}
 };
 
@@ -216,38 +252,130 @@ function Nothing(){
 
 function changeRoom(side){
 	lastChange = Date.now();
+	Player.accelx = 0;
+	Player.accely = 0;
+	transitionStage =5;
 	Game.isCurrent = false;
 	Game.reset();
+	 newside= side;
+	for(var i = 0; i < Game.Items.length; i++){
+		if(Game.Items[i].type=="Chest" || Game.Items[i].type=="Redchest"){
+			if(!Game.Items[i].canBeUsed) Game.Items.splice(i,1);
+		}
+	}
+	
 	for(var d = 0; d< Game.Doors.length; d++){
 		Game.Doors[d].isDestroyed = false;
+		if(Game.Doors[d].type =="Cursed" || Game.type == "Cursed"){
+			Game.Doors[d].type = "Cursed";
+			Game.Doors[d].locked = true;
+			Game.Doors[d].isColliding = true;}
 	}
-		if(side == "left"){
+	
+}
+
+function newRoom(){
+		if(newside == "left"){
 			Game = currentFloor[Game.locy][Game.locx-1];
 			Player.x  = canvas.width - 100;}
 			
-		else if(side == "right"){
+		else if(newside == "right"){
 			Game = currentFloor[Game.locy][Game.locx+1];
 			Player.x = 74;}
 		
-		else if(side == "up"){
+		else if(newside == "up"){
 			Game = currentFloor[Game.locy-1][Game.locx];
 			Player.y = canvas.height-120;}
 		
-		else if(side == "down"){
+		else if(newside == "down"){
 			Game = currentFloor[Game.locy+1][Game.locx];
 			Player.y = 74;}
 	
 	if(!Game.isVisited){Game.isVisited= true;gameStats.rooms++;}
 	Game.isCurrent = true;
 	updatingBackground = true;
+
+}
+
+function transition(){
+//CHANGEMENT D'ÉTAGE
+		if(transitionStage <5){
+			var canvas = getEl("canvas");
+			var context = canvas.getContext('2d');
+			context.save();
+			if(roomChangeOpac < 1 && transitionStage == 1) roomChangeOpac +=0.03;
+			if(roomChangeOpac >= 1 && transitionStage == 1) {
+				transitionStage = 2;
+				generateFloor();
+				updatingBackground = true;}
+			if(transitionStage ==2 && timeCounter < 120){
+				Player.accelx=0;
+				Player.accely=0;
+				timeCounter++;
+				isaaciconpos++;
+				if(timeCounter > 119){transitionStage =3;timeCounter =0;}
+			}
+			if(roomChangeOpac > 0 && transitionStage == 3) roomChangeOpac -=0.03;
+			if(roomChangeOpac <= 0 && transitionStage == 3) {transitionStage=0;roomChangeOpac=0;timeCounter =0;}
+			context.globalAlpha = roomChangeOpac;
+			context.drawImage(imageTool.loading, 0, 0, canvas.width, canvas.height);
+			
+			context.font = "12pt wendy";
+			context.fillStyle = 'white';
+			var floornames = ["Basement","Caves","The Depths"];
+			var flooricons = [imageTool.duke,imageTool.project,imageTool.duke2];
+			context.textAlign = 'center';
+			
+			//BG
+			for(var i = 0; i < floornames.length; i++){
+				context.drawImage(imageTool.uibar,canvas.width/2-400,  i*120+90,400,70);
+			}
+			
+			//ISAAC ANIMATION
+			if(transitionStage==2){
+				loadinganim.update(60,isaaciconpos-37);
+				loadinganim.draw(context);}
+			else  context.drawImage(imageTool.bodyIdle, 57,isaaciconpos-23, 40, 40);
+			context.drawImage(imageTool.playerDown, 45,isaaciconpos-58, 64, 55);
+			
+			//FLOOR NAMES & BOSS ICONS
+			for(var i = 0; i < floornames.length; i++){
+				context.fillText(floornames[i],canvas.width/2-250,  i*120+120);
+				context.drawImage(flooricons[i],canvas.width/2-150,  i*120+70,80,80);
+				if(i+1<=bossbeaten) context.drawImage(imageTool.xmark,canvas.width/2-150,  i*120+70,80,80);
+			}
+				
+			
+			context.restore();
+			isChanging = true;
+		}
+		//CHANGEMENT DE PIECE
+		else if(transitionStage >4){
+			var canvas = getEl("canvas");
+			var context = canvas.getContext('2d');
+			//context.clearRect(0,0,canvas.width,canvas.height);
+			context.save();
+			if(roomChangeOpac < 1 && transitionStage == 5) roomChangeOpac +=0.04;
+			if(roomChangeOpac >= 1 && transitionStage == 5) {
+				transitionStage = 6;
+				newRoom();
+				updatingBackground = true;}
+			if(roomChangeOpac > 0 && transitionStage == 6) roomChangeOpac -=0.05;
+			if(roomChangeOpac <= 0 && transitionStage == 6) {transitionStage=0;roomChangeOpac=0;}
+			context.globalAlpha = roomChangeOpac;
+			context.drawImage(imageTool.blackScreen, 0, 0, canvas.width, canvas.height);
+			context.restore();
+			isChanging = true;
+		}
 }
 
 function changeFloor(){
 	lastChange = Date.now();
 	Game.isCurrent = false;
 	Game.reset();
-	generateFloor();
-	updatingBackground = true;
+	Player.accelx= 0;
+	Player.accely=0;
+	transitionStage =1;
 }
 
 function showAdjacentRooms(){ //Découvrir les pièces adjacentes
@@ -303,10 +431,15 @@ function Door(x,y,side,type,locked){
 	this.isColliding = true;
 	this.use = function(){
 		if(this.locked && Game.combatMode ==0){
-			if(Player.keys > 0){
+			if((this.type =="Shop" || this.type == "Treasure" ) && Player.keys > 0){
 				this.locked=false;
 				Player.keys--;
 				updatingBackground = true;
+			}
+			else if (this.type == "Cursed" || Game.type =="Cursed"){
+				this.locked=false;
+				this.isColliding = false;
+				Player.getDamage(0.5);
 			}
 		}
 	}
@@ -331,30 +464,41 @@ function Door(x,y,side,type,locked){
 			var bgheight = 94;
 			var bgx = 12;
 			var bgy = -12;		
-			if(Game.type =="Secret"){
+			if(Game.type =="Secret" && this.type != ("Secret" || "Cursed")){
 				this.img = imageTool.secretL;
 				this.bgimg = imageTool.spacer;}
+				
 			else if(this.type =="Secret"){
 				if(!this.isDestroyed){
 					this.isColliding = true;
-					this.img = imageTool.spacer;}
+					this.img = imageTool.spacer;
+					this.bgimg = imageTool.spacer;}
 				else this.img = imageTool.secretL;
 					this.bgimg = imageTool.spacer;}
+					
 			else{
 				if(this.type =="Treasure") {
 					if(this.locked) this.bgimg = imageTool.keyholeL;
 					else this.bgimg = imageTool.doorLopen;
 					this.img = imageTool.TdoorL;}
-				else if(this.type =="Shop") {
-					if(this.locked) this.bgimg = imageTool.shopKeyholeL;
-					else this.bgimg = imageTool.doorLopen;
-					this.img = imageTool.doorL;}
-				else if(this.type =="Boss") this.img = imageTool.BdoorL;
-				else this.img = imageTool.doorL;
+					
+			else if(this.type=="Cursed" || Game.type=="Cursed") {
+				this.img = imageTool.curseddoorL;}
+					
+			else if(this.type =="Shop") {
+				if(this.locked) this.bgimg = imageTool.shopKeyholeL;
+				else this.bgimg = imageTool.doorLopen;
+				this.img = imageTool.doorL;}
+				
+			else if(this.type =="Boss") this.img = imageTool.BdoorL;
+			
+			else this.img = imageTool.doorL;
+			
 				
 				if(this.isDestroyed) this.bgimg = imageTool.doorLopen;
+			else if(Game.combatMode!=0 && (this.type=="Cursed" || Game.type=="Cursed"))this.bgimg = imageTool.doorLclosed;
 				else if(Game.combatMode!=0 && !this.locked)this.bgimg = imageTool.doorLclosed;
-				else if(!this.locked)this.bgimg = imageTool.doorLopen;
+				else if(!this.locked || this.type=="Cursed" || Game.type=="Cursed")this.bgimg = imageTool.doorLopen;
 			}
 		}
 			
@@ -367,30 +511,40 @@ function Door(x,y,side,type,locked){
 			var bgheight = 94;
 			var bgx = 0;
 			var bgy = -12;
-			if(Game.type =="Secret"){
+			if(Game.type =="Secret" && this.type != ("Secret" || "Cursed")){
 				this.img = imageTool.secretR;
 				this.bgimg = imageTool.spacer;}
+				
 			else if(this.type =="Secret"){
 				if(!this.isDestroyed){
 					this.isColliding = true;
-					this.img = imageTool.spacer;}
+					this.img = imageTool.spacer;
+					this.bgimg = imageTool.spacer;}
 				else this.img = imageTool.secretR;
-					this.bgimg = imageTool.spacer;	}
-			else{
-			if(this.type =="Treasure"){
+					this.bgimg = imageTool.spacer;}
+					
+			else{ 
+				if(this.type =="Treasure"){
 				if(this.locked) this.bgimg = imageTool.keyholeR;
 				else this.bgimg = imageTool.doorRopen;
 				this.img = imageTool.TdoorR;}
+				
+			else if(this.type=="Cursed" || Game.type=="Cursed") {
+				this.img = imageTool.curseddoorR;}
+					
 			else if(this.type =="Shop") {
 					if(this.locked) this.bgimg = imageTool.shopKeyholeR;
 					else this.bgimg = imageTool.doorRopen;
 					this.img = imageTool.doorR;}
+					
 			else if(this.type =="Boss")	this.img = imageTool.BdoorR;
+			
 			else this.img = imageTool.doorR;
 			
 			if(this.isDestroyed) this.bgimg = imageTool.doorRopen;
+			else if(Game.combatMode!=0 && (this.type=="Cursed" || Game.type=="Cursed"))this.bgimg = imageTool.doorRclosed;
 			else if(Game.combatMode!=0 && !this.locked)this.bgimg = imageTool.doorRclosed;
-			else if(!this.locked)this.bgimg = imageTool.doorRopen;
+			else if(!this.locked || this.type=="Cursed" || Game.type=="Cursed")this.bgimg = imageTool.doorRopen;
 			}
 		}
 			
@@ -403,30 +557,40 @@ function Door(x,y,side,type,locked){
 			var bgheight = 54;
 			var bgx = -13;
 			var bgy = 18;
-			if(Game.type =="Secret"){
+			if(Game.type =="Secret" && this.type != ("Secret" || "Cursed")){
 				this.img = imageTool.secretU;
 				this.bgimg = imageTool.spacer;}
+				
 			else if(this.type =="Secret"){
 				if(!this.isDestroyed){
 					this.isColliding = true;
-					this.img = imageTool.spacer;}
+					this.img = imageTool.spacer;
+					this.bgimg = imageTool.spacer;}
 				else this.img = imageTool.secretU;
 					this.bgimg = imageTool.spacer;}
+					
 			else{
-			if(this.type =="Treasure") {
+				if(this.type =="Treasure") {
 				if(this.locked) this.bgimg = imageTool.keyholeU;
 				else this.bgimg = imageTool.doorUopen;
 				this.img = imageTool.TdoorU;}
+					
+			else if(this.type=="Cursed" || Game.type=="Cursed") {
+					this.img = imageTool.curseddoorU;}
+					
 			else if(this.type =="Shop") {
 					if(this.locked) this.bgimg = imageTool.shopKeyholeU;
 					else this.bgimg = imageTool.doorUopen;
 					this.img = imageTool.doorU;}
+					
 			else if(this.type =="Boss")this.img = imageTool.BdoorU;
+			
 			else this.img = imageTool.doorU;
 			
 			if(this.isDestroyed) this.bgimg = imageTool.doorUopen;
+			else if(Game.combatMode!=0 && (this.type=="Cursed" || Game.type=="Cursed"))this.bgimg = imageTool.doorUclosed;
 			else if(Game.combatMode!=0 && !this.locked)this.bgimg = imageTool.doorUclosed;
-			else if(!this.locked)this.bgimg = imageTool.doorUopen;
+			else if(!this.locked || this.type=="Cursed" || Game.type=="Cursed")this.bgimg = imageTool.doorUopen;
 			}
 		}
 			
@@ -439,30 +603,40 @@ function Door(x,y,side,type,locked){
 			var bgheight = 64;
 			var bgx = -13;
 			var bgy = -8;
-			if(Game.type =="Secret"){
+			if(Game.type =="Secret" && this.type != ("Secret" || "Cursed")){
 				this.img = imageTool.secretD;
 				this.bgimg = imageTool.spacer;}
+				
 			else if(this.type =="Secret"){
 				if(!this.isDestroyed){
 					this.isColliding = true;
-					this.img = imageTool.spacer;}
+					this.img = imageTool.spacer;
+					this.bgimg = imageTool.spacer;}
 				else this.img = imageTool.secretD;
 					this.bgimg = imageTool.spacer;}
-			else{
+					
+			else {
 			if(this.type =="Treasure") {
 				if(this.locked) this.bgimg = imageTool.keyholeD;
 				else this.bgimg = imageTool.doorDopen;
 				this.img = imageTool.TdoorD;}
+					
+			else if(this.type=="Cursed" || Game.type=="Cursed") {
+					this.img = imageTool.curseddoorD ;}
+					
 			else if(this.type =="Shop") {
 					if(this.locked) this.bgimg = imageTool.shopKeyholeD;
 					else this.bgimg = imageTool.doorDopen;
 					this.img = imageTool.doorD;}
+					
 			else if(this.type =="Boss")	this.img = imageTool.BdoorD;
+			
 			else this.img = imageTool.doorD;
 			
 			if(this.isDestroyed) this.bgimg = imageTool.doorDopen;
+			else if(Game.combatMode!=0 && (this.type=="Cursed" || Game.type=="Cursed"))this.bgimg = imageTool.doorDclosed;
 			else if(Game.combatMode!=0 && !this.locked)this.bgimg = imageTool.doorDclosed;
-			else if(!this.locked)this.bgimg = imageTool.doorDopen;
+			else if(!this.locked || this.type=="Cursed" || Game.type=="Cursed")this.bgimg = imageTool.doorDopen;
 			}
 		}
 			
@@ -523,8 +697,8 @@ function Poop(x,y){
 	this.x = x+4;
 	this.y = y+4;
 	this.state = 0; //Étapes de destruction
-	this.width = 45;
-	this.height = 45;
+	this.width = 50;
+	this.height = 50;
 	this.canBeDestroyed = true;
 	this.isDestroyed = false;
 	this.isColliding = true;
@@ -536,11 +710,11 @@ function Poop(x,y){
 	}
 	this.draw = function(context){
 		if(hitBox){context.drawImage(imageTool.hitBox, this.x, this.y, this.width, this.height);}
-		if(this.state < 1) context.drawImage(imageTool.poop1, this.x-16, this.y-9, 78, 78);
-		else if(this.state < 1.75) context.drawImage(imageTool.poop2, this.x-16, this.y-3, 78, 78);
-		else if(this.state < 2.5) context.drawImage(imageTool.poop3, this.x-16, this.y-3, 78, 78);
-		else if(this.state < 3.25) context.drawImage(imageTool.poop4, this.x-16, this.y-3, 78, 78);
-		else { context.drawImage(imageTool.poop5, this.x-16, this.y-2, 78, 78);
+		if(this.state < 1) context.drawImage(imageTool.poop1, this.x-12, this.y-10, 78, 78);
+		else if(this.state < 1.75) context.drawImage(imageTool.poop2, this.x-12, this.y-6, 78, 78);
+		else if(this.state < 2.5) context.drawImage(imageTool.poop3, this.x-12, this.y-3, 78, 78);
+		else if(this.state < 3.25) context.drawImage(imageTool.poop4, this.x-12, this.y, 78, 78);
+		else { context.drawImage(imageTool.poop5, this.x-12, this.y-3, 78, 78);
 			if(this.canAnim){
 				/*sounds.bullet.currentTime = 0;
 				sounds.bullet.play();*/
@@ -606,6 +780,9 @@ function Glue(x,y){
 	this.height = 64;
 	this.canBeDestroyed = true;
 	this.isDestroyed = false;
+	this.use = function(obj){
+		if(obj == Player) obj.isSlowed = Date.now();
+	}
 	this.destroy = function(){
 		this.isDestroyed = true;
 	}
@@ -614,8 +791,48 @@ function Glue(x,y){
 		if(!this.isDestroyed) context.drawImage(imageTool.glue, x-15, y-13, 96, 96);}
 }
 
-function Fireplace(x,y){
-	this.type= "fireplace";
+function Spikes(x,y){
+	this.type = "spikes";
+	this.x = x+5;
+	this.y = y+9;
+	this.dmg = 1;
+	this.width = 50;
+	this.height = 50;
+	this.useTimer = 0;
+	this.hasLooted = false;
+	this.canBeDestroyed = true;
+	this.isDestroyed = false;
+	this.use = function(obj){
+		if(obj == Player) obj.getDamage(this.dmg);
+		else obj.getDamage(this.dmg);
+		if(Game.type == "Sacrifice" && (Date.now() - this.useTimer > 1000)){
+					
+			if(!this.hasLooted) {
+				var rand = getRand(5,1);
+				if(rand==1){
+					var subrand = getRand(4,1);
+					if(subrand==1) loot("Health",x,x+100,Game,true)
+					else if(subrand==2){ 
+						var subsubrand = getRand(10,1);
+						if(subsubrand == 1) Game.Items.push(new Chest(this.x,this.y+100,"Redchest"));
+						else Game.Items.push(new Chest(this.x,this.y+100,"Chest"));
+					}
+				}
+				if(rand==2){
+					this.hasLooted = true;
+					createItem(this.x+10,this.y+100,"Sacrifice")}
+			}
+			this.useTimer = Date.now();
+		}
+	}
+	this.destroy = function(){	}
+	this.draw = function(context){
+		if(hitBox)context.drawImage(imageTool.hitBox, this.x, this.y, this.width, this.height);
+		if(!this.isDestroyed) context.drawImage(imageTool.spikes, x-8, y-3, 78, 78);}
+}
+
+function Fireplace(x,y,type){
+	this.type= type;
 	this.x = x+4;
 	this.y = y+4;
 	this.state = 0; //Étapes de destruction
@@ -634,12 +851,16 @@ function Fireplace(x,y){
 	this.canBeDestroyed = true;
 	this.isDestroyed = false;
 	this.isColliding = true;
+	this.use = function(obj){
+		if(obj == Player) obj.getDamage(this.dmg);
+		else obj.getDamage(this.dmg);
+	}
 	this.destroy = function(){
 		this.isDestroyed = true;
 		this.state =5;
 	}
 	this.draw = function(context){
-		if(this.rand ==1) this.type = "hellfireplace";
+		if(this.type == "fireplace" && this.rand ==1) this.type = "hellfireplace";
 		if(this.type =="fireplace") this.fireAnim.update(this.x-8,this.y-32); //Animation fire
 		else {
 			this.hellfireAnim.update(this.x-8,this.y-32); //Animation hellfire
@@ -884,7 +1105,9 @@ function shopItem(x,y){
 	this.width = 32;
 	this.height = 32;
 	this.name = "";
+	this.type = "";
 	this.price =0;
+	this.desc = " ";
 	this.img = "";
 	this.priceImg = "";
 	this.isCreated = false;
@@ -900,8 +1123,8 @@ function shopItem(x,y){
 				this.name = Game.currentShopPool[rand];
 				console.log('nom: ' +this.name);
 				Game.currentShopPool.splice(rand,1);
-				if(this.name == "The Compass"){this.price = 15; this.priceImg = imageTool.price15; this.img = imageTool.thecompass;}
-				else if(this.name == "Treasure Map"){this.price = 15; this.priceImg = imageTool.price15; this.img = imageTool.treasuremap;
+				if(this.name == "The Compass"){this.desc = "Reveal rooms"; this.price = 15; this.priceImg = imageTool.price15; this.img = imageTool.thecompass;}
+				else if(this.name == "Treasure Map"){this.desc = "Reveal floor";this.price = 15; this.priceImg = imageTool.price15; this.img = imageTool.treasuremap;
 				}
 			}
 			//PickUps
@@ -911,17 +1134,19 @@ function shopItem(x,y){
 				Game.currentPickupPool.splice(rand,1);
 				if(this.name == "Heart"){this.price = 3; this.priceImg = imageTool.price3; this.img = imageTool.health;}
 				if(this.name == "Soul Heart"){this.price = 5; this.priceImg = imageTool.price5; this.img = imageTool.armor;}
-				if(this.name == "Half Heart") {this.price = 3; this.priceImg = imageTool.price5; this.img = imageTool.halfhealth;}
+				if(this.name == "Half Heart") {this.price = 3; this.priceImg = imageTool.price3; this.img = imageTool.halfhealth;}
 				if(this.name == "Bomb"){this.price = 5; this.priceImg = imageTool.price5; this.img = imageTool.bomb;}
 				if(this.name == "Key"){this.price = 5; this.priceImg = imageTool.price5; this.img = imageTool.key;}
 			}
 			this.isCreated = true;
+			
+			this.type = this.name;
 			console.log('4 item ' + this.name + ' created');
 		}
 	}
 	this.buy = function(){
 		Player.gold -= this.price;
-		Player.playLoot(this.img);
+		Player.playLoot(this);
 		this.alive = false;
 	}
 	this.use = function(){
@@ -970,37 +1195,39 @@ function TrapDoor(x,y){
 	this.y = y+2;
 	this.width = 50;
 	this.height = 30;
-	this.canBeUsed = true;
+	this.canBeUsed = false;
+	this.isSpawned = false;
+	this.spawntimer;
 	this.alive = true;
 	this.update = function(){}
-	this.use = function(){
-		if(Game.combatMode ==0) this.canBeUsed = true;
-		else this.canBeUsed = false;
+	this.use = function(){		
 		if(floorCount>2) this.canBeUsed = false;
 		
 		if(this.canBeUsed){
 			this.canBeUsed = false;
 			changeFloor();}}
 	this.draw = function(context){
-		if(Game.combatMode ==0) this.canBeUsed = true;
-		else this.canBeUsed = false;
+		if(!this.isSpawned && !this.canBeUsed && Game.combatMode ==0){this.isSpawned = true; this.spawntimer=Date.now();}
+		if(Date.now() - this.spawntimer > 1000)	this.canBeUsed = true;
 		
 		if(hitBox)context.drawImage(imageTool.hitBox, this.x, this.y, this.width, this.height);
 		
-		if(floorCount<=2 && this.canBeUsed){
+		if(floorCount<=2 && this.isSpawned){
 			context.drawImage(imageTool.trapdoor,this.x-7,this.y,64,64);}
 	}
 }
 
-function Chest(x,y){
-	this.type ="Chest";
-	this.x = x+2;
-	this.y = y+2;
+function Chest(x,y,type){
+	this.type =type;
+	this.x = x+10;
+	this.y = y+20;
 	this.dirx=0;
 	this.diry=0;
 	this.speed =0;
-	this.width = 60;
-	this.height = 60;
+	this.width = 40;
+	this.height = 40;
+	this.redRand = getRand(10,1);
+	this.redLoot = getRand(3,1);
 	this.moneyRand = getRand(3,3);
 	this.pickupRand = getRand(2,1);
 	this.bonusRand = getRand(4,1);
@@ -1064,18 +1291,54 @@ function Chest(x,y){
 	this.use = function(){
 		if(this.canBeUsed){
 			this.canBeUsed = false;
-			for(var i =0; i < this.moneyRand; i++){	loot("Money",this.x+(4*i),this.y+(4*i),Game,true);}
 			
-			if(this.pickupRand == 1) Game.Items.push(new Item(x+12,y+12,"Bomb",true));
-			else if(this.pickupRand == 2) Game.Items.push(new Item(x,y,"Key",true));
-	
-			this.alive = false;
-			console.log('Chest Opened \n moneyRand : ' +this.moneyRand + '\n pickupRand : '+this.pickupRand);
+			if(this.type == "Chest"){
+				for(var i =0; i < this.moneyRand; i++){	loot("Money",this.x+(4*i),this.y+(4*i),Game,true);}
+				
+				if(this.pickupRand == 1) Game.Items.push(new Item(x+12,y+12,"Bomb",true));
+				else if(this.pickupRand == 2) Game.Items.push(new Item(x,y,"Key",true));
+		
+				//this.alive = false;
+			}
+			else if(this.type =="Redchest"){
+				if(this.redLoot == 1 && chestPool.length > 0){ //ITEM
+					var redItem = getRand(chestPool.length,0);
+					console.log(chestPool[redItem]);
+					Game.Items.push(new Item(this.x+20,this.y-50,chestPool[redItem],true));
+					chestPool.splice(redItem,1);
+				}
+				else if(this.redLoot == 2){ // SPIDERS OU BOMBES
+					var badRand = getRand(2,1);
+					
+					for(var i = 0; i< 2; i++){
+						if(badRand ==1){
+							Game.combatMode = 1;
+							Game.Minions.push(new Spider(this.x+10+(30*i),this.y+80,1+floorCount/2,"spider",true));}
+						else if(badRand ==2) Game.Bombs.push(new Bomb("normal",this.x-20+(60*i),this.y+15));
+					}
+				}
+				else{ //SOULHEART
+					var soulRand = getRand(2,1);
+					for(var i = 0; i<soulRand; i++){
+						Game.Items.push(new Item(this.x+10+(30*i),this.y-50,"Soul Heart",true));
+					}
+				}
+			}
 		}
 	}
 	this.draw = function(context){
+		if(this.type=="Chest"){
+			if(this.redRand == 1) this.type ="Redchest";
+			else this.type ="Chest";}
 		if(hitBox)context.drawImage(imageTool.hitBox, this.x, this.y, this.width, this.height);
-		context.drawImage(imageTool.chest,this.x-1,this.y,62,62);
+		if(this.type == "Chest"){
+			if(this.canBeUsed) context.drawImage(imageTool.chest,this.x-12,this.y-6,62,62);
+			else context.drawImage(imageTool.chestopen,this.x-12,this.y-6,62,62);
+		}
+		else if(this.type == "Redchest"){
+			if(this.canBeUsed) context.drawImage(imageTool.redchest,this.x-12,this.y-6,62,62);
+			else context.drawImage(imageTool.redchestopen,this.x-12,this.y-6,62,62);
+		}
 	}
 	this.checkCollide = function(obj,pos){
 		if(obj == Player){
@@ -1196,11 +1459,13 @@ function bulletImpact(obj,x,y,ox,oy){
 //
 //
 // Niveau (Objet principal)
-function Room(type,map,locy,locx){
+function Room(type,map,locy,locx,title){
 	this.type = type;
+	this.title = title;
 	this.locy = locy; //Position Y dans l'array d'étage
 	this.locx = locx; // Position X dans l'array d'étage
 	this.grid = [];
+	this.overlayRand = getRand(3,1);
 	this.currentPickupPool = [];
 	this.currentShopPool = [];
 	this.shop = [];
@@ -1229,6 +1494,11 @@ function Room(type,map,locy,locx){
 	this.isCurrent = false; //Minimap, la salle actuelle
 	this.isVisible = false; //Minimap, la salle est visible (adjacente à une salle visitée, ou le joueur possède une carte)
 	this.iconVisible = false;  //Minimap, l'icone de la salle est visible (adjacente à une salle visitée, ou le joueur possède une boussole)
+	this.coinPresent = false;
+	this.keyPresent = false;
+	this.chestPresent = false;
+	this.bombPresent = false;
+	this.hpPresent = false;
 	this.map = map; //Tileset
 	this.shopCreate = function(){
 		if(this.type=="Shop"){
@@ -1255,13 +1525,15 @@ function Room(type,map,locy,locx){
 			for(var j=0,x=0; j< this.map[i].length; j++,x+=64){
 			var locked =false;
 				this.grid[i][j]=0;
-				if(this.map[i][j] == "Pl") {this.freeCells.push(new freeCell(x,y));Player.x=x;	Player.y=y;
+				if(this.map[i][j] == "Pl") {this.freeCells.push(new freeCell(x,y));Player.x=x+15;	Player.y=y;
 				if(floorCount ==1)this.sprites.push(new Sprite(imageTool.tutorial,130,100, 700, 238));}
 				//PORTES
 				else if(this.map[i][j] == "+L") {
 					if(this.locx > 0){
 						if(currentFloor[this.locy][this.locx-1].exists){
-							if((currentFloor[this.locy][this.locx-1].type=="Treasure" && floorCount > 1) || currentFloor[this.locy][this.locx-1].type=="Shop") locked = true;
+							if((currentFloor[this.locy][this.locx-1].type=="Treasure" && floorCount > 1) ||
+							currentFloor[this.locy][this.locx-1].type=="Shop" ||
+							currentFloor[this.locy][this.locx-1].type=="Cursed") locked = true;
 							else locked = false;
 							this.Doors.push(new Door(x,y,"left",currentFloor[this.locy][this.locx-1].type,locked));}
 						else this.wallMaps.push(new Wall(x,y));}
@@ -1271,7 +1543,9 @@ function Room(type,map,locy,locx){
 				else if(this.map[i][j] == "+R") {
 					if(this.locx < currentFloor[this.locy].length-1){
 						if(currentFloor[this.locy][this.locx+1].exists){
-							if((currentFloor[this.locy][this.locx+1].type=="Treasure" && floorCount > 1) || currentFloor[this.locy][this.locx+1].type=="Shop") locked = true;
+							if((currentFloor[this.locy][this.locx+1].type=="Treasure" && floorCount > 1) ||
+							currentFloor[this.locy][this.locx+1].type=="Shop" ||
+							currentFloor[this.locy][this.locx+1].type=="Cursed") locked = true;
 							else locked = false;
 							this.Doors.push(new Door(x,y,"right",currentFloor[this.locy][this.locx+1].type,locked));}
 						else this.wallMaps.push(new Wall(x,y));}
@@ -1281,7 +1555,9 @@ function Room(type,map,locy,locx){
 				else if(this.map[i][j] == "+U") {
 					if(this.locy > 0){
 						if(currentFloor[this.locy-1][this.locx].exists){
-							if((currentFloor[this.locy-1][this.locx].type=="Treasure" && floorCount > 1) || currentFloor[this.locy-1][this.locx].type=="Shop") locked = true;
+							if((currentFloor[this.locy-1][this.locx].type=="Treasure" && floorCount > 1) ||
+							currentFloor[this.locy-1][this.locx].type=="Shop" ||
+							currentFloor[this.locy-1][this.locx].type=="Cursed") locked = true;
 							else locked = false;
 							this.Doors.push(new Door(x,y,"up",currentFloor[this.locy-1][this.locx].type,locked));}
 						else this.wallMaps.push(new Wall(x,y));}
@@ -1291,7 +1567,9 @@ function Room(type,map,locy,locx){
 				else if(this.map[i][j] == "+D") {
 					if(this.locy < currentFloor.length-1){
 						if(currentFloor[this.locy+1][this.locx].exists){
-							if((currentFloor[this.locy+1][this.locx].type=="Treasure" && floorCount > 1) || currentFloor[this.locy+1][this.locx].type=="Shop") locked = true;
+							if((currentFloor[this.locy+1][this.locx].type=="Treasure" && floorCount > 1) ||
+							currentFloor[this.locy+1][this.locx].type=="Shop" ||
+							currentFloor[this.locy+1][this.locx].type=="Cursed") locked = true;
 							else locked = false;
 							this.Doors.push(new Door(x,y,"down",currentFloor[this.locy+1][this.locx].type,locked));}
 						else this.wallMaps.push(new Wall(x,y));}
@@ -1299,35 +1577,39 @@ function Room(type,map,locy,locx){
 				//Obstacles
 				else if(this.map[i][j] == "  ") {	this.freeCells.push(new freeCell(x,y)); this.grid[i][j]=1;}
 				else if(this.map[i][j] == "Tg") {	this.traps.push(new Glue(x,y)); this.grid[i][j]=1;}
+				else if(this.map[i][j] == "Ts") {	this.traps.push(new Spikes(x,y)); this.grid[i][j]=1;}
 				else if(this.map[i][j] == "!!") {	this.wallMaps.push(new Wall(x,y));this.grid[i][j]=0;}
 				else if(this.map[i][j] == "Bl") {	this.collideMaps.push(new Block(x,y));this.grid[i][j]=0;}
 				else if(this.map[i][j] == "Oo") {	this.collideMaps.push(new Poop(x,y));this.grid[i][j]=0;}
 				else if(this.map[i][j] == "Tn") {	this.collideMaps.push(new Tnt(x,y));this.grid[i][j]=0;}
-				else if(this.map[i][j] == "Tf") {	this.collideMaps.push(new Fireplace(x,y)); this.grid[i][j]=0;}
+				else if(this.map[i][j] == "Tf") {	this.collideMaps.push(new Fireplace(x,y,"fireplace")); this.grid[i][j]=0;}
+				else if(this.map[i][j] == "Th") {	this.collideMaps.push(new Fireplace(x,y,"hellfireplace")); this.grid[i][j]=0;}
 				else if(this.map[i][j] =="HA" || this.map[i][j] =="HB" || this.map[i][j] =="HC" || this.map[i][j] =="HD" ||
 						this.map[i][j] =="HE" || this.map[i][j] =="HF" || this.map[i][j] =="HG" || this.map[i][j] =="HH" ||
 						this.map[i][j] =="HI" || this.map[i][j] =="HJ" || this.map[i][j] =="HK" || this.map[i][j] =="HL" ||
 						this.map[i][j] =="HM" || this.map[i][j] =="HN" || this.map[i][j] =="HO" || this.map[i][j] =="HP"){	this.holeMaps.push(new Hole(x,y,this.map[i][j]));this.grid[i][j]=0;}
 				//Ennemis
-				else if(this.map[i][j] == "Sp") {	this.Minions.push(new Spider(x+15,y+25,1+floorCount/2,"spider",true)); this.grid[i][j]=1;}
-				else if(this.map[i][j] == "Sb") {	this.Minions.push(new Spider(x+15,y+25,3+floorCount/2,"buttspider",true)); this.grid[i][j]=1;}
-				else if(this.map[i][j] == "Zo") {	this.Minions.push(new Zombie(x+10,y+20,3+floorCount/2)); this.grid[i][j]=1;}
-				else if(this.map[i][j] == "Cl") {	this.Minions.push(new Clotty(i,j,x+10,y+20,5+floorCount/2)); this.grid[i][j]=1;}
-				else if(this.map[i][j] == "Ma") {	this.Minions.push(new Maggot(i,j,x+10,y+20,3+floorCount/2)); this.grid[i][j]=1;}
-				else if(this.map[i][j] == "Fl") {	this.Minions.push(new Fly(x,y,1+floorCount/2,"Black",true)); this.grid[i][j]=1;}
-				else if(this.map[i][j] == "Af") {	this.Minions.push(new Fly(x,y,1+floorCount/2,"Attack",true)); this.grid[i][j]=1;}
-				else if(this.map[i][j] == "Pf") {	this.Minions.push(new Fly(x,y,2+floorCount/2,"Pooter",true)); this.grid[i][j]=1;}
-				else if(this.map[i][j] == "To") {	this.Towers.push(new Tower(x,y,4+floorCount/2,true)); this.grid[i][j]=1;}
+				else if(this.map[i][j] == "Sp") {	this.Minions.push(new Spider(x+15,y+25,1+floorCount*2/3,"spider",true)); this.grid[i][j]=1;}
+				else if(this.map[i][j] == "Sb") {	this.Minions.push(new Spider(x+15,y+25,3+floorCount*2/3,"buttspider",true)); this.grid[i][j]=1;}
+				else if(this.map[i][j] == "Zo") {	this.Minions.push(new Zombie(x+10,y+20,3+floorCount*2/3)); this.grid[i][j]=1;}
+				else if(this.map[i][j] == "Cl") {	this.Minions.push(new Clotty(i,j,x+10,y+20,5+floorCount*2/3)); this.grid[i][j]=1;}
+				else if(this.map[i][j] == "Ma") {	this.Minions.push(new Maggot(i,j,x+10,y+20,3+floorCount*2/3)); this.grid[i][j]=1;}
+				else if(this.map[i][j] == "Fl") {	this.Minions.push(new Fly(x,y,1+floorCount*2/3,"Black",true)); this.grid[i][j]=1;}
+				else if(this.map[i][j] == "Af") {	this.Minions.push(new Fly(x,y,1+floorCount*2/3,"Attack",true)); this.grid[i][j]=1;}
+				else if(this.map[i][j] == "Pf") {	this.Minions.push(new Fly(x,y,2+floorCount*2/3,"Pooter",true)); this.grid[i][j]=1;}
+				else if(this.map[i][j] == "To") {	this.Towers.push(new Tower(x,y,4+floorCount*2/3,true)); this.grid[i][j]=1;}
 				//Bosses
-				else if(this.map[i][j] == "X1") {	this.Bosses.push(new Duke(x,y,70));this.sprites.push(new Blood(0,0,0,true)); this.grid[i][j]=1;}
-				else if(this.map[i][j] == "X2") {	this.Bosses.push(new Project(422,230,180));this.sprites.push(new Blood(0,0,0,true)); this.grid[i][j]=1;}
+				else if(this.map[i][j] == "X1") {	this.Bosses.push(new Duke(x,y,70,1)); this.grid[i][j]=1;}
+				else if(this.map[i][j] == "X3") {	this.Bosses.push(new Duke(x,y,120,2)); this.grid[i][j]=1;}
+				else if(this.map[i][j] == "X2") {	this.Bosses.push(new Project(422,230,180)); this.grid[i][j]=1;}
 				else if(this.map[i][j] == "ZZ") {	this.Items.push(new TrapDoor(x,y));this.grid[i][j]=1;}
 				//Shopkeeper
 				else if(this.map[i][j] == "Sk") {	
 					var skimg = "shopkeeper"+getRand(9,1);
 					this.overSprites.push(new Shopkeeper(imageTool[skimg],x,y,60,20)); this.grid[i][j]=1;}
 				//Items
-				else if(this.map[i][j] == "CC") {	this.Items.push(new Chest(x,y));this.grid[i][j]=1;}
+				else if(this.map[i][j] == "CC") {	this.Items.push(new Chest(x,y,"Chest"));this.grid[i][j]=1;}
+				else if(this.map[i][j] == "RC") {	this.Items.push(new Chest(x,y,"Redchest"));this.grid[i][j]=1;}
 				else if(this.map[i][j] == "XY") {	this.lootx = x+10; this.looty = y+10;this.canSpawnLoot=true; this.grid[i][j]=1;}
 				else if(this.map[i][j] == "00") {	loot("Health",x+10,y+10,this);this.grid[i][j]=1;}
 				else if(this.map[i][j] == "01") {	loot("Money",x+10,y+10,this);this.grid[i][j]=1;}
@@ -1337,11 +1619,49 @@ function Room(type,map,locy,locx){
 				else if(this.map[i][j] == "05") {	this.Items.push(new Item(x+16,y+16,"Wiggle Worm"));this.grid[i][j]=1;}
 				else if(this.map[i][j] == "06") {	this.Items.push(new Item(x+16,y+16,"The Halo"));this.grid[i][j]=1;}
 				else if(this.map[i][j] == "07") {	this.Items.push(new Item(x+16,y+16,"Pyro"));this.grid[i][j]=1;}
-				else if(this.map[i][j] == "00") {	this.Items.push(new Item(x+16,y+16,"Health"));this.grid[i][j]=1;}
+				else if(this.map[i][j] == "08") {	this.Items.push(new Item(x+16,y+16,"Jesus Juice"));this.grid[i][j]=1;}
+				else if(this.map[i][j] == "09") {	this.Items.push(new Item(x+16,y+16,"Wire Coat Hanger"));this.grid[i][j]=1;}
+				else if(this.map[i][j] == "10") {	this.Items.push(new Item(x+16,y+16,"Speed Ball"));this.grid[i][j]=1;}
+				else if(this.map[i][j] == "11") {	this.Items.push(new Item(x+16,y+16,"The Small Rock"));this.grid[i][j]=1;}
+				else if(this.map[i][j] == "12") {	this.Items.push(new Item(x+16,y+16,"Mom's Lipstick"));this.grid[i][j]=1;}
+				else if(this.map[i][j] == "13") {	this.Items.push(new Item(x+16,y+16,"The Inner Eye"));this.grid[i][j]=1;}
+				else if(this.map[i][j] == "14") {	this.Items.push(new Item(x+16,y+16,"Tooth Picks"));this.grid[i][j]=1;}
+				else if(this.map[i][j] == "15") {	this.Items.push(new Item(x+16,y+16,"Growth Hormones"));this.grid[i][j]=1;}
+				else if(this.map[i][j] == "16") {	this.Items.push(new Item(x+16,y+16,"<3"));this.grid[i][j]=1;}
+				else if(this.map[i][j] == "17") {	this.Items.push(new Item(x+16,y+16,"Skeleton Key"));this.grid[i][j]=1;}
+				else if(this.map[i][j] == "18") {	this.Items.push(new Item(x+16,y+16,"The Belt"));this.grid[i][j]=1;}
+				
+				for(var d = 0; d< this.Doors.length; d++){
+				this.Doors[d].isDestroyed = false;
+				if(this.Doors[d].type =="Cursed" || this.type == "Cursed"){
+					this.Doors[d].type = "Cursed";
+					this.Doors[d].locked = true;
+					this.Doors[d].isColliding = true;}
+				}
 			}
 		}
 	}
 	this.update = function(){
+	
+		//Détection items laissés dans les salles
+		this.coinPresent = false;
+		this.keyPresent = false;
+		this.chestPresent = false;
+		this.bombPresent = false;
+		this.hpPresent = false;
+		
+		for(var i = 0; i<this.Items.length; i++){
+			if(this.Items[i].type== "Half Heart" || this.Items[i].type== "Heart" || this.Items[i].type== "Soul Heart") this.hpPresent = true;
+			else if(this.Items[i].type== "Nickel" || this.Items[i].type== "Coin" || this.Items[i].type== "Dime")  this.coinPresent = true;
+			else if(this.Items[i].type== "Chest" || this.Items[i].type== "Redchest") {
+				if(this.Items[i].canBeUsed) this.chestPresent = true;}
+			else if(this.Items[i].type== "Key")  this.keyPresent = true;
+			else if(this.Items[i].type== "Bomb")  this.bombPresent = true;
+		}
+	
+	
+	
+	
 		for(var k=0; k<this.sprites.length;k++){
 			this.sprites[k].update();			}	
 	for(var k=0; k<this.overSprites.length;k++){
@@ -1380,7 +1700,7 @@ function Room(type,map,locy,locx){
 		for(var tb=0;tb<this.enemyBullets.length;tb++){
 			this.enemyBullets[tb].update();}
 		for(var tb=0;tb<this.collideMaps.length;tb++){
-			if(this.collideMaps[tb].type == "Chest")this.collideMaps[tb].update();}
+			if(this.collideMaps[tb].type == "Chest" || this.collideMaps[tb].type == "Redchest")this.collideMaps[tb].update();}
 			
 		this.enemies = this.Minions.length + this.Towers.length + this.Bosses.length;
 		if(this.enemies <=0){
@@ -1397,13 +1717,12 @@ function Room(type,map,locy,locx){
 		var context = canvas.getContext('2d');
 		var uicanvas = getEl("uicanvas");
 		var uicontext = uicanvas.getContext('2d');
-		context.clearRect(0,0,uicanvas.width,canvas.height);
+		context.clearRect(0,0,canvas.width,canvas.height);
 		if(hitBox){context.globalAlpha = 0.5;}
 		else context.globalAlpha = 1;
 		
 		//Éléments décor
 		if(updatingBackground){
-			updatingBackground = false;
 			
 			var bgcanvas = getEl("bgcanvas");
 			var bgcontext = bgcanvas.getContext('2d');
@@ -1415,10 +1734,35 @@ function Room(type,map,locy,locx){
 			for(var c=0;c<this.collideMaps.length;c++){
 				if(this.collideMaps[c].type!="fireplace" && this.collideMaps[c].type!="hellfireplace")this.collideMaps[c].draw(bgcontext);}
 			for(var h=0;h<this.holeMaps.length;h++){this.holeMaps[h].draw(bgcontext);}
+			
+			bgcontext.drawImage(imageTool.uinote, -60, canvas.height-30, 300, 40);
+			bgcontext.font = "12pt wendy";
+			bgcontext.fillStyle = 'white';
+			if(this.type =="Room"){
+				if(floorCount ==1) var floorname = "Basement " + this.title;
+				else if(floorCount ==2) var floorname = "Caves "+ this.title;
+				else if(floorCount ==3) var floorname = "The Depths "+ this.title;}
+			else floorname = this.title;
+			bgcontext.fillText(floorname,8, canvas.height-8);
 		}
 		for(var c=0;c<this.collideMaps.length;c++){
 			if(this.collideMaps[c].type=="fireplace" || this.collideMaps[c].type=="hellfireplace")this.collideMaps[c].draw(context);}
 		
+		if(Player.textShowing){
+				context.save();
+				context.fillStyle = 'white';
+				context.textAlign = 'center';
+				context.font = "20pt wendy";
+				context.drawImage(imageTool.uibar, 0,0, 960, 60);
+				context.fillText(Player.itemHoldingName,canvas.width/2 ,35);
+				if(Player.itemHoldingDesc !=" ")	{
+					context.font = "12pt wendy";
+					context.textAlign = 'right';
+					context.drawImage(imageTool.uinote, canvas.width-240, canvas.height-30, 300, 40);
+					context.fillText(Player.itemHoldingDesc,canvas.width-8, canvas.height-8);
+				}
+			context.restore();
+		}
 		
 		//Items et traps
 		for(var t=0;t<this.traps.length;t++){this.traps[t].draw(context);}
@@ -1469,20 +1813,21 @@ function Room(type,map,locy,locx){
 			context.drawImage(imageTool.gameover, 260,40,670, 500);
 			context.save();
 			context.font = "14pt danielbk";
+			context.textAlign = 'left';
 			context.fillStyle = 'black';
 			context.rotate(6*Math.PI/180);
 			context.globalAlpha = 0.65;
-			context.fillText(gameStats.rooms-1,504,162);
-			context.fillText(gameStats.kill,409,203);
-			context.fillText(gameStats.bullet,456,242);
+			context.fillText(gameStats.rooms-1,500,162);
+			context.fillText(gameStats.kill,405,203);
+			context.fillText(gameStats.bullet,452,242);
 			var hitpercent = (gameStats.hit / gameStats.bullet)*100;
 			if(isNaN(hitpercent)) hitpercent =0;
-			context.fillText(hitpercent.toFixed(),406,281);
+			context.fillText(hitpercent.toFixed(),402,281);
 			context.restore();
 
 			}
 		}
-		//Écran de pause
+		//UI
 		Player.drawUI(context,uicontext);
 		
 		//Debug
@@ -1503,24 +1848,6 @@ function Room(type,map,locy,locx){
 			
 		}
 		
-		//Minimap
-		var top = 10;
-		var left = 10;
-		for(var y=0; y < currentFloor.length; y++){
-			for(var x=0; x < currentFloor[y].length; x++){
-				if(currentFloor[y][x].isCurrent && currentFloor[y][x].type != "Secret" ){ uicontext.drawImage(imageTool.current,(x*42)+left,(y*17)+top, 44, 21);}
-				else if(currentFloor[y][x].exists && currentFloor[y][x].isVisited && currentFloor[y][x].type != "Secret" ){ uicontext.drawImage(imageTool.visited,(x*42)+left,(y*17)+top, 44, 21);}
-				else if(currentFloor[y][x].exists && currentFloor[y][x].isVisible && currentFloor[y][x].type != "Secret" ){ uicontext.drawImage(imageTool.unvisited,(x*42)+left,(y*17)+top, 44, 21);}
-			}
-		}
-		for(var y=0; y < currentFloor.length; y++){
-			for(var x=0; x < currentFloor[y].length; x++){			
-				if(currentFloor[y][x].exists && currentFloor[y][x].iconVisible && currentFloor[y][x].type =="Boss"){ uicontext.drawImage(imageTool.boss,(x*42)+left,(y*17)+top-8, 44, 32);}
-				else if(currentFloor[y][x].exists && currentFloor[y][x].iconVisible && currentFloor[y][x].type =="Treasure"){ uicontext.drawImage(imageTool.treasure,(x*42)+left,(y*17)+top-8, 44, 32);}
-				else if(currentFloor[y][x].exists && currentFloor[y][x].iconVisible && currentFloor[y][x].type =="Shop"){ uicontext.drawImage(imageTool.shop,(x*42)+left+10,(y*17)+top-4, 26, 28);}else if(currentFloor[y][x].exists && (currentFloor[y][x].isVisible || currentFloor[y][x].isVisible) && currentFloor[y][x].type == "Secret" ){ uicontext.drawImage(imageTool.secret,(x*42)+left,(y*17)+top-4, 44, 26);}
-			}
-		}
-		
 		//Pause
 		if(isPaused){
 			context.save();
@@ -1529,8 +1856,7 @@ function Room(type,map,locy,locx){
 			context.restore();
 			context.drawImage(imageTool.pauseScreen, 0, 0, canvas.width, canvas.height);
 		}
-	
-	
+			updatingBackground = false;
 	}
 	this.reset = function(){
 		for(var i=0;i<this.Minions.length;i++){this.Minions[i].reset();}

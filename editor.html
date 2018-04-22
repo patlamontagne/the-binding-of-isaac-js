@@ -1,14 +1,15 @@
 <!DOCTYPE html>
 <html lang="fr"><head>
-	<title>ROOM EDITOR</title>
+	<title>ROOM EDITOR | JAVASCRIPT ISAAC</title>
 	<meta charset="UTF-8">
 	<link href="editorstyles.css" rel="stylesheet">
 	<script src="js/FileSaver.js"></script>
-	<script src="js/editor.js"></script>
 	<script src="js/editorgame.js"></script>
-	<script src="js/editorsprites.js"></script>
+	<script src="js/sprites.js"></script>
+	<script src="js/editor.js"></script>
 	<script src="js/items.js"></script>
 	<script src="js/player.js"></script>
+	<script src="js/astar.js"></script>
 	<script src="js/enemy.js"></script>
 	<script src="js/keybind.js"></script>
 </head><body onload="initEditor()" >
@@ -48,16 +49,17 @@
 </div>
 			
 	<div id="editorlink">
+	<a href="index.html">Jeu</a>
 	<ul>
-	<li><a href="index.html">Jouer au jeu</a></li>
 	<li>&nbsp;</li>
 	<li>Crédits :</li>
-	<li>Concept et images originales par Edmund McMillen</li>
 	<li>Programmé et assemblé par Patrick Lamontagne</li>
 	<li>Testé par Dominik Brisson et Claudine Bourget</li>
+	<li>Concept original et sprites par Edmund McMillen</li>
+	<li>Artwork par <a href="http://wewk.deviantart.com/">Wewk</a></li>
 	<li>&nbsp;</li>
-	<li>Projet personnel HTML5 entièrement basé sur <a href="http://bindingofisaac.com/" TARGET='_blank' >The Binding Of Isaac</a></li>
-	<li> <a href="http://store.steampowered.com/app/113200/" TARGET='_blank' >Acheter le jeu sur Steam</a></li>
+	<li>Projet personnel HTML5 entièrement basé sur <a href="http://bindingofisaac.com/">The Binding Of Isaac</a></li>
+	<li> <a href="http://store.steampowered.com/app/113200/">Acheter le jeu sur Steam</a></li>
 	</ul>
 	</div>
 </body>

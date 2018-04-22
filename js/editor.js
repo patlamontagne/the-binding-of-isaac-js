@@ -1,4 +1,5 @@
 function getEl(id){ return document.getElementById(id);}
+var editorMode = true;
 var bossroom = false;
 var enemycount = 0;
 var normalroom = false;
@@ -6,17 +7,17 @@ var reward = false;
 var Testing = false;
 var testisReady = false;
 var Select = "  ";
-var items = ["HA","HB","HC","HD","HE","HF","HG","HH","HI","HJ","HK","HL","HM","HN","HO","HP","Bl","00","01","02","03","CC","Fl","Af","Pf","Sp","Sb","Ma","Cl","To","Zo","Tg","Tf","Tn","Oo","XY","X1","X2"];
+var items = ["HB","HC","HD","HE","HF","HG","HH","HI","HJ","HK","HL","HM","HN","HO","HP","HA","Bl","00","01","02","03","CC","RC","Fl","Af","Pf","Sp","Sb","Ma","Cl","To","Zo","Tg","Ts","Tf","Th","Tn","Oo","XY","X1","X3","X2"];
 var grid = [
-		["!!","!!","!!","!!","!!","!!","!!","+U","!!","!!","!!","!!","!!","!!","!!"],
-		["!!","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","!!"],
-		["!!","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","!!"],
-		["!!","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","!!"],
-		["+L","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","+R"],
-		["!!","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","!!"],
-		["!!","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","!!"],
-		["!!","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","!!"],
-		["!!","!!","!!","!!","!!","!!","!!","+D","!!","!!","!!","!!","!!","!!","!!"]
+	["!!","!!","!!","!!","!!","!!","!!","+U","!!","!!","!!","!!","!!","!!","!!"],
+	["!!","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","!!"],
+	["!!","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","!!"],
+	["!!","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","!!"],
+	["+L","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","+R"],
+	["!!","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","!!"],
+	["!!","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","!!"],
+	["!!","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","!!"],
+	["!!","!!","!!","!!","!!","!!","!!","+D","!!","!!","!!","!!","!!","!!","!!"]
 ];
 
 function initEditor(){ 
@@ -61,18 +62,18 @@ function initEditor(){
 				selector.appendChild(selection); // HTML recoit l'élément
 		}
 		alert("                        Bienvenue dans l'outil créateur de salle !\n\n\n"+
-			"COMMANDES : \n Clic GAUCHE sur la liste pour choisir l'élément \n Clic GAUCHE sur la grille pour poser l'élément \n Clic DROIT sur la grille pour effacer la case \n\n\n\n"+
-			"BOUTONS : \n Appuyez sur TEST pour visualiser et essayer votre création \n Appuyez sur EDIT pour revenir dans l'outil créateur \n Appuyez sur RESET pour réinitialiser la grille \n\n\n\n"+
-			"EXPORTER : \n SAVE télécharge votre création sous forme de fichier texte \n La zone de texte de droite détermine le nom du fichier \n\n\n\n"+
-			"IMPORTER : \n Copiez-collez le code d'une salle dans la zone de texte de gauche \n et appuyez sur READ pour importer le code dans l'éditeur \n Appuyez sur CLEAR pour vider la zone de texte \n\n\n\n"+
-			"Envoyez le code de vos salles sur CESTMOIPAT@GMAIL.COM \n et elles seront intégrées au jeu !");
+			"COMMANDES : \n - Clic GAUCHE sur la liste pour choisir l'élément \n - Clic GAUCHE sur la grille pour poser l'élément \n - Clic DROIT sur la grille pour effacer la case \n\n\n"+
+			"BOUTONS : \n - Appuyez sur TEST pour visualiser et essayer votre création \n - Appuyez sur EDIT pour revenir dans l'outil créateur \n - Appuyez sur RESET pour réinitialiser la grille \n\n\n"+
+			"EXPORTER : \n - SAVE télécharge votre création sous forme de fichier texte \n - La zone de texte de droite détermine le nom du fichier \n\n\n"+
+			"IMPORTER : \n - Copiez-collez le code d'une salle dans la zone de texte de gauche \n et appuyez sur READ pour importer le code dans l'éditeur \n - Appuyez sur CLEAR pour vider la zone de texte \n\n\n"+
+			"- Envoyez le code de vos salles sur CESTMOIPAT@GMAIL.COM \n et elles seront intégrées au jeu !");
 	//print();
 }
 
 //Click gauche
 function assign(code,y,x){
 	if(!Testing){
-		if((code == "X1" || code == "X2") && (normalroom || bossroom)) alert("La salle ne peut contenir qu'un boss.");
+		if((code == "X1" || code == "X3" || code == "X2") && (normalroom || bossroom)) alert("La salle ne peut contenir qu'un boss.");
 		else if(code == "XY" &&  reward) alert("Il ne peut qu'avoir une seule récompense par salle");
 		else if((
 				code== "Fl" || code== "Af" ||
@@ -90,7 +91,7 @@ function assign(code,y,x){
 
 //Click droit
 function clearCell(y,x){
-	if(grid[y][x] == "X1" || grid[y][x] == "X2") bossroom = false;
+	if(grid[y][x] == "X1" || grid[y][x] == "X2" || grid[y][x] == "X3") bossroom = false;
 	else if(grid[y][x] == "XY") reward = false;
 	else if((
 			grid[y][x]== "Fl" || grid[y][x]== "Af" ||
@@ -137,7 +138,8 @@ function scan(){
 			   grid[y][x]== "To" ||
 			   grid[y][x]== "Zo") {enemycount++;}
 			if (grid[y][x]== "X1" ||
-				grid[y][x]== "X2") bossroom = true;
+				grid[y][x]== "X2"||
+				grid[y][x]== "X3") bossroom = true;
 			if (grid[y][x]== "XY") reward = true;
 		}
 	}
