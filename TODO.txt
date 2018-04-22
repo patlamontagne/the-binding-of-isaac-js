@@ -1,19 +1,35 @@
-à faire : 
-
-levels
-combatMode
-vector tower
-block cassable
-block bougeable
-shop
-Revamp visuel
-boss
-sprite debris sur le sol on kill
-
-
-Probablement Difficile:
-
-minion pathfinding moins con
-animation impact projectile
-dynamique projectile (angle selon mouvement joueur)
+Pousser les bombes avec projectiles
 player bump on damage
+hitbox ronde
+Fonction getvector pour simplifier l'utilisation de vecteurs
+
+ITEMS
+Spectral tears
+Arrow tears
+Quadra tears
+Cyclope
+
+ENNEMIS
+Spidersack
+Moter (double fly)
+Boom fly
+Wrath(bomberman miniboss)
+Envy (Fistula Miniboss)
+Pride (troll miniboss)
+Fistula (boss)
+Chub (boss)
+Gurdy et Gurdy JR
+Larry JR
+
+Locked doors
+Chests
+Special rooms (sacrifice, demon,angel,arena)
+Assigner certains monstres pour certains étages
+Plus de tileset
+Selection Personnage
+
+FAIRE OBJETS UTILISABLE :
+Détonateur, Yummy Heart, Book of shadows
+
+
+
