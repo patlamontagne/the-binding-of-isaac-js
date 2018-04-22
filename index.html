@@ -4,11 +4,16 @@
 	<meta charset="UTF-8">
 	<link href="styles.css" rel="stylesheet">
 </head><body>
-	<div id="main">
-		<canvas id="canvas" width="800" height="480" >HTML5 n'est pas supporté par ce navigateur</canvas>
-		<div id="label">SCORE : <span id="score"></span><div id="fps"></div></div>
+	<div id="game">
+		<canvas id="statCanvas" width="960" height="40" >HTML5 n'est pas supporté par ce navigateur</canvas>
+		<canvas id="canvas" width="960" height="576" >HTML5 n'est pas supporté par ce navigateur</canvas>
+		<div id="label"><div id="fps"></div></div>
 	</div>
-		
-		
-	<script src="game.js"></script>
+	
+	
+	<script src="js/game.js"></script>
+	<script src="js/sprites.js"></script>
+	<script src="js/player.js"></script>
+	<script src="js/enemy.js"></script>
+	<script src="js/keybind.js"></script>
 </body></html>

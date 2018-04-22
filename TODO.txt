@@ -1,0 +1,17 @@
+Priorité:
+items
+tower attack
+moving blocks
+random movement minion
+vector tower
+levels
+debris sur le sol on kill
+sons
+
+Difficile:
+item overlap fix
+animation impact bullet
+animations de tir
+player bump on damage
+player movement friction
+minion overlap fix 
