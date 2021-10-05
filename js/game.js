@@ -31,7 +31,7 @@ var roomChangeOpac=1;
 var isaaciconpos = 0;
 var loadinganim = "";
 
-// Compatibilité browser
+// CompatibilitÃ© browser
  var animFrame = window.requestAnimationFrame ||
             window.webkitRequestAnimationFrame ||
             window.mozRequestAnimationFrame    ||
@@ -116,11 +116,11 @@ function generateFloor(){
 	for(var y=0; y < floorStructure.length; y++){
 		currentFloor[y] = new Array(floorStructure[y].length);
 		for(var x=0; x < floorStructure[y].length; x++){
-			currentFloor[y][x]= new Nothing(); //Initialiser toutes les rooms, même celles qui n'existent pas
+			currentFloor[y][x]= new Nothing(); //Initialiser toutes les rooms, mÃªme celles qui n'existent pas
 			//BASIC ROOMS
-			if(floorStructure[y][x] == "0"){ //Si room de base présente dans la structure
+			if(floorStructure[y][x] == "0"){ //Si room de base prÃ©sente dans la structure
 				var randRoom = getRand(possibleRooms.length,0); //Choisir une room random parmis celle disponibles
-				currentFloor[y][x] = new Room("Room",possibleRooms[randRoom],y,x,floorrand+1); //L'assigner à l'étage
+				currentFloor[y][x] = new Room("Room",possibleRooms[randRoom],y,x,floorrand+1); //L'assigner Ã  l'Ã©tage
 				possibleRooms.splice(randRoom,1);
 				} //Enleve la room des rooms disponibles
 				
@@ -176,7 +176,7 @@ function generateFloor(){
 	currentFloor[ry][rx] = new Room("Secret",secretRooms[randSecret],ry,rx,"Secret room"); //Assigner la Treasure room
 	secretRooms.splice(randSecret,1);
 			
-	//Salle de départ	
+	//Salle de dÃ©part	
 	for(var y=0; y < floorStructure.length; y++){
 		for(var x=0; x < floorStructure[y].length; x++){
 			while (floorStructure[ry][rx] !="0"){
@@ -188,7 +188,7 @@ function generateFloor(){
 			currentFloor[ry][rx].isCurrent = true;
 		}
 	}
-	//Créer le niveau
+	//CrÃ©er le niveau
 	for(var i=0; i<currentFloor.length;i++){
 		for(var j=0; j<currentFloor[i].length;j++){
 			//alert("i = "+i+"... j = "+j);
@@ -298,7 +298,7 @@ function newRoom(){
 }
 
 function transition(){
-//CHANGEMENT D'ÉTAGE
+//CHANGEMENT D'Ã‰TAGE
 		if(transitionStage <5){
 			var canvas = getEl("canvas");
 			var context = canvas.getContext('2d');
@@ -378,7 +378,7 @@ function changeFloor(){
 	transitionStage =1;
 }
 
-function showAdjacentRooms(){ //Découvrir les pièces adjacentes
+function showAdjacentRooms(){ //DÃ©couvrir les piÃ¨ces adjacentes
 	if(Game.locx > 0 && currentFloor[Game.locy][Game.locx-1].exists && currentFloor[Game.locy][Game.locx-1].type != "Secret"){
 		currentFloor[Game.locy][Game.locx-1].isVisible=true;
 		currentFloor[Game.locy][Game.locx-1].iconVisible=true;}
@@ -696,7 +696,7 @@ function Poop(x,y){
 	this.type = "poop";
 	this.x = x+4;
 	this.y = y+4;
-	this.state = 0; //Étapes de destruction
+	this.state = 0; //Ã‰tapes de destruction
 	this.width = 50;
 	this.height = 50;
 	this.canBeDestroyed = true;
@@ -730,7 +730,7 @@ function Tnt(x,y){
 	this.type = "tnt";
 	this.x = x;
 	this.y = y;
-	this.state = 0; //Étapes de destruction
+	this.state = 0; //Ã‰tapes de destruction
 	this.width = 58;
 	this.height = 58;
 	this.canBeDestroyed = true;
@@ -835,7 +835,7 @@ function Fireplace(x,y,type){
 	this.type= type;
 	this.x = x+4;
 	this.y = y+4;
-	this.state = 0; //Étapes de destruction
+	this.state = 0; //Ã‰tapes de destruction
 	this.rand = getRand(50,1);
 	this.fireAnim = new Animation(4,this.x,this.y,130,160,70,imageTool.fireplace,0,0,1);
 	this.hellfireAnim = new Animation(4,this.x,this.y,130,160,70,imageTool.hellfireplace,0,0,1);
@@ -1119,7 +1119,7 @@ function shopItem(x,y){
 			if(rand <2 && Game.currentShopPool.length >0){
 				console.log('currentShopPool.length ' + Game.currentShopPool.length);
 				var rand = getRand(Game.currentShopPool.length,0);
-				console.log('Tentative de création dun item');
+				console.log('Tentative de crÃ©ation dun item');
 				this.name = Game.currentShopPool[rand];
 				console.log('nom: ' +this.name);
 				Game.currentShopPool.splice(rand,1);
@@ -1234,7 +1234,7 @@ function Chest(x,y,type){
 	this.slidingTimer=0;
 	this.PlayerSliding = false;
 	this.ExploSliding=false;
-	this.canBeUsed = true; //Fermé ou ouvert
+	this.canBeUsed = true; //FermÃ© ou ouvert
 	this.alive = true;
 	this.isColliding=true;
 	this.update = function(){
@@ -1462,8 +1462,8 @@ function bulletImpact(obj,x,y,ox,oy){
 function Room(type,map,locy,locx,title){
 	this.type = type;
 	this.title = title;
-	this.locy = locy; //Position Y dans l'array d'étage
-	this.locx = locx; // Position X dans l'array d'étage
+	this.locy = locy; //Position Y dans l'array d'Ã©tage
+	this.locx = locx; // Position X dans l'array d'Ã©tage
 	this.grid = [];
 	this.overlayRand = getRand(3,1);
 	this.currentPickupPool = [];
@@ -1474,7 +1474,7 @@ function Room(type,map,locy,locx,title){
 	this.enemyBullets = [];
 	this.collideMaps = []; //Objets infranchissables par le joueur et par les projectiles
 	this.wallMaps = []; //Murs invisibles
-	this.traps = []; // Pièges
+	this.traps = []; // PiÃ¨ges
 	this.holeMaps = []; //Objets franchissables par les projectiles et certains Monstres, mais pas par le joueur
 	this.freeCells = []; //Espace libre, franchissable par tout
 	this.Items = []; // Drops, gold, boosts, hp, tout objets
@@ -1484,16 +1484,16 @@ function Room(type,map,locy,locx,title){
 	this.Bosses = []; 
 	this.overSprites = []; //Image fixes flottantes
 	this.sprites = []; //Images fixes, sang, taches, etc
-	this.enemies = 0; //Total d'ennemies présents
+	this.enemies = 0; //Total d'ennemies prÃ©sents
 	this.combatMode = 1; //Mode de combat
 	this.lootx = 0; //Positionx du loot de room
 	this.looty = 0; //Positiony du loot de room
-	this.canSpawnLoot = false; // Détermine si la room peut donner du loot ou pas
-	this.exists = true; //Propriété pour filtrer l'array des salles existantes et des emplacements vides
-	this.isVisited = false; //Minimap, la salle a été visité
+	this.canSpawnLoot = false; // DÃ©termine si la room peut donner du loot ou pas
+	this.exists = true; //PropriÃ©tÃ© pour filtrer l'array des salles existantes et des emplacements vides
+	this.isVisited = false; //Minimap, la salle a Ã©tÃ© visitÃ©
 	this.isCurrent = false; //Minimap, la salle actuelle
-	this.isVisible = false; //Minimap, la salle est visible (adjacente à une salle visitée, ou le joueur possède une carte)
-	this.iconVisible = false;  //Minimap, l'icone de la salle est visible (adjacente à une salle visitée, ou le joueur possède une boussole)
+	this.isVisible = false; //Minimap, la salle est visible (adjacente Ã  une salle visitÃ©e, ou le joueur possÃ¨de une carte)
+	this.iconVisible = false;  //Minimap, l'icone de la salle est visible (adjacente Ã  une salle visitÃ©e, ou le joueur possÃ¨de une boussole)
 	this.coinPresent = false;
 	this.keyPresent = false;
 	this.chestPresent = false;
@@ -1643,7 +1643,7 @@ function Room(type,map,locy,locx,title){
 	}
 	this.update = function(){
 	
-		//Détection items laissés dans les salles
+		//DÃ©tection items laissÃ©s dans les salles
 		this.coinPresent = false;
 		this.keyPresent = false;
 		this.chestPresent = false;
@@ -1721,7 +1721,7 @@ function Room(type,map,locy,locx,title){
 		if(hitBox){context.globalAlpha = 0.5;}
 		else context.globalAlpha = 1;
 		
-		//Éléments décor
+		//Ã‰lÃ©ments dÃ©cor
 		if(updatingBackground){
 			
 			var bgcanvas = getEl("bgcanvas");

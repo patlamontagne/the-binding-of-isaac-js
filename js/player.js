@@ -18,14 +18,14 @@ var Player = {
 	gold : 5, keys : 1, bombs : 1, //Pickups
 	bombPosed : Date.now(), 
 	head: imageTool.playerDown, 
-	orientation :"down", //Orientation de la tête
-	blink : 0, //Clignotement quand damagé
+	orientation :"down", //Orientation de la tÃªte
+	blink : 0, //Clignotement quand damagÃ©
 	isShooting: false, //Animation de tir
 	isLooting: false, //Animation de loot
 	textShowing: false, //Description d'item
-	itemHolding : "", //L'item qui est looté
-	itemHoldingName : "", //Le nom de l'item qui est looté
-	itemHoldingDesc : "", //La description de l'item qui est looté
+	itemHolding : "", //L'item qui est lootÃ©
+	itemHoldingName : "", //Le nom de l'item qui est lootÃ©
+	itemHoldingDesc : "", //La description de l'item qui est lootÃ©
 	lootTimer : 0, //Timer de l'animation
 	currentMoving : "", //Direction selon WASD
 	alive: true, 
@@ -42,11 +42,11 @@ var Player = {
 		//Gestion de vie
 		if(this.hp <= 0 && this.soul ==0) this.alive = false; //Si plus d'HP, le joueur n'est plus vivant
 		else if(this.hp > 12) this.hp = 12; //Maximum de 12 HP pleines, peut avoir plus de maxhp pour les sacrifier
-		if(!this.alive) gameOver = true; //Détection de fin de jeu
+		if(!this.alive) gameOver = true; //DÃ©tection de fin de jeu
 		
 		//Gestion de minimap
-		if(this.TreasureMap) showMap("Treasure Map"); //Montre les pièces
-		if(this.TheCompass) showMap("The Compass"); //Montre les icones de pièces spéciales
+		if(this.TreasureMap) showMap("Treasure Map"); //Montre les piÃ¨ces
+		if(this.TheCompass) showMap("The Compass"); //Montre les icones de piÃ¨ces spÃ©ciales
 		Game.isVisited = true;
 		Game.isVisible = true;
 		
@@ -54,7 +54,7 @@ var Player = {
 		this.posx = Math.round((this.x+this.width)/64);
 		this.posy = Math.round((this.y+this.height)/64);
 		
-		//Déplacement
+		//DÃ©placement
 		this.lastx = this.x;
 		this.lasty = this.y;
 		
@@ -75,9 +75,9 @@ var Player = {
 			Player.isShooting = true;}
 		else Player.isShooting = false;
 		
-		//State pour l'invulnérabilité temporaire
+		//State pour l'invulnÃ©rabilitÃ© temporaire
 		if( Date.now() - this.lastDamaged > 700){
-			this.canGetDamage = true;}	//compare le temps actuel avec le temps du dernier dégat
+			this.canGetDamage = true;}	//compare le temps actuel avec le temps du dernier dÃ©gat
 		else this.canGetDamage = false;
 		
 		//BOMBE
@@ -125,7 +125,7 @@ var Player = {
 			else if(this.accelx > this.speed){this.accelx -= this.friction;}
 			this.currentMoving = "right";}}
 			
-		//Décélération, si les deux touches d'une meme dimension sont relachées ou enfoncées(elles s'annulent)
+		//DÃ©cÃ©lÃ©ration, si les deux touches d'une meme dimension sont relachÃ©es ou enfoncÃ©es(elles s'annulent)
 		if(this.isLooting){
 			if(this.accely != 0){this.accely -= this.accely/7;}
 			if(this.accelx != 0){this.accelx -= this.accelx/7;}	}
@@ -135,7 +135,7 @@ var Player = {
 		if(!keyD && !keyA ){if(this.accelx != 0){this.accelx -= this.accelx/7;}}
 		if(keyA && keyD){if(this.accelx != 0){this.accelx -= this.accelx/7;}}
 	
-			//Accélération X
+			//AccÃ©lÃ©ration X
 		this.x += this.accelx*2;
 		
 		if(this.accelx*2 > 0){ 
@@ -152,7 +152,7 @@ var Player = {
 			this.checkCollide(Game.overSprites,"left");
 			this.checkCollide(Game.holeMaps,"left");
 			this.checkCollide(Game.Doors,"left");}
-		//Accélération Y
+		//AccÃ©lÃ©ration Y
 		this.y += this.accely*2;
 		
 		if(this.accely*2 > 0){ 
@@ -170,7 +170,7 @@ var Player = {
 			this.checkCollide(Game.holeMaps,"up");
 			this.checkCollide(Game.Doors,"up");}
 		
-		//Vérifications
+		//VÃ©rifications
 		itemCollision(Game.Items);
 		itemCollision(Game.shop);
 		detectCollision(Game.traps);
@@ -209,7 +209,7 @@ var Player = {
 				Animations[3].draw(context);
 				context.drawImage(this.itemHolding, this.x-21, this.y-84, 80, 80);}
 			
-			//Animations déplacement
+			//Animations dÃ©placement
 			else if(keyD){Animations[1].draw(context);}
 			else if(keyA){Animations[2].draw(context);}
 			else if(keyW || keyS){Animations[0].draw(context);}
@@ -229,7 +229,7 @@ var Player = {
 	},
 	drawHead : function(context){
 		if(!this.isLooting){
-			//Joueur invulnérable (a recu du damage)
+			//Joueur invulnÃ©rable (a recu du damage)
 			if(this.alive && !this.canGetDamage){
 				if(this.blink > 15)this.blink =0;
 				else if(this.blink > 0 && this.blink <=7){
@@ -399,10 +399,10 @@ var Player = {
 					if(this.isShooting) context.drawImage(imageTool.toothpicksside, this.x+12, this.y-12, 30, 45); 
 					else context.drawImage(imageTool.toothpicksside, this.x+12, this.y-20, 25, 55); }}
 			
-			//Remettre la tête de face après un timer
+			//Remettre la tÃªte de face aprÃ¨s un timer
 			if( Date.now() - this.lastFire > 700) this.orientation = "down";
 			
-			//Détail fixe
+			//DÃ©tail fixe
 			if (this.Halo){
 				if(this.isShooting) context.drawImage(imageTool.thehalo, this.x-21, this.y-77, 80, 80);
 				else context.drawImage(imageTool.thehalo, this.x-21, this.y-80, 80, 80);}//Objet flottant #2
@@ -411,7 +411,7 @@ var Player = {
 	},
 	drawUI : function(context,uicontext){
 		//Interface
-		if(Date.now() - this.uiUpdated > 200){ // Draw à toutes les x millisecondes
+		if(Date.now() - this.uiUpdated > 200){ // Draw Ã  toutes les x millisecondes
 			uicontext.clearRect(0,0,uicanvas.width,canvas.height);
 			uicontext.drawImage(imageTool.ui,0,0,960,120);
 			//LifeBar
@@ -526,8 +526,8 @@ var Player = {
 		
 			if(dmg > 0){ 
 				
-				this.damagedNow = Date.now(); //Moment ou le dégat est pris
-				if( this.damagedNow - this.lastDamaged > 1000){ //Si le dernier dégat date d'une seconde
+				this.damagedNow = Date.now(); //Moment ou le dÃ©gat est pris
+				if( this.damagedNow - this.lastDamaged > 1000){ //Si le dernier dÃ©gat date d'une seconde
 					if(this.soul > 0){this.soul -= 0.5;} //retirer l'armure (soul hearts)
 					else {this.hp -= dmg;}//retirer les points de vie
 					//GAMEOVER
@@ -576,11 +576,11 @@ var Player = {
 		
 		if(Date.now() - this.lastFire > this.fireRate){
 			
-			//Si le joueur tire dans la direction qu'il avance, la vitesse et la portée des projectiles est décuplée
+			//Si le joueur tire dans la direction qu'il avance, la vitesse et la portÃ©e des projectiles est dÃ©cuplÃ©e
 			if(this.orientation == this.currentMoving){
 				var brange = this.range*(1.2);
 				var bspeed = this.attackSpeed+this.speed/2;	}
-			//Sinon par défault
+			//Sinon par dÃ©fault
 			else {var brange = this.range; var bspeed = this.attackSpeed;}
 				gameStats.bullet++;
 			if(this.isNumberOne){	gapSwitch = 4;	numberOneY = 25; }

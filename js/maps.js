@@ -5,8 +5,8 @@
 	"Tg" Trap ralentissante
 	"Bl" Block
 	"HB" Trou
-	"Sp" Petite araignée
-	"Sb" Araignée à abdomen
+	"Sp" Petite araignÃ©e
+	"Sb" AraignÃ©e Ã  abdomen
 	"Fl" Mouche
 	"Pf"
 	"To" Montres tower (lance des projectiles)
@@ -18,7 +18,7 @@
 // Trou simple
 H0 
 
-//Rangée simple
+//RangÃ©e simple
 H1 H2 H3 
 
 //Colonne simple
@@ -35,7 +35,7 @@ H13 H14 H14 H15
 
 
 var startingRoom = [
-	[	//DÉPART
+	[	//DÃ‰PART
 		["!!","!!","!!","!!","!!","!!","!!","+U","!!","!!","!!","!!","!!","!!","!!"],
 		["!!","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","!!"],
 		["!!","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","  ","!!"],

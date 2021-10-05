@@ -38,7 +38,7 @@ function Spider(x,y,hp,type,sleeping){
 	}
 	this.move= function(){
 			
-		// Mode "bump" (a été touché)
+		// Mode "bump" (a Ã©tÃ© touchÃ©)
 		if(this.isHit){
 			this.dirx = (Player.x- Player.width/2) - (this.x - this.width/2);
 			this.diry = (Player.y- Player.height/2) - (this.y - this.height/2);
@@ -182,8 +182,8 @@ function Spider(x,y,hp,type,sleeping){
 				this.alive = false;}
 		}
 	}
-	this.checkDamage = function(){ //calcul d'invulnérabilité temporaire
-		if( Date.now()- this.lastDamaged < 150){ //compare le temps actuel avec le temps du dernier dégat
+	this.checkDamage = function(){ //calcul d'invulnÃ©rabilitÃ© temporaire
+		if( Date.now()- this.lastDamaged < 150){ //compare le temps actuel avec le temps du dernier dÃ©gat
 			this.isHit = true;}
 		else this.isHit = false;
 	}
@@ -330,8 +330,8 @@ function Fly(x,y,hp,type,immune, bossfollow){
 				this.y = (Game.Bosses[0].y + Game.Bosses[0].height/2 -12) + Math.cos(this.angle)*this.radiusrand ;
 			}
 			else{
-			// Mode déplacement
-				// Mode "bump" (a été touché)
+			// Mode dÃ©placement
+				// Mode "bump" (a Ã©tÃ© touchÃ©)
 				if(this.isHit){
 					this.dirx = (Player.x) - (this.x - this.width/2);
 					this.diry = (Player.y) - (this.y - this.height/2);
@@ -431,9 +431,9 @@ function Fly(x,y,hp,type,immune, bossfollow){
 				createItem(this.x,this.y+5,"basic");
 				this.alive = false;}}
 	}
-	this.checkDamage = function(){ //calcul d'invulnérabilité temporaire
+	this.checkDamage = function(){ //calcul d'invulnÃ©rabilitÃ© temporaire
 		this.now = Date.now();
-		if( this.now - this.lastDamaged < 120){ //compare le temps actuel avec le temps du dernier dégat
+		if( this.now - this.lastDamaged < 120){ //compare le temps actuel avec le temps du dernier dÃ©gat
 			this.isHit = true;}
 		else this.isHit = false;
 	}
@@ -679,9 +679,9 @@ function Zombie(x,y,hp){
 				createItem(this.x,this.y+5,"basic");
 				this.alive = false;}}
 	}
-	this.checkDamage = function(){ //calcul d'invulnérabilité temporaire
+	this.checkDamage = function(){ //calcul d'invulnÃ©rabilitÃ© temporaire
 		this.now = Date.now();
-		if( this.now - this.lastDamaged < 160){ //compare le temps actuel avec le temps du dernier dégat
+		if( this.now - this.lastDamaged < 160){ //compare le temps actuel avec le temps du dernier dÃ©gat
 			this.isHit = true;}
 		else this.isHit = false;
 	}	
@@ -787,7 +787,7 @@ function Clotty(posy,posx,x,y,hp){
 		this.diry = this.diry/this.hyp;	
 		
 			
-		// Mode "bump" (a été touché)
+		// Mode "bump" (a Ã©tÃ© touchÃ©)
 		if(this.isHit){
 			this.dirx = (Player.x- Player.width/2) - (this.x - this.width/2);
 			this.diry = (Player.y- Player.height/2) - (this.y - this.height/2);
@@ -842,8 +842,8 @@ function Clotty(posy,posx,x,y,hp){
 		
 		if(this.isAttacking) this.animS.update(this.x,this.y);
 		
-		if(this.posy == this.ry && this.posx == this.rx){ this.isArrived = true;} //Si arrivé a la position
-		else if(!this.isArrived && Date.now() - this.lastAng > 1500){this.isArrived = true;} //Si ca fait 1.5sec qu'il est pas arrivé à la position (debug)
+		if(this.posy == this.ry && this.posx == this.rx){ this.isArrived = true;} //Si arrivÃ© a la position
+		else if(!this.isArrived && Date.now() - this.lastAng > 1500){this.isArrived = true;} //Si ca fait 1.5sec qu'il est pas arrivÃ© Ã  la position (debug)
 		else this.isArrived = false;
 		
 		if(!this.isAttacking){
@@ -903,9 +903,9 @@ function Clotty(posy,posx,x,y,hp){
 				this.alive = false;}
 		}
 	}
-	this.checkDamage = function(){ //calcul d'invulnérabilité temporaire
+	this.checkDamage = function(){ //calcul d'invulnÃ©rabilitÃ© temporaire
 		this.now = Date.now();
-		if( this.now - this.lastDamaged < 150){ //compare le temps actuel avec le temps du dernier dégat
+		if( this.now - this.lastDamaged < 150){ //compare le temps actuel avec le temps du dernier dÃ©gat
 			this.isHit = true;}
 		else this.isHit = false;
 	}
@@ -1001,7 +1001,7 @@ function Maggot(posy,posx,x,y,hp){
 		this.dirx = this.dirx/this.hyp;
 		this.diry = this.diry/this.hyp;	
 		
-		// Mode "bump" (a été touché)
+		// Mode "bump" (a Ã©tÃ© touchÃ©)
 		if(this.isHit){
 			this.dirx = (Player.x- Player.width/2) - (this.x - this.width/2);
 			this.diry = (Player.y- Player.height/2) - (this.y - this.height/2);
@@ -1051,8 +1051,8 @@ function Maggot(posy,posx,x,y,hp){
 		this.posx = Math.round((this.x)/64);
 		this.posy = Math.round((this.y)/64);
 		
-		if(this.posy == this.ry && this.posx == this.rx){ this.isArrived = true;} //Si arrivé a la position
-		else if(!this.isArrived && Date.now() - this.lastAng > 1000){this.isArrived = true;} //Si ca fait 1.5sec qu'il est pas arrivé à la position (debug)
+		if(this.posy == this.ry && this.posx == this.rx){ this.isArrived = true;} //Si arrivÃ© a la position
+		else if(!this.isArrived && Date.now() - this.lastAng > 1000){this.isArrived = true;} //Si ca fait 1.5sec qu'il est pas arrivÃ© Ã  la position (debug)
 		else this.isArrived = false;
 		
 		
@@ -1137,9 +1137,9 @@ function Maggot(posy,posx,x,y,hp){
 				this.alive = false;}
 		}
 	}
-	this.checkDamage = function(){ //calcul d'invulnérabilité temporaire
+	this.checkDamage = function(){ //calcul d'invulnÃ©rabilitÃ© temporaire
 		this.now = Date.now();
-		if( this.now - this.lastDamaged < 150){ //compare le temps actuel avec le temps du dernier dégat
+		if( this.now - this.lastDamaged < 150){ //compare le temps actuel avec le temps du dernier dÃ©gat
 			this.isHit = true;}
 		else this.isHit = false;
 	}
@@ -1270,7 +1270,7 @@ function Tower(x,y,hp,sleeping){
 			if(!this.isHit){
 				context.drawImage(imageTool.tower, this.x+this.animX, this.y, this.width, this.height);}
 			if(this.isHit){
-				//var opac = (this.maxHp-this.hp)/this.maxHp; Calcul d'opacité par %age d'HP
+				//var opac = (this.maxHp-this.hp)/this.maxHp; Calcul d'opacitÃ© par %age d'HP
 				context.drawImage(imageTool.towerHit, this.x, this.y, this.width, this.height);}}
 	}
 	this.clear = function(){	//Supprimer
@@ -1290,9 +1290,9 @@ function Tower(x,y,hp,sleeping){
 				sounds.enemyDeath.play();
 				this.alive = false;}}
 	}
-	this.checkDamage = function(){ //calcul d'invulnérabilité temporaire
+	this.checkDamage = function(){ //calcul d'invulnÃ©rabilitÃ© temporaire
 		this.now = Date.now();
-		if( this.now - this.lastDamaged < 150){ //compare le temps actuel avec le temps du dernier dégat
+		if( this.now - this.lastDamaged < 150){ //compare le temps actuel avec le temps du dernier dÃ©gat
 			this.isHit = true;}
 		else this.isHit = false;
 	}
@@ -1379,7 +1379,7 @@ function Duke(x,y,hp,version){
 				this.flySpawn();
 				
 				if( this.now - this.lastDamaged > 80){
-					this.canGetDamage = true;}	//compare le temps actuel avec le temps du dernier dégat
+					this.canGetDamage = true;}	//compare le temps actuel avec le temps du dernier dÃ©gat
 				else this.canGetDamage = false;
 				
 				if((this.spawningSwarm || this.spawningFly) && Date.now() - this.lastFire > 700){
@@ -1518,7 +1518,7 @@ function Duke(x,y,hp,version){
 			}
 		}
 	}
-	this.checkDamage = function(){ //calcul d'invulnérabilité temporaire
+	this.checkDamage = function(){ //calcul d'invulnÃ©rabilitÃ© temporaire
 		this.now = Date.now();
 		if( this.now - this.lastDamaged < 80){	this.isHit = true;}
 		else this.isHit = false;
@@ -1692,7 +1692,7 @@ function Project(x,y,hp){
 				this.patternChange = Date.now();
 				console.log('Pattern '+this.pattern);
 			}
-			//Détermine direction de départ
+			//DÃ©termine direction de dÃ©part
 			if(!this.directionSet){
 				this.directionSet= true;
 				this.dirx = Math.sin(toRad(150));
@@ -1735,7 +1735,7 @@ function Project(x,y,hp){
 			}
 		}
 		
-		//Création tentacules
+		//CrÃ©ation tentacules
 		if(this.canSpawnArm){
 				this.canSpawnArm = false;
 				var distance = 80;
@@ -1945,7 +1945,7 @@ function Project(x,y,hp){
 						else if(pos == "left"){this.x = obj[i].x+obj[i].width;return true;}
 						else if(pos == "right"){this.x = obj[i].x-this.width;return true;}}}}
 		}
-	this.checkDamage = function(){ //calcul d'invulnérabilité temporaire
+	this.checkDamage = function(){ //calcul d'invulnÃ©rabilitÃ© temporaire
 		if( Date.now() - this.lastDamaged < 80){this.isHit = true;}
 		else this.isHit = false;
 	}
@@ -2000,7 +2000,7 @@ function Project(x,y,hp){
 				this.isHit = true;}
 				else this.isHit = false;
 			
-			//Calcul d'étape des parties du bras. Si un morceau de "niveau 3" est brisée, une mouche spawn
+			//Calcul d'Ã©tape des parties du bras. Si un morceau de "niveau 3" est brisÃ©e, une mouche spawn
 			if (this.hp <=3) this.state = 1;
 			else if (this.hp <=6){
 				if(this.state ==3){
@@ -2140,7 +2140,7 @@ function Project(x,y,hp){
 				this.isHit = true;}
 				else this.isHit = false;
 			
-			//Calcul d'étape des parties du bras. Si un morceau de "niveau 3" est brisée, une mouche spawn
+			//Calcul d'Ã©tape des parties du bras. Si un morceau de "niveau 3" est brisÃ©e, une mouche spawn
 			if (this.hp <=3) this.state = 1;
 			else if (this.hp <=6){
 				if(this.state ==3){
@@ -2259,7 +2259,7 @@ function Project(x,y,hp){
 		}
 		this.move= function(){
 			
-		// Mode "bump" (a été touché)
+		// Mode "bump" (a Ã©tÃ© touchÃ©)
 		if(this.isHit){
 			this.dirx = (Player.x- Player.width/2) - (this.x - this.width/2);
 			this.diry = (Player.y- Player.height/2) - (this.y - this.height/2);

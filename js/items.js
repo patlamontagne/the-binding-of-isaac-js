@@ -401,7 +401,7 @@ function createItem(x,y,type,slide){
 			if(rand ==2) loot("Money",x,y,Game,slide);}}
 			
 		
-	//ROCK BRISABLE, TABLE DE LOOT SPÉCIFIQUE
+	//ROCK BRISABLE, TABLE DE LOOT SPÃ‰CIFIQUE
 	else if(type == "xblock") loot("Rock",x,y,Game,slide)
 	
 	 //POOP, 10% de chance de drop. Coins ou Coeurs
