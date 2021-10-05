@@ -8,14 +8,39 @@ html { background: #151515;	font: 1em Arial; }
     src: url("font/danielbk.ttf");}
 
 #game {
-	width: 970px;
+	width: 960px;
 	margin: 20px auto;
 	line-height:0px;
-	text-align: center;}
-canvas { border-left: solid 6px #000;border-right: solid 6px #000; margin: auto;}
-#canvas { border-bottom: solid 6px #000;color:#fff;}
-#uicanvas{border-bottom: solid 0px #323131; background: #000;}
-#bgcanvas{border-bottom: solid 0px #323131;position: absolute; top: 140px; z-index: -10;}
+	text-align: center;
+	position: relative;
+}
+
+#fullscreen:fullscreen #game {
+	width: auto;
+	margin: 0 auto;
+}
+
+canvas {
+	border-left: solid 6px #000;
+	border-right: solid 6px #000;
+	margin: auto;
+	width: 100%;
+	box-sizing: border-box;
+}
+#canvas {
+	border-bottom: solid 6px #000;
+	color:#fff;
+}
+#uicanvas{
+	border-bottom: solid 0px #323131;
+	background: #000;
+}
+#bgcanvas{
+	border-bottom: solid 0px #323131;
+	position: absolute;
+	/* top: 140px; */
+	z-index: -10;
+}
 
 #editorlink{
 	margin: 10px auto;

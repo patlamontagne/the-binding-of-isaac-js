@@ -412,8 +412,8 @@ var Player = {
 	drawUI : function(context,uicontext){
 		//Interface
 		if(Date.now() - this.uiUpdated > 200){ // Draw à toutes les x millisecondes
-			uicontext.clearRect(0,0,uicanvas.width,canvas.height);
-			uicontext.drawImage(imageTool.ui,0,0,960,120);
+			uicontext.clearRect(0,0,uicanvas.width,uicanvas.height);
+			uicontext.drawImage(imageTool.ui,0,0,uicanvas.width,uicanvas.height);
 			//LifeBar
 			var half = this.hp%1;
 			var halfarmor = this.soul%1;

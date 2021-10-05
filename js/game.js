@@ -1,3 +1,11 @@
+var gameWidth = getEl('game').offsetWidth;
+var canvas = getEl("canvas");
+var context = canvas.getContext('2d');
+var uicanvas = getEl("uicanvas");
+var uicontext = uicanvas.getContext('2d');
+var bgcanvas = getEl("bgcanvas");
+var bgcontext = bgcanvas.getContext('2d');
+
 //Variables globales et Arrays
 //PAUSE
 var isChanging = false;
@@ -46,8 +54,6 @@ var recursiveAnim = function() {
 
 //Initialisation
 function gameInit(){
-	var canvas = getEl("canvas");
-    var context = canvas.getContext('2d');
 	generateFloor();
 	playerAnimations();
 	keyboardEvent();
@@ -56,8 +62,6 @@ function gameInit(){
 }
 
 function loading(state){
-	var canvas = getEl("canvas");
-    var context = canvas.getContext('2d');
 	if(state){
 		context.clearRect(0,0,canvas.width,canvas.height);
 		context.drawImage(imageTool.loading, 0, 0, canvas.width, canvas.height);
@@ -69,7 +73,7 @@ function loading(state){
 }
 
 // Loop du jeu
-function mainloop(){	
+function mainloop(){
 	//if(keyQ)toggleHitbox();
 	if(Date.now() - lastChange <= 500){
 		isChanging = true;}
@@ -95,8 +99,6 @@ function mainloop(){
 		
 		if(transitionStage !=0){
 			transition();
-			var uicanvas = getEl("uicanvas");
-			var uicontext = uicanvas.getContext('2d');
 			uicontext.drawImage(imageTool.blackScreen, 0, 0, uicanvas.width, uicanvas.height);}
 	//fps calcul
 	var thisFrameTime = (thisLoop=new Date) - lastLoop;
@@ -300,8 +302,6 @@ function newRoom(){
 function transition(){
 //CHANGEMENT D'ÉTAGE
 		if(transitionStage <5){
-			var canvas = getEl("canvas");
-			var context = canvas.getContext('2d');
 			context.save();
 			if(roomChangeOpac < 1 && transitionStage == 1) roomChangeOpac +=0.03;
 			if(roomChangeOpac >= 1 && transitionStage == 1) {
@@ -351,8 +351,6 @@ function transition(){
 		}
 		//CHANGEMENT DE PIECE
 		else if(transitionStage >4){
-			var canvas = getEl("canvas");
-			var context = canvas.getContext('2d');
 			//context.clearRect(0,0,canvas.width,canvas.height);
 			context.save();
 			if(roomChangeOpac < 1 && transitionStage == 5) roomChangeOpac +=0.04;
@@ -1712,11 +1710,6 @@ function Room(type,map,locy,locx,title){
 		else this.combatMode = 1;
 	}
 	this.draw = function(){
-		//Definition contexte canvas
-		var canvas = getEl("canvas");
-		var context = canvas.getContext('2d');
-		var uicanvas = getEl("uicanvas");
-		var uicontext = uicanvas.getContext('2d');
 		context.clearRect(0,0,canvas.width,canvas.height);
 		if(hitBox){context.globalAlpha = 0.5;}
 		else context.globalAlpha = 1;
@@ -1724,8 +1717,6 @@ function Room(type,map,locy,locx,title){
 		//Éléments décor
 		if(updatingBackground){
 			
-			var bgcanvas = getEl("bgcanvas");
-			var bgcontext = bgcanvas.getContext('2d');
 			bgcontext.clearRect(0,0,bgcanvas.width,canvas.height);
 			
 			Background.draw(bgcontext);

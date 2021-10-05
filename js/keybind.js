@@ -7,6 +7,32 @@ var keyW = false, keyA = false, keyS = false, keyD = false, keyQ = false, keyE =
 var keyLeft = false, keyUp = false, keyRight = false, keyDown = false; //ARROWS
 var keyPause = false, keyShift = false, keySpace = false;// ENTER
 
+var fullscreenAvailable = typeof screenfull !== 'undefined';
+if (fullscreenAvailable) {
+	screenfull.on('change', () => {
+		setTimeout(() => {
+			var elem = getEl('game');
+			const height = window.innerHeight
+			|| document.documentElement.clientHeight
+			|| document.body.clientHeight;
+			
+			if (screenfull.isFullscreen) {
+				elem.style.width = (height * 1.385) + 'px';
+			} else {
+				elem.style.height = '';
+				elem.style.width = '';
+			}
+		}, 100);
+	});
+}
+
+function toggleFullscreen() {
+	if (fullscreenAvailable) {
+		var elem = getEl('fullscreen');
+		screenfull.toggle(elem);
+	}
+}
+
 function onKeyDown(event){
 	var keyCode = event.keyCode;
 	switch(keyCode){
@@ -23,6 +49,7 @@ function onKeyDown(event){
 		case 69: keyE = true; break;		//e
 		case 16: keyShift = true; break;	//shift
 		case 13: keyPause = true; break;	//enter
+		case 70: toggleFullscreen(); break; // f
 	}
 }
 function onKeyUp(event){
