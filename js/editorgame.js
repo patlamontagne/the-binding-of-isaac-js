@@ -31,29 +31,64 @@ var floorStructure;
 var currentFloor;
 var possibleRooms;
 editorMode = true;
-	
-// Compatibilité browser
- var animFrame = window.requestAnimationFrame ||
-            window.webkitRequestAnimationFrame ||
-            window.mozRequestAnimationFrame    ||
-            window.oRequestAnimationFrame      ||
-            window.msRequestAnimationFrame     ||
-            null ;
-// loop animation			
-var recursiveAnim = function() {
-    if(Testing) {
-		mainloop();
-		animFrame( recursiveAnim )};
+				
+// rAF
+window.requestAnimationFrame = function() {
+    return window.requestAnimationFrame ||
+		window.webkitRequestAnimationFrame ||
+		window.mozRequestAnimationFrame ||
+		window.msRequestAnimationFrame ||
+		window.oRequestAnimationFrame ||
+		function(f) {
+			window.setTimeout(f,1e3/60);
+		}
+}();
+
+var latest_timestamp;
+
+// limit fps loop
+var limitLoop = function (fn, fps) {
+ 
+    // Use var then = Date.now(); if you
+    // don't care about targetting < IE9
+    var then = new Date().getTime();
+	var timstamp = then; // timestamp of the 
+	latest_timestamp = then;
+
+    // custom fps, otherwise fallback to 60
+    fps = fps || 60;
+    var interval = 1000 / fps;
+ 
+    return (function loop(time){
+
+		// clearing old loop.
+		// fixes cumulative gameloops on multiple gameInit().
+		if (timstamp != latest_timestamp) return;
+		
+		requestAnimationFrame(loop);
+ 
+        // again, Date.now() if it's available
+        var now = new Date().getTime();
+        var delta = now - then;
+ 
+        if (delta > interval) {
+            // Update time
+            // now - (delta % interval) is an improvement over just 
+            // using then = now, which can end up lowering overall fps
+            then = now - (delta % interval);
+ 
+            // call the fn, passing current fps to it
+            fn(frames);
+        }
+    }(0));
 };
 
 //Initialisation
 function gameInit(){
-	var canvas = getEl("canvas");
-    var context = canvas.getContext('2d');
 	generateFloor();
 	playerAnimations();
 	keyboardEvent();
-	animFrame(recursiveAnim);
+	limitLoop(mainloop, 60);
 	updatingBackground = true;
 }
 
