@@ -92,11 +92,13 @@ var limitLoop = function (fn, fps) {
 
 //Initialisation
 function gameInit(){
-	generateFloor();
-	playerAnimations();
-	keyboardEvent();
-	limitLoop(mainloop, 60);
-	updatingBackground = true;
+	setTimeout(function() {
+		generateFloor();
+		playerAnimations();
+		keyboardEvent();
+		limitLoop(mainloop, 60);
+		updatingBackground = true;
+	}, 500);
 }
 
 function loading(state){
