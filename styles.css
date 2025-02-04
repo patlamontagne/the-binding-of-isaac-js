@@ -1,5 +1,9 @@
 html { background: #151515;	font: 1em Arial; }
-* {	padding: 0px; margin: 0px; }
+* {
+	box-sizing: border-box;
+	padding: 0;
+	margin: 0;
+}
 @font-face {
     font-family: 'wendy';
     src: url("font/8bit.ttf");}
@@ -24,22 +28,27 @@ canvas {
 	border-left: solid 6px #000;
 	border-right: solid 6px #000;
 	margin: auto;
-	width: 100%;
-	box-sizing: border-box;
 }
-#canvas {
+
+.board-conrainer {
+	position: relative;
 	border-bottom: solid 6px #000;
+}
+
+#canvas {
+	position: absolute;
+	top: 0;
+  left: 0;
 	color:#fff;
 }
+
 #uicanvas{
 	border-bottom: solid 0px #323131;
 	background: #000;
 }
 #bgcanvas{
 	border-bottom: solid 0px #323131;
-	position: absolute;
-	left: 0;
-	bottom: 0;
+	position: relative;
 	z-index: -10;
 }
 
